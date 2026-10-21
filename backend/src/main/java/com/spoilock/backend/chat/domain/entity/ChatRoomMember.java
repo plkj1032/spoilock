@@ -1,6 +1,6 @@
-package com.spoilock.backend.chat.entity;
+package com.spoilock.backend.chat.domain.entity;
 
-import com.spoilock.backend.chat.entity.id.ChatRoomMemberId;
+import com.spoilock.backend.chat.domain.entity.id.ChatRoomMemberId;
 import com.spoilock.backend.user.entity.User;
 
 import jakarta.persistence.*;

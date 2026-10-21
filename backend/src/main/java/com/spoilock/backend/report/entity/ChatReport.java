@@ -1,6 +1,6 @@
 package com.spoilock.backend.report.entity;
 
-import com.spoilock.backend.chat.entity.ChatMessage;
+import com.spoilock.backend.chat.domain.entity.ChatMessage;
 import com.spoilock.backend.common.entity.CreatedAtEntity;
 import com.spoilock.backend.report.enums.ReportReason;
 import com.spoilock.backend.report.enums.ReportStatus;

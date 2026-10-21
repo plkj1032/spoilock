@@ -1,7 +1,7 @@
 package com.spoilock.backend.ai.entity;
 
 import com.spoilock.backend.ai.enums.RiskLevel;
-import com.spoilock.backend.chat.entity.ChatMessage;
+import com.spoilock.backend.chat.domain.entity.ChatMessage;
 import com.spoilock.backend.spoiler.entity.SpoilerEvent;
 
 import jakarta.persistence.*;
