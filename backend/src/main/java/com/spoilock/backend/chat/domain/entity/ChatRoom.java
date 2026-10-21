@@ -1,4 +1,4 @@
-package com.spoilock.backend.chat.entity;
+package com.spoilock.backend.chat.domain.entity;
 
 import com.spoilock.backend.common.entity.CreatedAtEntity;
 import com.spoilock.backend.drama.entity.Drama;

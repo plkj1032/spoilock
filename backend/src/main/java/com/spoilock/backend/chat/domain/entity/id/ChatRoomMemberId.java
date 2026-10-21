@@ -1,4 +1,4 @@
-package com.spoilock.backend.chat.entity.id;
+package com.spoilock.backend.chat.domain.entity.id;
 
 import jakarta.persistence.*;
 import lombok.*;
