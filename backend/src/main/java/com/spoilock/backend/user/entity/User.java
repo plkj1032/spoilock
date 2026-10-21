@@ -37,4 +37,19 @@ public class User extends AuditedEntity {
 
     @Column(name = "token_version", nullable = false)
     private Long tokenVersion = 0L;
+
+    public static User createLocal(
+            String email,
+            String passwordHash,
+            String nickname
+    )
+    {
+        User user = new User();
+
+        user.email = email;
+        user.passwordHash = passwordHash;
+        user.nickname = nickname;
+
+        return user;
+    }
 }
