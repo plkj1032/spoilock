@@ -27,7 +27,7 @@ public class AuthService {
                 .trim()
                 .toLowerCase(Locale.ROOT);
 
-        if(userRepository.existByEmail(email))
+        if(userRepository.existsByEmail(email))
         {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
