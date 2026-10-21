@@ -38,7 +38,7 @@ public class OAuthAccount {
     private OAuthProvider provider;
 
     @Column(name = "provider_user_id",
-            nullable = false, length = 255)
+            nullable = false, length = 100)
     private String providerUserId;
 
     @CreationTimestamp
