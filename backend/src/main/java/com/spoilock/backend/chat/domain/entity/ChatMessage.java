@@ -88,4 +88,23 @@ public class ChatMessage extends CreatedAtEntity {
 
         return message;
     }
+
+    public static ChatMessage createSystem(
+            ChatRoom room,
+            User user,
+            MessageType messageType,
+            String content
+    ){
+        if (messageType == null || messageType == MessageType.CHAT){
+            throw new IllegalArgumentException("시스템 메시지는 ENTER, LEAVE, KICK만 가능합니다.");
+        }
+        ChatMessage message = new ChatMessage();
+        message.room = room;
+        message.user = user;
+        message.messageType = messageType;
+        message.content = content;
+        message.analysisStatus = AnalysisStatus.SKIPPED;
+
+        return message;
+    }
 }

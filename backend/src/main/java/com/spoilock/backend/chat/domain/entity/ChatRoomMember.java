@@ -47,4 +47,13 @@ public class ChatRoomMember {
             updatable = false
     )
     private LocalDateTime joinedAt;
+
+    public static ChatRoomMember create(ChatRoom room, User user) {
+        ChatRoomMember member = new ChatRoomMember();
+
+        member.id = new ChatRoomMemberId(room.getId(), user.getId());
+        member.room = room;
+        member.user = user;
+        return member;
+    }
 }

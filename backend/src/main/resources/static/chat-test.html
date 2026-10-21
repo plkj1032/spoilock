@@ -7,7 +7,12 @@
 </head>
 <body>
 <h2>WebSocket 채팅 테스트</h2>
-
+<div>
+    <label>
+        작성자 ID:
+        <input id="userId" type="number" value="1" min="1">
+    </label>
+</div>
 <div>
     <label>
         방 번호:
@@ -76,7 +81,9 @@
                     `/topic/chat/${connectedRoomId}`,
                     (frame) => {
                         const message = JSON.parse(frame.body);
-                        log(`[방 ${message.roomId}] ${message.content}`);
+                        log(`[메시지 ${message.messageId}] ` +
+                            `[방 ${message.roomId}] ` +
+                            `[작성자 ${message.userId}] ${message.content}`);
                     }
                 );
 
@@ -122,10 +129,21 @@
                 return;
             }
 
+            const userId = Number(document.getElementById("userId").value);
+
+            if (!Number.isSafeInteger(userId) || userId <= 0) {
+                alert("올바른 작성자 ID를 입력해 주세요.");
+                return;
+            }
+
             client.publish({
-                destination: "/app/chat.send",
+                destination: "/app/chat.test.send",
+                headers: {
+                    "content-type": "application/json"
+                },
                 body: JSON.stringify({
                     roomId: connectedRoomId,
+                    userId: userId,
                     content: content
                 })
             });
