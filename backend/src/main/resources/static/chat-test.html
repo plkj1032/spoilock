@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SpoiLock 채팅 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.1.1/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<h2>WebSocket 채팅 테스트</h2>
+
+<div>
+    <label>
+        방 번호:
+        <input id="roomId" type="number" value="1" min="1">
+    </label>
+    <button id="connectButton" onclick="connect()">연결</button>
+    <button id="disconnectButton" onclick="disconnect()" disabled>
+        연결 종료
+    </button>
+</div>
+
+<p id="status">연결 안 됨</p>
+
+<form id="messageForm">
+    <input id="content" placeholder="메시지 입력" maxlength="2000">
+    <button id="sendButton" type="submit" disabled>전송</button>
+</form>
+
+<pre id="messages"></pre>
+
+<script>
+    let client = null;
+    let connectedRoomId = null;
+
+    const roomInput = document.getElementById("roomId");
+    const contentInput = document.getElementById("content");
+    const status = document.getElementById("status");
+    const messages = document.getElementById("messages");
+    const connectButton = document.getElementById("connectButton");
+    const disconnectButton = document.getElementById("disconnectButton");
+    const sendButton = document.getElementById("sendButton");
+
+    function log(message) {
+        messages.textContent += message + "\n";
+    }
+
+    function resetButtons() {
+        connectButton.disabled = false;
+        disconnectButton.disabled = true;
+        sendButton.disabled = true;
+        roomInput.disabled = false;
+    }
+
+    function connect() {
+        const roomId = Number(roomInput.value);
+
+        if (!Number.isSafeInteger(roomId) || roomId <= 0) {
+            alert("올바른 방 번호를 입력해 주세요.");
+            return;
+        }
+
+        connectedRoomId = roomId;
+        connectButton.disabled = true;
+        roomInput.disabled = true;
+        status.textContent = "연결 중...";
+
+        const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+
+        client = new StompJs.Client({
+            brokerURL: `${protocol}//${location.host}/ws`,
+            reconnectDelay: 0,
+            connectionTimeout: 5000,
+
+            onConnect: () => {
+                client.subscribe(
+                    `/topic/chat/${connectedRoomId}`,
+                    (frame) => {
+                        const message = JSON.parse(frame.body);
+                        log(`[방 ${message.roomId}] ${message.content}`);
+                    }
+                );
+
+                status.textContent = `방 ${connectedRoomId} 연결됨`;
+                disconnectButton.disabled = false;
+                sendButton.disabled = false;
+            },
+
+            onStompError: (frame) => {
+                log("STOMP 오류: " + frame.headers.message);
+            },
+
+            onWebSocketError: () => {
+                log("WebSocket 연결 오류: 개발자 도구에서 확인해 주세요.");
+            },
+
+            onWebSocketClose: () => {
+                status.textContent = "연결 종료";
+                resetButtons();
+            }
+        });
+
+        client.activate();
+    }
+
+    async function disconnect() {
+        if (client) {
+            await client.deactivate();
+            client = null;
+        }
+
+        status.textContent = "연결 종료";
+        resetButtons();
+    }
+
+    document.getElementById("messageForm")
+        .addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const content = contentInput.value.trim();
+
+            if (!client?.connected || !content) {
+                return;
+            }
+
+            client.publish({
+                destination: "/app/chat.send",
+                body: JSON.stringify({
+                    roomId: connectedRoomId,
+                    content: content
+                })
+            });
+
+            contentInput.value = "";
+        });
+</script>
+</body>
+</html>
