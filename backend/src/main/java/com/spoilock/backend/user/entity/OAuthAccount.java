@@ -45,4 +45,18 @@ public class OAuthAccount {
     @Column(name = "linked_at",
             nullable = false, updatable = false)
     private LocalDateTime linkedAt;
+
+    public static OAuthAccount linkKakao(
+            User user,
+            String kakaoId
+    )
+    {
+        OAuthAccount account = new OAuthAccount();
+
+        account.user = user;
+        account.provider = OAuthProvider.KAKAO;
+        account.providerUserId = kakaoId;
+
+        return account;
+    }
 }

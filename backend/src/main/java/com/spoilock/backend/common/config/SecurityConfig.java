@@ -3,6 +3,7 @@ package com.spoilock.backend.common.config;
 import jakarta.servlet.http.Cookie;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,6 +25,7 @@ import jakarta.servlet.DispatcherType;
 public class SecurityConfig {
 
     @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http
     ) throws Exception {
@@ -66,7 +68,9 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/auth/csrf"
+                                "/api/auth/csrf",
+                                "/api/dramas",
+                                "/api/dramas/**"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -97,6 +101,14 @@ public class SecurityConfig {
     {
         return request -> {
             String path = request.getRequestURI();
+
+            if("GET".equals(request.getMethod())
+                && (path.equals("/api/dramas")
+                || path.startsWith("/api/dramas/"))
+            )
+            {
+                return null;
+            }
 
             // 공개 로그인 API에서는 만료된 기존
             // Access Token 쿠키 때문에 로그인이

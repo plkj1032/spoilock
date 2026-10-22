@@ -58,4 +58,26 @@ public class UserProgress {
             nullable = false
     )
     private LocalDateTime updatedAt;
+
+    // 최초 시청 진도 생성
+    public static UserProgress create(
+            User user,
+            Drama drama,
+            Integer watchedEpisodeNumber
+    ) {
+        UserProgress progress = new UserProgress();
+
+        progress.user = user;
+        progress.drama = drama;
+        progress.watchedEpisodeNumber = watchedEpisodeNumber;
+
+        return progress;
+    }
+
+    // 기존 시청 진도 변경
+    public void updateWatchedEpisodeNumber(
+            Integer watchedEpisodeNumber
+    ) {
+        this.watchedEpisodeNumber = watchedEpisodeNumber;
+    }
 }
