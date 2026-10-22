@@ -1,0 +1,266 @@
+/* =========================
+   Chat Room Create Modal
+========================= */
+
+.chat-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(2, 8, 23, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.chat-create-modal {
+  width: 100%;
+  max-width: 560px;
+
+  padding: 30px;
+
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 22px;
+
+  background: #0f1a2d;
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.chat-create-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  margin-bottom: 28px;
+}
+
+.chat-create-header h2 {
+  margin: 7px 0 8px;
+
+  font-size: 28px;
+  line-height: 1.2;
+
+  color: #f8fafc;
+}
+
+.chat-create-header p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.chat-create-close {
+  flex-shrink: 0;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+
+  background: #162238;
+  color: #cbd5e1;
+
+  font-size: 22px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.chat-create-close:hover:not(:disabled) {
+  background: #1f2d46;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #ffffff;
+}
+
+.chat-create-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 22px;
+}
+
+.chat-create-field {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+}
+
+.chat-create-field label {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: #e2e8f0;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.chat-create-field label span {
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.chat-create-field select,
+.chat-create-field input,
+.chat-create-field textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border: 1px solid #26344d;
+  border-radius: 12px;
+
+  background: #0b1424;
+  color: #f8fafc;
+
+  font: inherit;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.chat-create-field select,
+.chat-create-field input {
+  height: 48px;
+
+  padding: 0 14px;
+}
+
+.chat-create-field textarea {
+  min-height: 110px;
+
+  padding: 14px;
+
+  resize: vertical;
+
+  line-height: 1.6;
+}
+
+.chat-create-field select:focus,
+.chat-create-field input:focus,
+.chat-create-field textarea:focus {
+  border-color: #5b7cff;
+
+  background: #0d1829;
+
+  box-shadow: 0 0 0 3px rgba(91, 124, 255, 0.12);
+}
+
+.chat-create-field input::placeholder,
+.chat-create-field textarea::placeholder {
+  color: #64748b;
+}
+
+.chat-create-field select:disabled,
+.chat-create-field input:disabled,
+.chat-create-field textarea:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+.chat-create-count {
+  align-self: flex-end;
+
+  margin-top: -3px;
+
+  color: #64748b;
+
+  font-size: 12px;
+}
+
+.chat-create-error {
+  margin: -4px 0 0;
+
+  padding: 11px 13px;
+
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  border-radius: 10px;
+
+  background: rgba(127, 29, 29, 0.14);
+  color: #fca5a5;
+
+  font-size: 13px;
+}
+
+.chat-create-state {
+  padding: 36px 16px;
+
+  text-align: center;
+
+  color: #94a3b8;
+}
+
+.chat-create-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding-top: 4px;
+}
+
+.chat-create-actions .button {
+  min-width: 110px;
+}
+
+@media (max-width: 640px) {
+  .chat-create-backdrop {
+    align-items: flex-end;
+
+    padding: 12px;
+  }
+
+  .chat-create-modal {
+    max-width: none;
+
+    padding: 24px 20px;
+
+    border-radius: 20px;
+  }
+
+  .chat-create-header h2 {
+    font-size: 24px;
+  }
+
+  .chat-create-actions {
+    flex-direction: column-reverse;
+  }
+
+  .chat-create-actions .button {
+    width: 100%;
+  }
+}

@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
 
 import { authApi } from "./api/authApi";
 
 import Header from "./components/common/Header";
 import AuthModal from "./components/auth/AuthModal";
-
-import HomePage from "./pages/HomePage";
-import DramaListPage from "./pages/DramaListPage";
-import ChatPage from "./pages/ChatPage";
-import CommunityPage from "./pages/CommunityPage";
-import ChatRoomPage from "./pages/ChatRoomPage";
+import AppRouter from "./router/AppRouter";
 
 import "./App.css";
 
@@ -22,7 +16,6 @@ function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  // 새로고침 시 로그인 상태 복구
   useEffect(() => {
     let active = true;
 
@@ -117,76 +110,12 @@ function App() {
         onLogout={handleLogout}
       />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <HomePage
-              user={user}
-              onLogin={() => openModal("login")}
-              onNotice={setNotice}
-            />
-          }
-        />
-
-        <Route
-          path="/dramas"
-          element={
-            <DramaListPage
-              user={user}
-              onLogin={() => openModal("login")}
-              onNotice={setNotice}
-            />
-          }
-        />
-
-        <Route
-          path="/chat"
-          element={
-            <ChatPage
-              user={user}
-              onLogin={() => openModal("login")}
-              onNotice={setNotice}
-            />
-          }
-        />
-
-        <Route
-          path="/community"
-          element={
-            <CommunityPage
-              user={user}
-              onLogin={() => openModal("login")}
-              onNotice={setNotice}
-            />
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route
-          path="/chat/:roomId"
-          element={
-            pending ? (
-              <main className="container main-content">로그인 확인 중...</main>
-            ) : user ? (
-              <ChatRoomPage
-                key={`${user.id}:${window.location.pathname}`}
-                user={user}
-              />
-            ) : (
-              <main className="container main-content">
-                <p>로그인 후 채팅방을 이용할 수 있습니다.</p>
-                <button
-                  className="button button-primary"
-                  onClick={() => openModal("login")}
-                >
-                  로그인
-                </button>
-              </main>
-            )
-          }
-        />
-      </Routes>
+      <AppRouter
+        user={user}
+        pending={pending}
+        onLogin={() => openModal("login")}
+        onNotice={setNotice}
+      />
 
       {notice && (
         <div className="toast" role="status">

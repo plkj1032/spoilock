@@ -2,17 +2,15 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { chatApi } from "../api/chatApi";
-import DramaCard from "../components/drama/DramaCard";
-import { NavLink } from "react-router-dom";
 import DramaGallery from "../components/drama/DramaGallery";
-
+import ChatRoomCreate from "../components/chat/ChatRoomCreate";
 export default function HomePage({ user, onLogin, onNotice }) {
   const navigate = useNavigate();
 
   const [rooms, setRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
   const [enteringRoomId, setEnteringRoomId] = useState(null);
-
+  const [createRoomOpen, setCreateRoomOpen] = useState(false);
   useEffect(() => {
     let active = true;
 
@@ -68,7 +66,7 @@ export default function HomePage({ user, onLogin, onNotice }) {
       return;
     }
 
-    onNotice("채팅방 만들기는 다음 단계에서 연결할 예정입니다.");
+    setCreateRoomOpen(true);
   }
   return (
     <main className="container main-content">
@@ -157,9 +155,11 @@ export default function HomePage({ user, onLogin, onNotice }) {
         </aside>
       </div>
       <p className="demo-disclaimer">
-        드라마·평점 정보는 아직 프론트엔드 데모 데이터이며, 채팅방은 실제 서버
-        데이터와 연결되어 있습니다.
+        채팅방과 드라마 정보는 실제 서버 데이터와 연결되어 있습니다.
       </p>
+      {createRoomOpen && (
+        <ChatRoomCreate onClose={() => setCreateRoomOpen(false)} />
+      )}
     </main>
   );
 }
