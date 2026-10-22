@@ -52,4 +52,9 @@ public class User extends AuditedEntity {
 
         return user;
     }
+
+    public void incrementTokenVersion()
+    {
+        this.tokenVersion++;
+    }
 }

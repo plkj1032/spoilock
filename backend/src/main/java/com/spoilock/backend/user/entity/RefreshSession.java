@@ -29,4 +29,27 @@ public class RefreshSession extends CreatedAtEntity {
 
     @Column(name = "revoked_at")
     private LocalDateTime revokedAt;
+
+    public static RefreshSession create(
+            User user,
+            String tokenHash,
+            LocalDateTime expiresAt
+    )
+    {
+        RefreshSession session = new RefreshSession();
+        session.user = user;
+        session.tokenHash = tokenHash;
+        session.expiresAt = expiresAt;
+        return session;
+    }
+
+    public boolean isUsable(LocalDateTime now)
+    {
+        return revokedAt == null && expiresAt.isAfter(now);
+    }
+
+    public void revoke(LocalDateTime now)
+    {
+        this.revokedAt = now;
+    }
 }
