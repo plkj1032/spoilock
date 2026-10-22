@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-import DramaCard from "../components/drama/DramaCard";
-import { demoDramas, demoRooms } from "../data/demoData";
+import { demoRooms } from "../data/demoData";
+import DramaGallery from "../components/drama/DramaGallery";
 
 export default function HomePage({ user, onLogin, onNotice }) {
   const viewRoom = () => {
@@ -21,17 +21,13 @@ export default function HomePage({ user, onLogin, onNotice }) {
           전체 보기 ›
         </NavLink>
       </div>
-      <div className="drama-grid">
-        {demoDramas.slice(0, 4).map((drama) => (
-          <DramaCard
-            key={drama.id}
-            drama={drama}
-            onAction={() =>
-              onNotice("드라마·시청 진도 API 연결 전의 데모 카드입니다.")
-            }
-          />
-        ))}
-      </div>
+      <DramaGallery
+        key={user?.id ?? "guest"}
+        user={user}
+        onLogin={onLogin}
+        onNotice={onNotice}
+        limit={4}
+      />
       <div className="section-top rooms-title">
         <div>
           <span className="section-overline">LIVE ROOMS</span>

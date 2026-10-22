@@ -1,7 +1,7 @@
 package com.spoilock.backend.drama.enums;
 
 public enum DramaStatus {
-    UPCOMING,
-    ONGOING,
-    COMPLETED
+    DRAFT,
+    PUBLISHED,
+    HIDDEN
 }

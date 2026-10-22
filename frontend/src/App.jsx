@@ -130,7 +130,13 @@ function App() {
 
         <Route
           path="/dramas"
-          element={<DramaListPage onNotice={setNotice} />}
+          element={
+            <DramaListPage
+              user={user}
+              onLogin={() => openModal("login")}
+              onNotice={setNotice}
+            />
+          }
         />
 
         <Route
