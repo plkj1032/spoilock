@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import DramaListPage from "./pages/DramaListPage";
 import ChatPage from "./pages/ChatPage";
 import CommunityPage from "./pages/CommunityPage";
+import ChatRoomPage from "./pages/ChatRoomPage";
 
 import "./App.css";
 
@@ -162,6 +163,29 @@ function App() {
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/chat/:roomId"
+          element={
+            pending ? (
+              <main className="container main-content">로그인 확인 중...</main>
+            ) : user ? (
+              <ChatRoomPage
+                key={`${user.id}:${window.location.pathname}`}
+                user={user}
+              />
+            ) : (
+              <main className="container main-content">
+                <p>로그인 후 채팅방을 이용할 수 있습니다.</p>
+                <button
+                  className="button button-primary"
+                  onClick={() => openModal("login")}
+                >
+                  로그인
+                </button>
+              </main>
+            )
+          }
+        />
       </Routes>
 
       {notice && (

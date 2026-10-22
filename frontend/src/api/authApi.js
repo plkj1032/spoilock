@@ -130,10 +130,10 @@ export async function apiRequest(path, options = {}) {
       throw error;
     }
 
-    // Access Token 만료 시 Refresh Token으로 갱신
+    // Access Token 만료 시 Refresh Token 갱신
     await refreshOnce();
 
-    // 새로운 Access Token으로 원래 요청 재시도
+    // 기존 요청 재시도
     return request(path, requestOptions);
   }
 }
