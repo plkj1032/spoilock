@@ -69,11 +69,8 @@ public class SecurityConfig {
                                 "/api/auth/csrf"
                         ).permitAll()
 
-                        .requestMatchers(
-                                "/chat-test.html",
-                                "/ws",
-                                "/ws/**"
-                        ).permitAll()
+                        .requestMatchers("/chat-test.html").permitAll()
+                        .requestMatchers("/ws", "/ws/**").authenticated()
 
                         .anyRequest().authenticated()
                 )
