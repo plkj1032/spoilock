@@ -1,0 +1,81 @@
+// 관리자 작품 등록 API가 붙기 전까지 사용하는 가상 드라마 데모 데이터입니다.
+export const demoDramas = [
+  {
+    id: 1,
+    title: "심야의 목격자",
+    genre: "미스터리 · 스릴러",
+    watched: 4,
+    total: 12,
+    cover: "night",
+    rating: "9.4",
+  },
+  {
+    id: 2,
+    title: "푸른 골목의 우리",
+    genre: "청춘 · 로맨스",
+    watched: 7,
+    total: 16,
+    cover: "alley",
+    rating: "9.1",
+  },
+  {
+    id: 3,
+    title: "서울, 제로시",
+    genre: "SF · 액션",
+    watched: 0,
+    total: 10,
+    cover: "zero",
+    rating: "8.9",
+  },
+  {
+    id: 4,
+    title: "사라진 파동",
+    genre: "범죄 · 드라마",
+    watched: 3,
+    total: 8,
+    cover: "wave",
+    rating: "9.2",
+  },
+  {
+    id: 5,
+    title: "유리로 된 밤",
+    genre: "추리 · 미스터리",
+    watched: 10,
+    total: 12,
+    cover: "glass",
+    rating: "8.8",
+  },
+  {
+    id: 6,
+    title: "마지막 플랫폼",
+    genre: "판타지 · 로맨스",
+    watched: 2,
+    total: 16,
+    cover: "platform",
+    rating: "9.0",
+  },
+];
+
+export const demoRooms = [
+  {
+    id: "room-1",
+    title: "4화까지 본 사람들 모여요",
+    description: "자유 채팅 · 스포일러 자동 차단",
+    members: 128,
+    tag: "1~4화",
+  },
+  {
+    id: "room-2",
+    title: "떡밥 추리방",
+    description: "추리 · 미시청 회차 보호",
+    members: 86,
+    tag: "전 회차",
+  },
+  {
+    id: "room-3",
+    title: "팬들의 수다방",
+    description: "자유 대화 · 회차별 검열",
+    members: 43,
+    tag: "전체",
+  },
+];
