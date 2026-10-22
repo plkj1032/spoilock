@@ -119,3 +119,5 @@ export const authApi = {
     }
   },
 };
+
+export { request as apiRequest };
