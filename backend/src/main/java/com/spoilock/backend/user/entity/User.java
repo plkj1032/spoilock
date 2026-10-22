@@ -57,4 +57,14 @@ public class User extends AuditedEntity {
     {
         this.tokenVersion++;
     }
+
+    public static User createKakao(String nickname) {
+        User user = new User();
+
+        user.email = null;
+        user.passwordHash = null;
+        user.nickname = nickname;
+
+        return user;
+    }
 }

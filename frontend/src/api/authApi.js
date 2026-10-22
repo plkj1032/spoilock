@@ -120,4 +120,20 @@ export const authApi = {
   },
 };
 
-export { request as apiRequest };
+export async function apiRequest(path, options = {}) {
+  const { retryOn401 = false, ...requestOptions } = options;
+
+  try {
+    return await request(path, requestOptions);
+  } catch (error) {
+    if (!retryOn401 || !(error instanceof ApiError) || error.status !== 401) {
+      throw error;
+    }
+
+    // Access Token 만료 시 Refresh Token 갱신
+    await refreshOnce();
+
+    // 기존 요청 재시도
+    return request(path, requestOptions);
+  }
+}

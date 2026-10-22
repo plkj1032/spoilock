@@ -184,7 +184,18 @@ export default function AuthModal({
             {signup ? "로그인" : "회원가입"}
           </button>
         </p>
-        <p className="oauth-later">소셜 로그인은 추후 연동할 예정입니다.</p>
+        <button
+          type="button"
+          className="button button-outline submit-button"
+          disabled={busy}
+          onClick={() => {
+            window.location.assign(
+              "http://localhost:8080/oauth2/authorization/kakao",
+            );
+          }}
+        >
+          카카오로 로그인
+        </button>
       </section>
     </div>
   );

@@ -34,5 +34,5 @@ public class Drama extends AuditedEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private DramaStatus status = DramaStatus.UPCOMING;
+    private DramaStatus status = DramaStatus.DRAFT;
 }
