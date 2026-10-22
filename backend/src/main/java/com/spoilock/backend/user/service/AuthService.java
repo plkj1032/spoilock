@@ -42,10 +42,20 @@ public class AuthService {
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
+        String nickname = request.nickname().trim();
+
+        if(nickname.length() < 2)
+        {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "닉네임은 2자 이상 입력해주세요."
+            );
+        }
+
         User user = User.createLocal(
                 email,
                 encodedPassword,
-                request.nickname().trim()
+                nickname
         );
 
         User savedUser = userRepository.save(user);
