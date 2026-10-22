@@ -49,4 +49,21 @@ public class ChatRoom extends CreatedAtEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    public static ChatRoom create(
+            Drama drama,
+            User createdBy,
+            String roomName,
+            String description
+    ) {
+        ChatRoom room = new ChatRoom();
+
+        room.drama = drama;
+        room.createdBy = createdBy;
+        room.roomName = roomName;
+        room.description = description;
+        room.active = true;
+
+        return room;
+    }
 }

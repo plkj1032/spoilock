@@ -72,6 +72,10 @@ public class SecurityConfig {
                                 "/api/dramas",
                                 "/api/dramas/**"
                         ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/chat/rooms"
+                        ).permitAll()
 
                         .requestMatchers("/chat-test.html").permitAll()
                         .requestMatchers("/ws", "/ws/**").authenticated()

@@ -18,6 +18,20 @@ async function changeMembership(roomId, action) {
 }
 
 export const chatApi = {
+  getRooms: () => apiRequest("/api/chat/rooms"),
+
+  getRoom: (roomId) => apiRequest(`/api/chat/rooms/${roomId}`),
+
+  createRoom: (dramaId, roomName, description) =>
+    apiRequest("/api/chat/rooms", {
+      method: "POST",
+      body: {
+        dramaId,
+        roomName,
+        description,
+      },
+    }),
+
   enterRoom: (roomId) => changeMembership(roomId, "enter"),
 
   leaveRoom: (roomId) => changeMembership(roomId, "leave"),

@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { Client } from "@stomp/stompjs";
+import { chatApi } from "../api/chatApi";
 
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
@@ -17,7 +23,7 @@ function mergeMessages(current, incoming) {
 
 export default function ChatRoomPage({ user }) {
   const { roomId } = useParams();
-
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // 개발 환경에서만 두 번째 서버 연결 허용
@@ -28,12 +34,13 @@ export default function ChatRoomPage({ user }) {
   const bottomRef = useRef(null);
   const initialScrollDoneRef = useRef(false);
 
+  const [room, setRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [leaving, setLeaving] = useState(false);
   const [nextCursor, setNextCursor] = useState(null);
   const [hasNext, setHasNext] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -53,6 +60,26 @@ export default function ChatRoomPage({ user }) {
   }, [loading, error]);
 
   const olderLoadingRef = useRef(false);
+  useEffect(() => {
+    let active = true;
+
+    chatApi
+      .getRoom(Number(roomId))
+      .then((data) => {
+        if (active) {
+          setRoom(data);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setError(error.message);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [roomId]);
 
   useEffect(() => {
     let active = true;
@@ -228,7 +255,24 @@ export default function ChatRoomPage({ user }) {
       }
     }
   }
+  async function leaveRoom() {
+    if (leaving) {
+      return;
+    }
 
+    setLeaving(true);
+    setError("");
+
+    try {
+      await chatApi.leaveRoom(Number(roomId));
+
+      navigate("/");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLeaving(false);
+    }
+  }
   function sendMessage(event) {
     event.preventDefault();
 
@@ -268,11 +312,20 @@ export default function ChatRoomPage({ user }) {
       <div className="section-top">
         <div>
           <span className="section-overline">CHAT ROOM</span>
-          <h1>채팅방 {roomId}</h1>
+          <h1>{room?.roomName ?? "채팅방"}</h1>
           <p>
             {user.nickname}님 · {connected ? "연결됨" : "연결 안 됨"}
           </p>
         </div>
+
+        <button
+          type="button"
+          className="button button-outline"
+          onClick={leaveRoom}
+          disabled={leaving}
+        >
+          {leaving ? "나가는 중..." : "채팅방 나가기"}
+        </button>
       </div>
 
       {loading && <p role="status">대화를 불러오는 중입니다.</p>}
