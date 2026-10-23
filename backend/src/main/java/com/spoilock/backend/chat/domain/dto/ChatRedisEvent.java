@@ -6,6 +6,11 @@ import java.time.LocalDateTime;
 
 public record ChatRedisEvent(
         Long roomId,
-        Long messageId
+        Long messageId,
+        Long kickedUserId
 ) {
+    //기존 채팅/입장/퇴장 코드에서 그대로 사용
+    public ChatRedisEvent(Long roomId, Long messageId){
+        this(roomId, messageId, null);
+    }
 }

@@ -4,6 +4,9 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { chatApi } from "../api/chatApi";
 import DramaGallery from "../components/drama/DramaGallery";
 import ChatRoomCreate from "../components/chat/ChatRoomCreate";
+
+import "../styles/HomePage.css";
+import "../styles/ChatRoomList.css";
 export default function HomePage({ user, onLogin, onNotice }) {
   const navigate = useNavigate();
 

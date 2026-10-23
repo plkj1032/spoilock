@@ -1,0 +1,171 @@
+.admin-page {
+  max-width: 950px;
+}
+
+.admin-panel {
+  background: #1d2c45;
+  border: 1px solid #344667;
+  border-radius: 14px;
+  padding: 26px;
+  margin-bottom: 24px;
+}
+
+.admin-panel h2 {
+  margin-bottom: 22px;
+}
+
+.admin-panel h3 {
+  margin: 24px 0 15px;
+}
+
+/* 제목 + 액션 버튼 */
+.admin-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-heading h2,
+.admin-heading h3 {
+  margin: 0;
+}
+
+/* 입력 필드 */
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-field label {
+  color: #b7c8e8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-field input,
+.admin-field textarea {
+  width: 100%;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #101c2f;
+  color: white;
+  padding: 12px;
+  font: inherit;
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-field small {
+  color: #9fb0ce;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* 회차 */
+.admin-episode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.admin-episode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-episode-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.episode-delete {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12px;
+}
+
+.episode-add {
+  width: 100%;
+  margin: 8px 0 20px;
+  border-style: dashed;
+}
+
+/* 저작권 안내 */
+.admin-rights-note {
+  padding: 14px;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #16243b;
+  color: #b9c9e6;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+/* 저장 버튼 */
+.admin-submit {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+}
+
+/* 작품 목록 */
+.admin-drama-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-drama-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #34496f;
+  border-radius: 10px;
+}
+
+.admin-drama-item .page-subtitle {
+  margin-top: 8px;
+}
+
+.admin-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 9px;
+  border: 1px solid #405579;
+  border-radius: 6px;
+  color: #c4d5f7;
+  font-size: 11px;
+}
+
+/* 모바일 */
+@media (max-width: 570px) {
+  .admin-panel {
+    padding: 18px;
+  }
+
+  .admin-episode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-drama-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

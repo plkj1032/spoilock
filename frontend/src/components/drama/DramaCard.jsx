@@ -1,3 +1,5 @@
+import "../../styles/DramaCard.css";
+
 export default function DramaCard({
   drama,
   watched,

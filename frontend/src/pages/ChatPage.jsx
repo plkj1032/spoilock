@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { chatApi } from "../api/chatApi";
 
+import "../styles/ChatPage.css";
+import "../styles/ChatRoomList.css";
+
 export default function ChatPage({ user, onLogin, onNotice }) {
   const navigate = useNavigate();
 

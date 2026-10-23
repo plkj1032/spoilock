@@ -1,0 +1,50 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #030914d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  backdrop-filter: blur(5px);
+}
+
+.auth-dialog {
+  width: 100%;
+  max-width: 410px;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  position: relative;
+  border: 1px solid #344667;
+  border-radius: 18px;
+  padding: 30px;
+  background: #1c2a42;
+  box-shadow: 0 22px 60px #02081799;
+}
+
+.modal-close {
+  position: absolute;
+  right: 17px;
+  top: 15px;
+  width: 29px;
+  height: 29px;
+  color: #a9b9d8;
+  background: #25344f;
+  border: 1px solid #364a6a;
+  border-radius: 8px;
+  font-size: 19px;
+}
+
+.auth-dialog > h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 21px;
+}
+
+.dialog-description {
+  margin: 8px 0 28px;
+  text-align: center;
+  color: #92a6c8;
+  font-size: 12px;
+}

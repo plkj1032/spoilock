@@ -1,0 +1,16 @@
+.chat-ban-panel {
+  padding: 20px;
+  margin: 16px 0;
+  border: 1px solid #475569;
+  border-radius: 12px;
+}
+
+.chat-ban-panel__item {
+  padding: 16px 0;
+  border-bottom: 1px solid #475569;
+  overflow-wrap: anywhere;
+}
+
+.chat-ban-panel__item:last-child {
+  border-bottom: none;
+}

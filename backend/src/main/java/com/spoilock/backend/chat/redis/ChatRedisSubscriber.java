@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -32,6 +33,16 @@ public class ChatRedisSubscriber implements MessageListener {
                     json,
                     ChatRedisEvent.class
             );
+
+            if(event.kickedUserId() != null) {
+                messagingTemplate.convertAndSendToUser(
+                        event.kickedUserId().toString(),
+                        "/queue/chat",
+                        Map.of(
+                                "eventType","KICKED","roomId",event.roomId()
+                        )
+                );
+            }
 
             List<Long> userIds =
                     chatRoomMemberRepository.findUserIdsByRoomId(

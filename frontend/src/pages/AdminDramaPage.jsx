@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { adminDramaApi } from "../api/adminDramaApi";
-
+import "../styles/AdminDramaPage.css";
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
   title: `${i + 1}화`,

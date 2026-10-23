@@ -28,7 +28,9 @@ public class ChatRoomQueryRepository {
                                 chatRoom.id,
                                 chatRoom.roomName,
                                 chatRoom.description,
-                                chatRoomMember.id.userId.count()
+                                chatRoomMember.id.userId.count(),
+                                chatRoom.roomType,
+                                chatRoom.createdBy.id
                         )
                 )
                 .from(chatRoom)
@@ -51,7 +53,9 @@ public class ChatRoomQueryRepository {
                                 chatRoom.id,
                                 chatRoom.roomName,
                                 chatRoom.description,
-                                chatRoomMember.id.userId.count()
+                                chatRoomMember.id.userId.count(),
+                                chatRoom.roomType,
+                                chatRoom.createdBy.id
                         )
                 )
                 .from(chatRoom)

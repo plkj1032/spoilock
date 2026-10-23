@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./ChatRoomCreate.css";
+import "../../styles/ChatRoomCreate.css";
 
 import { chatApi } from "../../api/chatApi";
 import { dramaApi } from "../../api/dramaApi";
+import Button from "../common/Button";
 
 export default function ChatRoomCreate({ onClose }) {
   const navigate = useNavigate();
@@ -188,22 +189,17 @@ export default function ChatRoomCreate({ onClose }) {
             )}
 
             <div className="chat-create-actions">
-              <button
-                type="button"
-                className="button button-outline"
-                onClick={onClose}
-                disabled={submitting}
-              >
+              <Button variant="outline" onClick={onClose} disabled={submitting}>
                 취소
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="submit"
-                className="button button-primary"
+                variant="primary"
                 disabled={submitting || !dramaId || !roomName.trim()}
               >
                 {submitting ? "채팅방 만드는 중..." : "채팅방 만들기"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
