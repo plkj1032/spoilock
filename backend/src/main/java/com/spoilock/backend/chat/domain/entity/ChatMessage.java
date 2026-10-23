@@ -107,4 +107,43 @@ public class ChatMessage extends CreatedAtEntity {
 
         return message;
     }
+
+    /**
+     * 스포일러 분석 완료.
+     *
+     * @param publish                 true  → VISIBLE (requiredEpisodeNumber 이상 시청자에게 공개, null 이면 전원)
+     *                                false → PENDING (관리자 검토 대기, 원문 차단)
+     * @param requiredEpisodeNumber   공개에 필요한 회차 (publish=false 면 무시)
+     */
+    public void completeAnalysis(
+            boolean publish,
+            Integer requiredEpisodeNumber
+    ) {
+        this.analysisStatus = AnalysisStatus.COMPLETED;
+        this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
+
+        // 관리자가 이미 숨김/삭제한 메시지는 분석 결과로 다시 공개하지 않음
+        if (isModeratedByAdmin()) {
+            return;
+        }
+
+        this.moderationStatus = publish
+                ? ModerationStatus.VISIBLE
+                : ModerationStatus.PENDING;
+    }
+
+    /** 스포일러 분석 실패: 원문 차단 유지, 복구 작업이 재시도 */
+    public void failAnalysis() {
+        this.analysisStatus = AnalysisStatus.FAILED;
+        this.requiredEpisodeNumber = null;
+
+        if (!isModeratedByAdmin()) {
+            this.moderationStatus = ModerationStatus.PENDING;
+        }
+    }
+
+    private boolean isModeratedByAdmin() {
+        return moderationStatus == ModerationStatus.HIDDEN
+                || moderationStatus == ModerationStatus.REMOVED;
+    }
 }

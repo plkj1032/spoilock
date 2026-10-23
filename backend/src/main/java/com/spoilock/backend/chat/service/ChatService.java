@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.service;
 
+import com.spoilock.backend.ai.service.ChatAnalysisRequested;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.domain.entity.ChatMessage;
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
@@ -14,6 +15,7 @@ import com.spoilock.backend.chat.repository.ChatRoomRepository;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,8 @@ public class ChatService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomAccessService chatRoomAccessService;
     private final ChatRoomBanRepository chatRoomBanRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     @Transactional
     public ChatRedisEvent saveMessage(
@@ -72,6 +76,18 @@ public class ChatService {
 
         ChatMessage savedMessage =
                 chatMessageRepository.save(message);
+
+        // 스포일러 분석 요청: 이 트랜잭션이 커밋된 뒤 별도 스레드에서 Python 서버 호출
+        // (ChatAnalysisListener, @TransactionalEventListener AFTER_COMMIT)
+        // 여기서 직접 호출하면 Gemini 응답을 기다리는 동안 DB 트랜잭션이 열려 있게 된다.
+        eventPublisher.publishEvent(
+                new ChatAnalysisRequested(
+                        savedMessage.getId(),
+                        room.getId(),
+                        room.getDrama().getId(),
+                        savedMessage.getContent()
+                )
+        );
 
         return toRedisEvent(savedMessage);
     }

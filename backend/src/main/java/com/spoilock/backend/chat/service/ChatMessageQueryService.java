@@ -3,6 +3,7 @@ package com.spoilock.backend.chat.service;
 import com.spoilock.backend.chat.domain.dto.ChatMessageHistoryResponse;
 import com.spoilock.backend.chat.domain.dto.ChatMessageResponse;
 import com.spoilock.backend.chat.domain.entity.ChatMessage;
+import com.spoilock.backend.chat.domain.type.ChatBlockReason;
 import com.spoilock.backend.chat.domain.type.ChatVisibility;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.chat.repository.ChatMessageRepository;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
@@ -53,15 +55,20 @@ public class ChatMessageQueryService {
             );
         }
 
-        boolean show;
+        ChatBlockReason blockReason;
 
         if (message.getMessageType() == MessageType.CHAT) {
-            show = canShowChatMessage(message, userId);
+            Long dramaId = message.getRoom().getDrama().getId();
+            blockReason = chatBlockReason(
+                    message,
+                    userId,
+                    () -> chatProgressQueryRepository.findWatchedEpisodeNumber(userId, dramaId)
+            );
         } else {
-            show = canShowSystemMessage(message);
+            blockReason = systemBlockReason(message);
         }
 
-        return toResponse(message, show);
+        return toResponse(message, blockReason);
     }
 
     public ChatMessageHistoryResponse getHistory(
@@ -119,18 +126,19 @@ public class ChatMessageQueryService {
                 pageMessages.stream()
                         .map(message -> {
 
-                            boolean show;
+                            ChatBlockReason blockReason;
 
                             if (message.getMessageType() == MessageType.CHAT) {
-                                show = canShowChatMessage(
+                                blockReason = chatBlockReason(
                                         message,
-                                        watchedEpisodeNumber
+                                        userId,
+                                        () -> watchedEpisodeNumber
                                 );
                             } else {
-                                show = canShowSystemMessage(message);
+                                blockReason = systemBlockReason(message);
                             }
 
-                            return toResponse(message, show);
+                            return toResponse(message, blockReason);
                         })
                         .toList();
 
@@ -150,7 +158,7 @@ public class ChatMessageQueryService {
         );
     }
 
-    private boolean canShowSystemMessage(ChatMessage message) {
+    private ChatBlockReason systemBlockReason(ChatMessage message) {
         boolean systemMessage =
                 message.getMessageType() == MessageType.ENTER
                         || message.getMessageType() == MessageType.LEAVE
@@ -160,80 +168,80 @@ public class ChatMessageQueryService {
                 message.getModerationStatus() == ModerationStatus.HIDDEN
                         || message.getModerationStatus() == ModerationStatus.REMOVED;
 
-        return systemMessage
+        boolean show = systemMessage
                 && message.getAnalysisStatus() == AnalysisStatus.SKIPPED
                 && !hidden;
-    }
-    private boolean canShowChatMessage(
-            ChatMessage message,
-            Long userId
-    ) {
-        // 분석 대기·진행 중·실패 상태에서는 원문 비공개
-        if (message.getAnalysisStatus() != AnalysisStatus.COMPLETED) {
-            return false;
-        }
 
-        // 서비스 공개 상태가 확정된 메시지만 허용
-        if (message.getModerationStatus() != ModerationStatus.VISIBLE) {
-            return false;
-        }
-
-        Integer requiredEpisode = message.getRequiredEpisodeNumber();
-
-        // 분석 완료 + 공개 상태에서 회차가 없으면 스포 아님
-        if (requiredEpisode == null) {
-            return true;
-        }
-
-        // 잘못된 회차 값은 공개하지 않음
-        if (requiredEpisode <= 0) {
-            return false;
-        }
-
-        Long dramaId = message.getRoom().getDrama().getId();
-
-        return chatProgressQueryRepository
-                .findWatchedEpisodeNumber(userId, dramaId)
-                .map(watchedEpisode -> watchedEpisode >= requiredEpisode)
-                .orElse(false);
+        return show ? null : ChatBlockReason.HIDDEN;
     }
 
-    private boolean canShowChatMessage(
+    /**
+     * 일반 채팅 공개 여부. null 이면 원문 공개, 값이 있으면 그 이유로 차단.
+     *
+     * @param watchedEpisodeNumber 수신자의 시청 회차 (필요할 때만 조회)
+     */
+    private ChatBlockReason chatBlockReason(
             ChatMessage message,
-            Optional<Integer> watchedEpisodeNumber
+            Long viewerId,
+            Supplier<Optional<Integer>> watchedEpisodeNumber
     ) {
-        // 분석 대기·진행 중·실패 상태에서는 원문 비공개
-        if (message.getAnalysisStatus() != AnalysisStatus.COMPLETED) {
-            return false;
+        ModerationStatus moderation = message.getModerationStatus();
+
+        // 관리자 숨김·삭제는 누구에게도 공개하지 않음
+        if (moderation == ModerationStatus.HIDDEN
+                || moderation == ModerationStatus.REMOVED) {
+            return ChatBlockReason.HIDDEN;
         }
 
-        // 서비스 공개 상태가 확정된 메시지만 허용
-        if (message.getModerationStatus() != ModerationStatus.VISIBLE) {
-            return false;
+        // 보낸 사람 본인에게는 원문 표시 (본인이 쓴 내용이므로 스포일러가 아님)
+        if (message.getUser().getId().equals(viewerId)) {
+            return null;
+        }
+
+        // 분석 대기·진행 중·실패 상태에서는 원문 비공개
+        if (message.getAnalysisStatus() == AnalysisStatus.PENDING
+                || message.getAnalysisStatus() == AnalysisStatus.PROCESSING) {
+            return ChatBlockReason.ANALYZING;
+        }
+
+        if (message.getAnalysisStatus() == AnalysisStatus.FAILED) {
+            return ChatBlockReason.FAILED;
+        }
+
+        if (message.getAnalysisStatus() != AnalysisStatus.COMPLETED) {
+            return ChatBlockReason.REVIEW;
+        }
+
+        // 서비스 공개 상태가 확정된 메시지만 허용 (NO_MATCH·UNCERTAIN 등은 PENDING 으로 보류)
+        if (moderation != ModerationStatus.VISIBLE) {
+            return ChatBlockReason.REVIEW;
         }
 
         Integer requiredEpisode = message.getRequiredEpisodeNumber();
 
         // 분석 완료 + 공개 상태에서 필요 회차가 없으면 스포 아님
         if (requiredEpisode == null) {
-            return true;
+            return null;
         }
 
         // 비정상 회차는 공개하지 않음
         if (requiredEpisode <= 0) {
-            return false;
+            return ChatBlockReason.REVIEW;
         }
 
-        return watchedEpisodeNumber
-                .map(watchedEpisode ->
-                        watchedEpisode >= requiredEpisode
-                )
-                .orElse(false);
+        Optional<Integer> watched = watchedEpisodeNumber.get();
+
+        return watched.isPresent() && watched.get() >= requiredEpisode
+                ? null
+                : ChatBlockReason.NOT_WATCHED;
     }
+
     private ChatMessageResponse toResponse(
             ChatMessage message,
-            boolean show
+            ChatBlockReason blockReason
     ) {
+        boolean show = blockReason == null;
+
         return new ChatMessageResponse(
                 message.getId(),
                 message.getRoom().getId(),
@@ -242,7 +250,8 @@ public class ChatMessageQueryService {
                 message.getMessageType(),
                 show ? ChatVisibility.SHOW : ChatVisibility.BLOCK,
                 show ? message.getContent() : null,
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                blockReason
         );
     }
 }
