@@ -79,6 +79,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/chat-test.html").permitAll()
                         .requestMatchers("/ws", "/ws/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )

@@ -1,0 +1,106 @@
+/* 회차 제목과 삭제 버튼 가로 배치 */
+.admin-episode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-episode-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 회차 삭제 */
+.episode-delete {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12px;
+}
+
+/* 회차 추가 */
+.episode-add {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  border-style: dashed;
+}
+
+.admin-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-heading h2,
+.admin-heading h3 {
+  margin: 0;
+}
+
+.admin-episode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-episode-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.episode-delete {
+  flex-shrink: 0;
+  padding: 12px;
+}
+
+.episode-add {
+  width: 100%;
+  margin: 8px 0 20px;
+  border-style: dashed;
+}
+
+.admin-field small {
+  color: #9fb0ce;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.admin-rights-note {
+  padding: 14px;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #16243b;
+  color: #b9c9e6;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.admin-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 9px;
+  border: 1px solid #405579;
+  border-radius: 6px;
+  color: #c4d5f7;
+  font-size: 11px;
+}
+
+@media (max-width: 570px) {
+  .admin-episode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-drama-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -35,4 +35,45 @@ public class Drama extends AuditedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private DramaStatus status = DramaStatus.DRAFT;
+
+    public static Drama createDraft(
+            String title,
+            String synopsis,
+            String posterUrl,
+            Integer totalEpisodeCount
+    )
+    {
+        Drama drama = new Drama();
+
+        drama.title = title;
+        drama.synopsis = synopsis;
+        drama.posterUrl = posterUrl;
+        drama.totalEpisodeCount = totalEpisodeCount;
+        drama.status = DramaStatus.DRAFT;
+
+        return drama;
+    }
+
+    public void publish()
+    {
+        this.status = DramaStatus.PUBLISHED;
+    }
+
+    public void updateDraft(
+            String title,
+            String synopsis,
+            String posterUrl,
+            Integer totalEpisodeCount
+    )
+    {
+        this.title = title;
+        this.synopsis = synopsis;
+        this.posterUrl = posterUrl;
+        this.totalEpisodeCount = totalEpisodeCount;
+    }
+
+    public void hide()
+    {
+        this.status = DramaStatus.HIDDEN;
+    }
 }

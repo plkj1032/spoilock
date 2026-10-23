@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import { authApi } from "./api/authApi";
 
@@ -16,6 +17,7 @@ function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  // 새로고침 시 로그인 상태 복구
   useEffect(() => {
     let active = true;
 

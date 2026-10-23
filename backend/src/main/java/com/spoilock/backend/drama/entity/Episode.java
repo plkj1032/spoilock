@@ -46,4 +46,19 @@ public class Episode extends CreatedAtEntity {
 
     @Column(name = "released_at")
     private LocalDateTime releasedAt;
+
+    public static Episode create(
+            Drama drama,
+            Integer episodeNumber,
+            String title
+    )
+    {
+        Episode episode = new Episode();
+
+        episode.drama = drama;
+        episode.episodeNumber = episodeNumber;
+        episode.title = title;
+
+        return episode;
+    }
 }
