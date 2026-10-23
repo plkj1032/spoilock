@@ -7,6 +7,8 @@ import com.spoilock.backend.drama.service.AdminDramaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,10 +29,12 @@ public class AdminDramaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AdminDramaResponse create(
-            @Valid @RequestBody CreateDramaRequest request
-            )
-    {
-        return adminDramaService.create(request);
+            @Valid @RequestBody CreateDramaRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        Long adminId = Long.valueOf(jwt.getSubject());
+
+        return adminDramaService.create(request, adminId);
     }
 
     @PatchMapping("/{dramaId}/publish")

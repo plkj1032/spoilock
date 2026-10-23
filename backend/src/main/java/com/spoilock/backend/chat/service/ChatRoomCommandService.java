@@ -5,6 +5,7 @@ import com.spoilock.backend.chat.domain.dto.ChatRoomCreateResponse;
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
 import com.spoilock.backend.chat.repository.ChatRoomRepository;
 import com.spoilock.backend.drama.entity.Drama;
+import com.spoilock.backend.drama.enums.DramaStatus;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.repository.UserRepository;
@@ -27,25 +28,24 @@ public class ChatRoomCommandService {
             ChatRoomCreateRequest request,
             Long userId
     ) {
-        if (!dramaRepository.existsById(request.dramaId())) {
+        Drama drama = dramaRepository.findById(request.dramaId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "작품을 찾을 수 없습니다."
+                ));
+
+        if (drama.getStatus() != DramaStatus.PUBLISHED) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "작품을 찾을 수 없습니다."
+                    "공개된 작품을 찾을 수 없습니다."
             );
         }
 
-        if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "사용자를 찾을 수 없습니다."
-            );
-        }
-
-        Drama drama =
-                dramaRepository.getReferenceById(request.dramaId());
-
-        User creator =
-                userRepository.getReferenceById(userId);
+        User creator = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "사용자를 찾을 수 없습니다."
+                ));
 
         String roomName = request.roomName().trim();
 

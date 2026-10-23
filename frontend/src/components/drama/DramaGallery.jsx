@@ -6,7 +6,14 @@ import Button from "../common/Button";
 import "../../styles/DramaGallery.css";
 import "../../styles/Modal.css";
 
-export default function DramaGallery({ user, onLogin, onNotice, limit }) {
+export default function DramaGallery({
+  user,
+  onLogin,
+  onNotice,
+  limit,
+  selectedDramaId,
+  onSelectDrama,
+}) {
   const [dramas, setDramas] = useState([]);
   const [progressById, setProgressById] = useState({});
   const [loading, setLoading] = useState(true);
@@ -182,6 +189,8 @@ export default function DramaGallery({ user, onLogin, onNotice, limit }) {
               loggedIn={!!user}
               progressLoading={progressLoading}
               onAction={() => openProgress(drama)}
+              selected={String(selectedDramaId) === String(drama.id)}
+              onSelect={onSelectDrama ? () => onSelectDrama(drama) : undefined}
             />
           ))}
         </div>

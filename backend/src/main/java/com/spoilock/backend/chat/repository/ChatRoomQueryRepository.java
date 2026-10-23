@@ -1,8 +1,11 @@
 package com.spoilock.backend.chat.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoilock.backend.chat.domain.dto.ChatRoomListResponse;
+import com.spoilock.backend.chat.domain.type.ChatRoomType;
+import com.spoilock.backend.drama.enums.DramaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,21 +29,32 @@ public class ChatRoomQueryRepository {
                         Projections.constructor(
                                 ChatRoomListResponse.class,
                                 chatRoom.id,
-                                chatRoom.roomName,
+                                new CaseBuilder()
+                                        .when(chatRoom.roomType.eq(ChatRoomType.DEFAULT))
+                                        .then(chatRoom.drama.title.concat(" 토론방"))
+                                        .otherwise(chatRoom.roomName),
                                 chatRoom.description,
                                 chatRoomMember.id.userId.count(),
                                 chatRoom.roomType,
-                                chatRoom.createdBy.id
+                                chatRoom.createdBy.id,
+                                chatRoom.drama.id
                         )
                 )
                 .from(chatRoom)
                 .leftJoin(chatRoomMember)
                 .on(chatRoomMember.id.roomId.eq(chatRoom.id))
-                .where(chatRoom.active.isTrue())
+                .where(
+                        chatRoom.active.isTrue(),
+                        chatRoom.drama.status.eq(DramaStatus.PUBLISHED)
+                )
                 .groupBy(
                         chatRoom.id,
                         chatRoom.roomName,
-                        chatRoom.description
+                        chatRoom.description,
+                        chatRoom.roomType,
+                        chatRoom.createdBy.id,
+                        chatRoom.drama.id,
+                        chatRoom.drama.title
                 )
                 .fetch();
     }
@@ -51,11 +65,15 @@ public class ChatRoomQueryRepository {
                         Projections.constructor(
                                 ChatRoomListResponse.class,
                                 chatRoom.id,
-                                chatRoom.roomName,
+                                new CaseBuilder()
+                                        .when(chatRoom.roomType.eq(ChatRoomType.DEFAULT))
+                                        .then(chatRoom.drama.title.concat(" 토론방"))
+                                        .otherwise(chatRoom.roomName),
                                 chatRoom.description,
                                 chatRoomMember.id.userId.count(),
                                 chatRoom.roomType,
-                                chatRoom.createdBy.id
+                                chatRoom.createdBy.id,
+                                chatRoom.drama.id
                         )
                 )
                 .from(chatRoom)
@@ -63,12 +81,17 @@ public class ChatRoomQueryRepository {
                 .on(chatRoomMember.id.roomId.eq(chatRoom.id))
                 .where(
                         chatRoom.id.eq(roomId),
-                        chatRoom.active.isTrue()
+                        chatRoom.active.isTrue(),
+                        chatRoom.drama.status.eq(DramaStatus.PUBLISHED)
                 )
                 .groupBy(
                         chatRoom.id,
                         chatRoom.roomName,
-                        chatRoom.description
+                        chatRoom.description,
+                        chatRoom.roomType,
+                        chatRoom.createdBy.id,
+                        chatRoom.drama.id,
+                        chatRoom.drama.title
                 )
                 .fetchOne();
 

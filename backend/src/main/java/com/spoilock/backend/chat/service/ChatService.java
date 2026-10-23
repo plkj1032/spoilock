@@ -56,6 +56,7 @@ public class ChatService {
                                 "존재하지 않는 회원입니다."
                         )
                 );
+        chatRoomAccessService.checkRoomAvailable(room);
         chatRoomAccessService.checkNotBanned(roomId, userId);
 
         ChatRoomMemberId memberId =
@@ -113,6 +114,7 @@ public class ChatService {
                         )
                 );
 
+        chatRoomAccessService.checkRoomAvailable(room);
         chatRoomAccessService.checkNotBanned(roomId, userId);
 
         ChatRoomMemberId memberId =

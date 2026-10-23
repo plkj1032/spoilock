@@ -8,6 +8,7 @@ public record ChatRoomListResponse(
         String description,
         Long memberCount,
         ChatRoomType roomType,
-        Long createById
+        Long createdById,
+        Long dramaId
 ) {
 }
