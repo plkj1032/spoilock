@@ -8,6 +8,7 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
         <NavLink to="/" className="logo-link" aria-label="SPOILOCK 홈">
           <Brand />
         </NavLink>
+
         <nav className="nav-links" aria-label="주 메뉴">
           <NavLink to="/" end>
             드라마
@@ -15,14 +16,26 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
           <NavLink to="/chat">채팅</NavLink>
           <NavLink to="/community">커뮤니티</NavLink>
         </nav>
+
         <div className="header-actions">
           {pending ? (
             <span className="auth-loading">로그인 확인 중...</span>
           ) : user ? (
             <>
+              {/* ADMIN에게만 관리자 버튼 표시 */}
+              {user.role === "ADMIN" && (
+                <NavLink
+                  to="/admin/dramas"
+                  className="button button-outline admin-link"
+                >
+                  관리자
+                </NavLink>
+              )}
+
               <span className="user-greeting">
                 <strong>{user.nickname}</strong>님
               </span>
+
               <button
                 type="button"
                 className="button button-subtle"

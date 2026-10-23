@@ -19,4 +19,11 @@ public interface DramaRepository
             DramaStatus status
     );
 
+    boolean existsByTitleIgnoreCase(String title);
+
+    boolean existsByTitleIgnoreCaseAndIdNot(
+            String title,
+            Long id
+    );
+
 }

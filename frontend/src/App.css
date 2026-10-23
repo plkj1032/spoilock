@@ -894,3 +894,99 @@ h3 {
   margin-top: 18px;
   padding: 13px;
 }
+
+/* SPOILOCK 관리자 페이지 */
+.admin-page {
+  max-width: 950px;
+}
+
+.admin-panel {
+  background: #1d2c45;
+  border: 1px solid #344667;
+  border-radius: 14px;
+  padding: 26px;
+  margin-bottom: 24px;
+}
+
+.admin-panel h2 {
+  margin-bottom: 22px;
+}
+
+.admin-panel h3 {
+  margin: 24px 0 15px;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-field label {
+  color: #b7c8e8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-field input,
+.admin-field textarea {
+  width: 100%;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #101c2f;
+  color: white;
+  padding: 12px;
+  font: inherit;
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-episode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.admin-submit {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.admin-drama-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-drama-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #34496f;
+  border-radius: 10px;
+}
+
+.admin-drama-item .page-subtitle {
+  margin-top: 8px;
+}
+
+@media (max-width: 570px) {
+  .admin-panel {
+    padding: 18px;
+  }
+
+  .admin-episode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-drama-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

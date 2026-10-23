@@ -11,6 +11,7 @@ import DramaListPage from "./pages/DramaListPage";
 import ChatPage from "./pages/ChatPage";
 import CommunityPage from "./pages/CommunityPage";
 import ChatRoomPage from "./pages/ChatRoomPage";
+import AdminDramaPage from "./pages/AdminDramaPage";
 
 import "./App.css";
 
@@ -183,6 +184,20 @@ function App() {
                   로그인
                 </button>
               </main>
+            )
+          }
+        />
+        <Route
+          path="/admin/dramas"
+          element={
+            pending ? (
+              <main className="container main-content">
+                로그인 상태 확인 중...
+              </main>
+            ) : user?.role === "ADMIN" ? (
+              <AdminDramaPage />
+            ) : (
+              <Navigate to="/" replace />
             )
           }
         />
