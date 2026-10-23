@@ -40,7 +40,7 @@ async function csrfToken() {
   return token;
 }
 
-async function request(path, { method = "GET", body } = {}) {
+async function request(path, { method = "GET", body, signal, cache } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
@@ -53,6 +53,8 @@ async function request(path, { method = "GET", body } = {}) {
     method,
     headers,
     credentials: "include",
+    signal,
+    cache,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 

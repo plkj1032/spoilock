@@ -1,5 +1,7 @@
 import { NavLink } from "react-router-dom";
 import Brand from "./Brand";
+import Button from "./Button";
+import "../../styles/Header.css";
 
 export default function Header({ user, pending, onLogin, onLogout, busy }) {
   return (
@@ -22,6 +24,9 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
             <span className="auth-loading">로그인 확인 중...</span>
           ) : user ? (
             <>
+              <span className="user-greeting">
+                <strong>{user.nickname}</strong>님
+              </span>
               {/* ADMIN에게만 관리자 버튼 표시 */}
               {user.role === "ADMIN" && (
                 <NavLink
@@ -31,28 +36,14 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
                   관리자
                 </NavLink>
               )}
-
-              <span className="user-greeting">
-                <strong>{user.nickname}</strong>님
-              </span>
-
-              <button
-                type="button"
-                className="button button-subtle"
-                disabled={busy}
-                onClick={onLogout}
-              >
+              <Button variant="subtle" disabled={busy} onClick={onLogout}>
                 로그아웃
-              </button>
+              </Button>
             </>
           ) : (
-            <button
-              type="button"
-              className="button button-primary"
-              onClick={onLogin}
-            >
+            <Button variant="primary" onClick={onLogin}>
               로그인
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -8,130 +8,23 @@
   --blue: #4675f0;
   --bluebright: #7296ff;
 }
-.site-header {
-  height: 72px;
-  background: #0b1321;
-  border-bottom: 1px solid #1d2a3e;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-.header-content {
-  max-width: 1160px;
-  padding: 0 28px;
-  margin: auto;
-  height: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 22px;
-}
-.logo-link {
-  width: max-content;
-}
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 18px;
-  color: #fff;
-  font-weight: 850;
-  letter-spacing: -0.8px;
-}
-.brand-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  color: white;
-  font-size: 18px;
-  background: linear-gradient(140deg, #638eff, #365edd);
-  box-shadow: 0 4px 15px #4169f42b;
-}
-.brand-accent {
-  color: #7296ff;
-}
-.nav-links {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 42px;
-}
-.nav-links a {
-  color: #adbad3;
-  font-size: 14px;
-  font-weight: 650;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  border-bottom: 2px solid transparent;
-}
-.nav-links a.active {
-  color: #fff;
-  border-bottom-color: var(--bluebright);
-}
-.nav-links a:hover {
-  color: #fff;
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  white-space: nowrap;
-}
-.user-greeting {
-  color: #ccd6eb;
-  font-size: 13px;
-}
-.auth-loading {
-  color: var(--muted);
-  font-size: 12px;
-}
-.button {
-  border: 0;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 13px;
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
-}
-.button-primary {
-  color: #fff;
-  background: #456fe8;
-}
-.button-primary:hover:not(:disabled) {
-  background: #597ff2;
-}
-.button-subtle {
-  color: #e1eaff;
-  background: #243553;
-}
-.button-subtle:hover {
-  background: #30456a;
-}
-.button-outline {
-  border: 1px solid #344b79;
-  color: #dbe5ff;
-  background: #192844;
-}
-.button-outline:hover {
-  background: #26385e;
-}
+
+/* =========================
+   공통 레이아웃
+========================= */
+
 .container {
   max-width: 1120px;
   margin: 0 auto;
   padding-left: 28px;
   padding-right: 28px;
 }
+
 .main-content {
   padding-top: 58px;
   padding-bottom: 68px;
 }
+
 .section-top {
   display: flex;
   align-items: flex-end;
@@ -139,86 +32,49 @@
   gap: 24px;
   margin-bottom: 24px;
 }
+
 .section-overline {
   color: #7c9aff;
   letter-spacing: 2px;
   font-size: 10px;
   font-weight: 800;
 }
+
 h1,
 h2,
 h3,
 p {
   margin: 0;
 }
+
 h1 {
   font-size: 27px;
   font-weight: 750;
   letter-spacing: -1px;
   margin-top: 12px;
 }
+
 h2 {
   font-size: 23px;
   font-weight: 720;
   letter-spacing: -0.7px;
   margin-top: 10px;
 }
+
 h3 {
   font-size: 16px;
 }
-.section-link {
-  color: #93a6c8;
-  font-size: 12px;
-  padding-bottom: 4px;
-}
-.section-link:hover {
-  color: #e0e9ff;
-}
+
 .page-subtitle {
   font-size: 13px;
   color: var(--muted);
   margin-top: 12px;
 }
-.drama-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-}
-.drama-grid.all-dramas {
-  gap: 20px;
-}
-.drama-card {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  border-radius: 12px;
-  transition:
-    transform 0.2s,
-    border-color 0.2s;
-}
-.drama-card:hover {
-  transform: translateY(-3px);
-  border-color: #5273c2;
-}
-.drama-cover {
-  height: 195px;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-.drama-cover::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(transparent 45%, #0b1629aa);
-  z-index: -1;
-}
-.cover-night {
-  background:
-    radial-gradient(ellipse at 30% 75%, #325b94 0%, transparent 28%),
-    radial-gradient(ellipse at 72% 28%, #152c52 0%, transparent 55%),
-    linear-gradient(145deg, #101729, #164274 55%, #040913);
-}
+
+/* =========================
+   드라마 공통 / 잔여 스타일
+========================= */
+
 .cover-alley {
   background:
     linear-gradient(
@@ -235,52 +91,29 @@ h3 {
     ),
     linear-gradient(160deg, #1b2347, #4c3d64 45%, #081c36);
 }
+
 .cover-zero {
   background:
     repeating-linear-gradient(80deg, #1c466c34 0 1px, transparent 1px 6px),
     radial-gradient(ellipse at 50% 45%, #184d64 0, #0f273f 34%, #090e19 76%);
 }
+
 .cover-wave {
   background:
     radial-gradient(ellipse at 60% 25%, #0e8bb9aa 0, transparent 17%),
     linear-gradient(140deg, #05101e, #0c3a55 55%, #170915);
 }
+
 .cover-glass {
   background: linear-gradient(15deg, #0b141e 18%, #204763 50%, #050c17 91%);
 }
+
 .cover-platform {
   background:
     radial-gradient(ellipse at 60% 40%, #2c8595 0%, transparent 25%),
     linear-gradient(120deg, #101626, #14354e, #08111c);
 }
-.drama-cover::before {
-  content: "";
-  position: absolute;
-  inset: 25% -15% -28%;
-  opacity: 0.38;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 16px,
-      #4e78bb22 16px 26px,
-      transparent 26px 47px
-    ),
-    linear-gradient(0deg, #000a17 20%, transparent 95%);
-  transform: skewY(-8deg);
-}
-.demo-mark {
-  position: absolute;
-  bottom: 10px;
-  left: 11px;
-  z-index: 2;
-  font-size: 9px;
-  border: 1px solid #6d8cc84d;
-  border-radius: 5px;
-  padding: 3px 6px;
-  background: #102647bb;
-  color: #a6c3ff;
-  letter-spacing: 1px;
-}
+
 .rating {
   position: absolute;
   top: 9px;
@@ -291,546 +124,6 @@ h3 {
   background: #10131fdf;
   border-radius: 5px;
   padding: 5px 7px;
-}
-.drama-description {
-  padding: 14px 14px 8px;
-}
-.eyebrow {
-  text-transform: uppercase;
-  font-size: 10px;
-}
-.muted {
-  color: #889dc4;
-}
-.drama-description h3 {
-  margin-top: 8px;
-  margin-bottom: 18px;
-  font-size: 15px;
-}
-.progress-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
-  color: #8ea3c8;
-  font-size: 10px;
-  margin-bottom: 8px;
-}
-.progress-track {
-  height: 3px;
-  background: #384d71;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.progress-track > span {
-  display: block;
-  height: 100%;
-  background: #6992ff;
-  border-radius: 10px;
-}
-.card-action {
-  border: 0;
-  background: none;
-  color: #a2bbff;
-  padding: 13px 0 3px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 750;
-}
-.card-action:hover {
-  color: white;
-}
-.card-action span {
-  font-size: 18px;
-  line-height: 10px;
-}
-.rooms-title {
-  margin-top: 58px;
-}
-.room-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(230px, 1fr);
-  gap: 18px;
-}
-.room-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.room-card {
-  width: 100%;
-  text-align: left;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: #d9e5ff;
-  border-radius: 11px;
-  padding: 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: background 0.2s;
-}
-.room-card:hover {
-  background: #293956;
-}
-.room-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: #25406a;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  font-size: 25px;
-  color: #a5bdff;
-}
-.room-copy {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.room-copy strong {
-  font-size: 13px;
-  white-space: normal;
-}
-.room-copy small {
-  font-size: 11px;
-  color: #95a7c7;
-}
-.room-copy em {
-  display: inline-block;
-  color: #9bb5ff;
-  background: #294477;
-  font-size: 9px;
-  padding: 3px 5px;
-  border-radius: 4px;
-  margin-left: 4px;
-  font-style: normal;
-  vertical-align: middle;
-}
-.room-members {
-  font-size: 11px;
-  color: #9cb0d0;
-  white-space: nowrap;
-}
-.room-enter {
-  font-size: 11px;
-  color: #a0baff;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.safety-card {
-  background: linear-gradient(148deg, #23395e, #192b48);
-  border: 1px solid #385078;
-  border-radius: 12px;
-  padding: 21px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 11px;
-}
-.safety-icon {
-  background: #2c4a80;
-  color: #91b6ff;
-  font-size: 25px;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  margin-bottom: 8px;
-}
-.safety-card h3 {
-  font-size: 15px;
-}
-.safety-card p {
-  line-height: 1.7;
-  font-size: 11px;
-  color: #a5b9db;
-}
-.safety-bars {
-  display: flex;
-  gap: 4px;
-  width: 100%;
-  margin-top: 4px;
-}
-.safety-bars span {
-  flex: 1;
-  height: 3px;
-  background: #5b83ed;
-}
-.safety-card small {
-  color: #a6b8da;
-  font-size: 10px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-}
-.safety-card small strong {
-  color: #9db6ff;
-}
-.demo-disclaimer {
-  font-size: 11px;
-  color: #778aa7;
-  margin-top: 26px;
-  line-height: 1.7;
-}
-.standalone-rooms {
-  max-width: 850px;
-  margin-top: 28px;
-}
-.community-page {
-  max-width: 930px;
-}
-.new-post {
-  width: 100%;
-  margin: 25px 0 15px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #1b2941;
-  color: #a1b0cd;
-  padding: 18px;
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  text-align: left;
-  font-size: 13px;
-}
-.new-post span:nth-child(2) {
-  flex: 1;
-}
-.new-post strong {
-  background: #416ce2;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 7px;
-  font-size: 12px;
-}
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  background: #45649a;
-  color: white;
-  font-weight: 700;
-}
-.sample-post {
-  background: #1b2941;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  max-width: 720px;
-}
-.post-author {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 13px;
-  margin-bottom: 20px;
-}
-.demo-label {
-  font-size: 10px;
-  color: #99baff;
-  margin-left: auto;
-}
-.sample-post p {
-  color: #d4deef;
-  line-height: 1.6;
-  font-size: 13px;
-}
-.post-poster {
-  height: 200px;
-  margin-top: 16px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  color: #95baff;
-  background:
-    radial-gradient(ellipse at 30% 40%, #27466f, transparent 45%),
-    linear-gradient(120deg, #090f21, #1b3457);
-}
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: #030914d1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  backdrop-filter: blur(5px);
-}
-.auth-dialog {
-  width: 100%;
-  max-width: 410px;
-  max-height: calc(100vh - 36px);
-  overflow: auto;
-  position: relative;
-  border: 1px solid #344667;
-  border-radius: 18px;
-  padding: 30px;
-  background: #1c2a42;
-  box-shadow: 0 22px 60px #02081799;
-}
-.modal-close {
-  position: absolute;
-  right: 17px;
-  top: 15px;
-  width: 29px;
-  height: 29px;
-  color: #a9b9d8;
-  background: #25344f;
-  border: 1px solid #364a6a;
-  border-radius: 8px;
-  font-size: 19px;
-}
-.dialog-brand {
-  text-align: center;
-  margin-bottom: 28px;
-}
-.auth-dialog > h2 {
-  margin: 0;
-  text-align: center;
-  font-size: 21px;
-}
-.dialog-description {
-  margin: 8px 0 28px;
-  text-align: center;
-  color: #92a6c8;
-  font-size: 12px;
-}
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.auth-form label {
-  font-size: 11px;
-  color: #bccbe5;
-  font-weight: 700;
-}
-.auth-form input {
-  width: 100%;
-  background: #101c2f;
-  border: 1px solid #293955;
-  border-radius: 8px;
-  color: white;
-  padding: 12px 13px;
-  font-size: 13px;
-  min-height: 42px;
-}
-.auth-form input::placeholder {
-  color: #697d9f;
-}
-.auth-form input:focus {
-  border-color: #6289ed;
-}
-.password-input {
-  position: relative;
-}
-.password-input input {
-  padding-right: 62px;
-}
-.password-toggle {
-  position: absolute;
-  right: 9px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 0;
-  background: transparent;
-  color: #a7bbe3;
-  font-size: 11px;
-}
-.submit-button {
-  margin-top: 11px;
-  padding: 13px 16px;
-}
-.switch-auth {
-  font-size: 11px;
-  color: #8fa4c7;
-  text-align: center;
-  margin-top: 24px;
-}
-.switch-auth button {
-  border: 0;
-  color: #98b5ff;
-  background: none;
-  font-size: 11px;
-  font-weight: 800;
-}
-.oauth-later {
-  border-top: 1px solid #30405c;
-  margin-top: 20px;
-  padding-top: 14px;
-  color: #6d82a4;
-  font-size: 10px;
-  text-align: center;
-}
-.form-error,
-.form-success {
-  font-size: 12px;
-  line-height: 1.5;
-  border-radius: 6px;
-  padding: 9px;
-}
-.form-error {
-  background: #4e2633;
-  color: #ffd0d8;
-}
-.form-success {
-  background: #173e44;
-  color: #c2f8e3;
-}
-.toast {
-  position: fixed;
-  z-index: 75;
-  bottom: 24px;
-  right: 24px;
-  max-width: min(420px, calc(100% - 48px));
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #273a5d;
-  color: #e4ecff;
-  border: 1px solid #4765a4;
-  padding: 13px 15px;
-  box-shadow: 0 10px 30px #0006;
-  border-radius: 9px;
-  font-size: 13px;
-}
-.toast button {
-  background: transparent;
-  border: 0;
-  color: #d6e6ff;
-  font-size: 18px;
-  margin-left: 10px;
-}
-@media (max-width: 860px) {
-  .header-content {
-    grid-template-columns: auto 1fr auto;
-    padding: 0 20px;
-  }
-  .nav-links {
-    gap: 22px;
-  }
-  .drama-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .room-layout {
-    grid-template-columns: 1fr;
-  }
-  .safety-card {
-    min-height: 190px;
-  }
-}
-@media (max-width: 570px) {
-  .site-header {
-    height: auto;
-  }
-  .header-content {
-    grid-template-columns: 1fr auto;
-    grid-template-rows: 56px 39px;
-    gap: 0;
-    padding: 0 15px;
-  }
-  .brand {
-    font-size: 15px;
-  }
-  .brand-mark {
-    width: 27px;
-    height: 27px;
-  }
-  .nav-links {
-    grid-column: 1/-1;
-    grid-row: 2;
-    justify-content: center;
-    gap: 38px;
-  }
-  .nav-links a {
-    font-size: 12px;
-  }
-  .header-actions {
-    grid-column: 2;
-    grid-row: 1;
-    gap: 8px;
-  }
-  .user-greeting {
-    font-size: 11px;
-  }
-  .header-actions .button {
-    padding: 9px 11px;
-    font-size: 11px;
-  }
-  .container {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .main-content {
-    padding-top: 35px;
-  }
-  h1 {
-    font-size: 22px;
-  }
-  h2 {
-    font-size: 20px;
-  }
-  .drama-grid {
-    gap: 12px;
-  }
-  .drama-cover {
-    height: 145px;
-  }
-  .drama-description {
-    padding: 12px 10px 10px;
-  }
-  .drama-description h3 {
-    font-size: 13px;
-    min-height: 32px;
-    margin-bottom: 13px;
-  }
-  .section-overline {
-    font-size: 9px;
-  }
-  .rooms-title {
-    margin-top: 42px;
-    align-items: center;
-  }
-  .rooms-title .button {
-    font-size: 11px;
-    padding: 9px;
-  }
-  .room-card {
-    padding: 12px;
-    gap: 9px;
-  }
-  .room-icon {
-    width: 33px;
-    height: 33px;
-  }
-  .room-copy strong {
-    font-size: 12px;
-  }
-  .room-copy small {
-    font-size: 10px;
-  }
-  .room-members {
-    display: none;
-  }
-  .room-enter {
-    font-size: 10px;
-  }
-  .auth-dialog {
-    padding: 26px 20px;
-  }
 }
 
 /* 실제 드라마 포스터 */
@@ -843,150 +136,136 @@ h3 {
   z-index: 1;
 }
 
-/* 시청 진도 설정창 */
-.progress-dialog {
-  max-width: 450px;
+/* =========================
+   공통 안내 문구
+========================= */
+
+.demo-disclaimer {
+  font-size: 11px;
+  color: #778aa7;
+  margin-top: 26px;
+  line-height: 1.7;
 }
 
-.progress-current {
+/* =========================
+   인증 / 폼 공통
+========================= */
+
+.oauth-later {
+  border-top: 1px solid #30405c;
+  margin-top: 20px;
+  padding-top: 14px;
+  color: #6d82a4;
+  font-size: 10px;
   text-align: center;
-  font-size: 14px;
-  font-weight: 750;
-  color: #a6bfff;
-  margin-bottom: 18px;
 }
 
-.progress-hint {
-  margin: 14px 0;
-  color: #a7b9d9;
+.form-error,
+.form-success {
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.5;
+  border-radius: 6px;
+  padding: 9px;
 }
 
-.progress-episodes {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
+.form-error {
+  background: #4e2633;
+  color: #ffd0d8;
 }
 
-.progress-episodes button {
-  min-height: 43px;
-  border-radius: 9px;
-  background: #111e34;
-  border: 1px solid #34496f;
-  color: #d6e2fc;
-  font-size: 13px;
-  font-weight: 700;
+.form-success {
+  background: #173e44;
+  color: #c2f8e3;
 }
 
-.progress-episodes button:hover:not(:disabled) {
-  background: #2b426a;
+/* =========================
+   태블릿
+========================= */
+
+@media (max-width: 860px) {
+  .header-content {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 20px;
+  }
+
+  .nav-links {
+    gap: 22px;
+  }
 }
 
-.progress-episodes button.active {
-  background: #456fe8;
-  border-color: #7296ff;
-  color: white;
-}
-
-.progress-save {
-  width: 100%;
-  margin-top: 18px;
-  padding: 13px;
-}
-
-/* SPOILOCK 관리자 페이지 */
-.admin-page {
-  max-width: 950px;
-}
-
-.admin-panel {
-  background: #1d2c45;
-  border: 1px solid #344667;
-  border-radius: 14px;
-  padding: 26px;
-  margin-bottom: 24px;
-}
-
-.admin-panel h2 {
-  margin-bottom: 22px;
-}
-
-.admin-panel h3 {
-  margin: 24px 0 15px;
-}
-
-.admin-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.admin-field label {
-  color: #b7c8e8;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.admin-field input,
-.admin-field textarea {
-  width: 100%;
-  border: 1px solid #34496f;
-  border-radius: 8px;
-  background: #101c2f;
-  color: white;
-  padding: 12px;
-  font: inherit;
-}
-
-.admin-field textarea {
-  resize: vertical;
-}
-
-.admin-episode-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
-}
-
-.admin-submit {
-  width: 100%;
-  margin-top: 12px;
-  padding: 14px;
-}
-
-.admin-drama-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.admin-drama-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #34496f;
-  border-radius: 10px;
-}
-
-.admin-drama-item .page-subtitle {
-  margin-top: 8px;
-}
+/* =========================
+   모바일
+========================= */
 
 @media (max-width: 570px) {
-  .admin-panel {
-    padding: 18px;
+  .site-header {
+    height: auto;
   }
 
-  .admin-episode-grid {
-    grid-template-columns: 1fr;
+  .header-content {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 56px 39px;
+    gap: 0;
+    padding: 0 15px;
   }
 
-  .admin-drama-item {
-    align-items: flex-start;
-    flex-direction: column;
+  .brand {
+    font-size: 15px;
+  }
+
+  .brand-mark {
+    width: 27px;
+    height: 27px;
+  }
+
+  .nav-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    gap: 38px;
+  }
+
+  .nav-links a {
+    font-size: 12px;
+  }
+
+  .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 8px;
+  }
+
+  .user-greeting {
+    font-size: 11px;
+  }
+
+  .header-actions .button {
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .main-content {
+    padding-top: 35px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .section-overline {
+    font-size: 9px;
+  }
+
+  .auth-dialog {
+    padding: 26px 20px;
   }
 }

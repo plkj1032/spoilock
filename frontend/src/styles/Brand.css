@@ -1,0 +1,29 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 20px; /* 18 → 20 */
+  color: #fff;
+  font-weight: 850;
+  letter-spacing: -0.8px;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; /* 28 → 32 */
+  height: 32px; /* 28 → 32 */
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.brand-mark svg {
+  width: 32px;
+  height: 32px;
+}
+
+.brand-accent {
+  color: #7296ff;
+}

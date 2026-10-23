@@ -5,6 +5,7 @@ import DramaListPage from "../pages/DramaListPage";
 import ChatPage from "../pages/ChatPage";
 import ChatRoomPage from "../pages/ChatRoomPage";
 import CommunityPage from "../pages/CommunityPage";
+import AdminDramaPage from "../pages/AdminDramaPage";
 
 export default function AppRouter({ user, pending, onLogin, onNotice }) {
   return (
@@ -60,6 +61,18 @@ export default function AppRouter({ user, pending, onLogin, onNotice }) {
       />
 
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="/admin/dramas"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminDramaPage />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
     </Routes>
   );
 }

@@ -1,8 +1,15 @@
 import { apiRequest, ApiError } from "./authApi";
 
+function chatRequest(path, options = {}) {
+  return apiRequest(path, {
+    ...options,
+    retryOn401: true,
+  });
+}
+
 async function changeMembership(roomId, action) {
   try {
-    return await apiRequest(`/api/chat/rooms/${roomId}/${action}`, {
+    return await chatRequest(`/api/chat/rooms/${roomId}/${action}`, {
       method: "POST",
     });
   } catch (error) {
@@ -18,12 +25,12 @@ async function changeMembership(roomId, action) {
 }
 
 export const chatApi = {
-  getRooms: () => apiRequest("/api/chat/rooms"),
+  getRooms: () => chatRequest("/api/chat/rooms"),
 
-  getRoom: (roomId) => apiRequest(`/api/chat/rooms/${roomId}`),
+  getRoom: (roomId) => chatRequest(`/api/chat/rooms/${roomId}`),
 
   createRoom: (dramaId, roomName, description) =>
-    apiRequest("/api/chat/rooms", {
+    chatRequest("/api/chat/rooms", {
       method: "POST",
       body: {
         dramaId,
@@ -35,4 +42,16 @@ export const chatApi = {
   enterRoom: (roomId) => changeMembership(roomId, "enter"),
 
   leaveRoom: (roomId) => changeMembership(roomId, "leave"),
+
+  kickMember: (roomId, userId, reason) =>
+    chatRequest(`/api/chat/rooms/${roomId}/kick`, {
+      method: "POST",
+      body: { userId, reason },
+    }),
+  getBans: (roomId) => chatRequest(`/api/chat/rooms/${roomId}/bans`),
+
+  releaseBan: (roomId, banId) =>
+    chatRequest(`/api/chat/rooms/${roomId}/bans/${banId}/release`, {
+      method: "POST",
+    }),
 };

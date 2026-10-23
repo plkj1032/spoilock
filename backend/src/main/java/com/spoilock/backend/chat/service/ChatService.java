@@ -4,18 +4,22 @@ import com.spoilock.backend.ai.service.ChatAnalysisRequested;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.domain.entity.ChatMessage;
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
+import com.spoilock.backend.chat.domain.entity.ChatRoomBan;
 import com.spoilock.backend.chat.domain.entity.ChatRoomMember;
 import com.spoilock.backend.chat.domain.entity.id.ChatRoomMemberId;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.chat.repository.ChatMessageRepository;
+import com.spoilock.backend.chat.repository.ChatRoomBanRepository;
 import com.spoilock.backend.chat.repository.ChatRoomMemberRepository;
 import com.spoilock.backend.chat.repository.ChatRoomRepository;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -28,6 +32,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatRoomAccessService chatRoomAccessService;
+    private final ChatRoomBanRepository chatRoomBanRepository;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -197,6 +202,81 @@ public class ChatService {
 
         return Optional.of(
                 toRedisEvent(savedMessage)
+        );
+    }
+
+    @Transactional
+    public ChatRedisEvent kickMember(
+            Long roomId,
+            Long actorId,
+            Long targetUserId,
+            String reason
+    ){
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "존재하지 않는 채팅방입니다.")
+                );
+        User actor = userRepository.findById(actorId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "존재하지 않는 회원입니다.")
+                );
+        // 기본방은 관리자, 일반방/비공개방은 생성자만 가능
+        chatRoomAccessService.checkKickPermission(room,actor);
+
+        if (actorId.equals(targetUserId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "자기 자신을 강퇴할 수 없습니다.");
+        }
+
+        if (chatRoomBanRepository.existsActiveBan(roomId, targetUserId)){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 강퇴한 회원입니다.");
+        }
+        ChatRoomMemberId memberId =
+                new ChatRoomMemberId(roomId, targetUserId);
+
+        ChatRoomMember member = chatRoomMemberRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "채팅방에 참여 중인 회원이 아닙니다."
+                ));
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "존재하지 않는 회원입니다."
+                ));
+
+        String normalizedReason =
+                reason == null || reason.isBlank()
+                        ? null
+                        : reason.trim();
+
+        chatRoomBanRepository.save(
+                new ChatRoomBan(room, target, actor, normalizedReason)
+        );
+
+        chatRoomMemberRepository.delete(member);
+
+        ChatMessage message = ChatMessage.createSystem(
+                room,
+                target,
+                MessageType.KICK,
+                target.getNickname() + "님이 강퇴되었습니다."
+        );
+
+        ChatMessage savedMessage = chatMessageRepository.save(message);
+
+        return new ChatRedisEvent(
+                roomId,
+                savedMessage.getId(),
+                targetUserId
         );
     }
 

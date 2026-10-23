@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { dramaApi } from "../../api/dramaApi";
 import DramaCard from "./DramaCard";
+import Button from "../common/Button";
+
+import "../../styles/DramaGallery.css";
+import "../../styles/Modal.css";
 
 export default function DramaGallery({ user, onLogin, onNotice, limit }) {
   const [dramas, setDramas] = useState([]);
@@ -252,9 +256,9 @@ export default function DramaGallery({ user, onLogin, onNotice, limit }) {
                   진도를 올리면 해당 회차의 스포일러가 표시될 수 있습니다.
                 </p>
 
-                <button
-                  type="button"
-                  className="button button-primary progress-save"
+                <Button
+                  variant="primary"
+                  className="progress-save"
                   onClick={saveProgress}
                   disabled={
                     saving ||
@@ -266,7 +270,7 @@ export default function DramaGallery({ user, onLogin, onNotice, limit }) {
                   }
                 >
                   {saving ? "저장 중..." : "시청 진도 저장"}
-                </button>
+                </Button>
               </>
             )}
           </section>

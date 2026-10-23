@@ -7,6 +7,10 @@ import {
 } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import { chatApi } from "../api/chatApi";
+import ChatBanPanel from "../components/chat/ChatBanPanel";
+import { apiRequest } from "../api/authApi";
+import Button from "../components/common/Button";
+import "../styles/ChatRoomPage.css";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -54,6 +58,17 @@ export default function ChatRoomPage({ user }) {
   const [nextCursor, setNextCursor] = useState(null);
   const [hasNext, setHasNext] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const [kickingUserId, setKickingUserId] = useState(null);
+  const [showBanPanel, setShowBanPanel] = useState(false);
+  const kickingRef = useRef(false);
+
+  const canKick = Boolean(
+    room &&
+    (room.roomType === "DEFAULT"
+      ? user.role === "ADMIN"
+      : ["CUSTOM", "PRIVATE"].includes(room.roomType) &&
+        String(room.createdById) === String(user.id)),
+  );
   useLayoutEffect(() => {
     if (loading || error || initialScrollDoneRef.current) {
       return;
@@ -96,25 +111,21 @@ export default function ChatRoomPage({ user }) {
     const controller = new AbortController();
 
     async function getJson(path) {
-      const response = await fetch(path, {
-        credentials: "include",
-        cache: "no-store",
-        signal: controller.signal,
-      });
+      try {
+        return await apiRequest(path, {
+          retryOn401: true,
+          cache: "no-store",
+          signal: controller.signal,
+        });
+      } catch (err) {
+        if (err.status === 403) {
+          throw new Error("이 채팅방에 접근할 권한이 없습니다.", {
+            cause: err,
+          });
+        }
 
-      if (response.status === 401) {
-        throw new Error("로그인이 만료되었습니다.");
+        throw err;
       }
-
-      if (response.status === 403) {
-        throw new Error("이 채팅방에 접근할 권한이 없습니다.");
-      }
-
-      if (!response.ok) {
-        throw new Error("대화를 불러오지 못했습니다.");
-      }
-
-      return response.json();
     }
 
     function showError(err) {
@@ -145,6 +156,16 @@ export default function ChatRoomPage({ user }) {
         const event = JSON.parse(frame.body);
 
         if (String(event.roomId) !== roomId) return;
+        if (!active) return;
+        if (event.eventType == "KICKED") {
+          setConnected(false);
+          setMessages([]);
+          setContent("");
+
+          window.alert("이 채팅방에서 강퇴되었습니다.");
+          navigate("/chat", { replace: true });
+          return;
+        }
 
         const message = await getJson(
           `/api/chat/rooms/${roomId}/messages/${event.messageId}`,
@@ -210,8 +231,7 @@ export default function ChatRoomPage({ user }) {
       clientRef.current = null;
       void client.deactivate();
     };
-  }, [roomId, user.id, useSecondServer]);
-
+  }, [roomId, user.id, useSecondServer, navigate]);
   async function loadOlderMessages() {
     if (!hasNext || nextCursor === null || olderLoadingRef.current) {
       return;
@@ -225,27 +245,13 @@ export default function ChatRoomPage({ user }) {
     setError("");
 
     try {
-      const response = await fetch(
+      const data = await apiRequest(
         `/api/chat/rooms/${roomId}/messages?cursor=${nextCursor}`,
         {
-          credentials: "include",
+          retryOn401: true,
           cache: "no-store",
         },
       );
-
-      if (response.status === 401) {
-        throw new Error("로그인이 만료되었습니다.");
-      }
-
-      if (response.status === 403) {
-        throw new Error("이 채팅방에 접근할 권한이 없습니다.");
-      }
-
-      if (!response.ok) {
-        throw new Error("이전 대화를 불러오지 못했습니다.");
-      }
-
-      const data = await response.json();
 
       if (clientRef.current !== currentClient) return;
 
@@ -255,7 +261,11 @@ export default function ChatRoomPage({ user }) {
       setHasNext(data.hasNext);
     } catch (err) {
       if (clientRef.current === currentClient) {
-        setError(err.message);
+        setError(
+          err.status === 403
+            ? "이 채팅방에 접근할 권한이 없습니다."
+            : err.message,
+        );
       }
     } finally {
       olderLoadingRef.current = false;
@@ -263,6 +273,43 @@ export default function ChatRoomPage({ user }) {
       if (clientRef.current === currentClient) {
         setLoadingOlder(false);
       }
+    }
+  }
+  async function kickMember(targetUserId, nickname) {
+    if (!canKick || kickingRef.current) return;
+
+    const reason = window.prompt(
+      `${nickname}님을 강퇴합니다.\n사유를 입력하세요. 비워두어도 됩니다.`,
+      "",
+    );
+
+    // 취소 버튼을 누르면 요청하지 않음
+    if (reason === null) return;
+
+    if (reason.length > 500) {
+      setError("강퇴 사유는 500자 이하로 입력해 주세요.");
+      return;
+    }
+
+    kickingRef.current = true;
+    setKickingUserId(targetUserId);
+    setError("");
+
+    try {
+      await chatApi.kickMember(
+        Number(roomId),
+        targetUserId,
+        reason.trim() || null,
+      );
+    } catch (err) {
+      setError(
+        err.status === 403
+          ? "강퇴 권한이 없거나 인증 상태가 변경되었습니다."
+          : err.message,
+      );
+    } finally {
+      kickingRef.current = false;
+      setKickingUserId(null);
     }
   }
   async function leaveRoom() {
@@ -328,38 +375,39 @@ export default function ChatRoomPage({ user }) {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="button button-outline"
-          onClick={leaveRoom}
-          disabled={leaving}
-        >
+        <Button variant="outline" onClick={leaveRoom} disabled={leaving}>
           {leaving ? "나가는 중..." : "채팅방 나가기"}
-        </button>
+        </Button>
       </div>
 
       {loading && <p role="status">대화를 불러오는 중입니다.</p>}
       {error && <p role="alert">{error}</p>}
+      {canKick && (
+        <>
+          <Button
+            variant="outline"
+            aria-expanded={showBanPanel}
+            onClick={() => setShowBanPanel((current) => !current)}
+          >
+            {showBanPanel ? "강퇴 관리 닫기" : "강퇴 관리"}
+          </Button>
+
+          {showBanPanel && (
+            <ChatBanPanel key={roomId} roomId={Number(roomId)} />
+          )}
+        </>
+      )}
 
       {!loading && hasNext && (
-        <button
-          type="button"
-          className="button button-outline"
+        <Button
+          variant="outline"
           onClick={loadOlderMessages}
           disabled={loadingOlder}
         >
           {loadingOlder ? "불러오는 중..." : "이전 메시지 불러오기"}
-        </button>
+        </Button>
       )}
-      <div
-        aria-label="채팅 메시지"
-        style={{
-          display: "grid",
-          gap: 12,
-          padding: "20px 0",
-          minHeight: 200,
-        }}
-      >
+      <div className="chat-message-list" aria-label="채팅 메시지">
         {!loading && !error && messages.length === 0 && (
           <p>아직 대화가 없습니다.</p>
         )}
@@ -371,10 +419,7 @@ export default function ChatRoomPage({ user }) {
 
           if (system) {
             return (
-              <div
-                key={message.messageId}
-                style={{ textAlign: "center", color: "#64748b" }}
-              >
+              <div key={message.messageId} className="chat-system-message">
                 {blocked ? "공개되지 않은 알림입니다." : message.content}
               </div>
             );
@@ -383,28 +428,29 @@ export default function ChatRoomPage({ user }) {
           return (
             <article
               key={message.messageId}
-              style={{
-                justifySelf: mine ? "end" : "start",
-                maxWidth: "80%",
-                padding: "12px 16px",
-                borderRadius: 16,
-                background: mine ? "#e0e7ff" : "#f1f5f9",
-                color: "#1e293b",
-                overflowWrap: "anywhere",
-              }}
+              className={`chat-message ${mine ? "mine" : "other"}`}
             >
-              <strong>{message.nickname}</strong>
+              <div className="chat-message-header">
+                <strong>{message.nickname}</strong>
 
-              <p style={{ margin: "8px 0", whiteSpace: "pre-wrap" }}>
+                {canKick && String(message.userId) !== String(user.id) && (
+                  <button
+                    type="button"
+                    onClick={() => kickMember(message.userId, message.nickname)}
+                    disabled={kickingUserId !== null}
+                  >
+                    {kickingUserId === message.userId ? "처리 중..." : "강퇴"}
+                  </button>
+                )}
+              </div>
+
+              <p className="chat-message-content">
                 {blocked
                   ? BLOCK_MESSAGES[message.blockReason] ?? BLOCK_MESSAGES.DEFAULT
                   : message.content}
               </p>
 
-              <time
-                dateTime={message.createdAt}
-                style={{ fontSize: 12, color: "#64748b" }}
-              >
+              <time dateTime={message.createdAt} className="chat-message-time">
                 {new Date(message.createdAt).toLocaleTimeString("ko-KR", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -415,27 +461,24 @@ export default function ChatRoomPage({ user }) {
         })}
       </div>
 
-      <form
-        onSubmit={sendMessage}
-        style={{ display: "flex", gap: 12, paddingBottom: 24 }}
-      >
+      <form onSubmit={sendMessage} className="chat-input-form">
         <input
+          className="chat-input"
           aria-label="채팅 메시지"
           placeholder="메시지를 입력하세요"
           value={content}
           onChange={(event) => setContent(event.target.value)}
           maxLength={2000}
           disabled={!connected}
-          style={{ flex: 1, minWidth: 0, padding: 12 }}
         />
 
-        <button
+        <Button
           type="submit"
-          className="button button-primary"
+          variant="primary"
           disabled={!connected || !content.trim()}
         >
           전송
-        </button>
+        </Button>
       </form>
       <div ref={bottomRef} />
     </main>

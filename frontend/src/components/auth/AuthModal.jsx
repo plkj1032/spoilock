@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import Brand from "../common/Brand";
+import Button from "../common/Button";
+import "../../styles/AuthModal.css";
+import "../../styles/Modal.css";
 
 export default function AuthModal({
   mode,
@@ -170,23 +173,19 @@ export default function AuthModal({
               {error}
             </p>
           )}
-          <button
+          <Button
             type="submit"
-            className="button button-primary submit-button"
+            variant="primary"
+            className="submit-button"
             disabled={busy}
           >
             {busy ? "처리 중..." : signup ? "회원가입" : "로그인"}
-          </button>
+          </Button>
         </form>
-        <p className="switch-auth">
-          {signup ? "이미 계정이 있나요?" : "아직 회원이 아니신가요?"}{" "}
-          <button type="button" onClick={switchMode} disabled={busy}>
-            {signup ? "로그인" : "회원가입"}
-          </button>
-        </p>
-        <button
-          type="button"
-          className="button button-outline submit-button"
+
+        <Button
+          variant="kakao"
+          className="submit-button kakao-login-button"
           disabled={busy}
           onClick={() => {
             window.location.assign(
@@ -195,7 +194,13 @@ export default function AuthModal({
           }}
         >
           카카오로 로그인
-        </button>
+        </Button>
+        <p className="switch-auth">
+          {signup ? "이미 계정이 있나요?" : "아직 회원이 아니신가요?"}{" "}
+          <button type="button" onClick={switchMode} disabled={busy}>
+            {signup ? "로그인" : "회원가입"}
+          </button>
+        </p>
       </section>
     </div>
   );

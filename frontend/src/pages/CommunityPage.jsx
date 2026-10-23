@@ -1,3 +1,5 @@
+import "../styles/CommunityPage.css";
+
 export default function CommunityPage({ user, onLogin, onNotice }) {
   const action = () =>
     user

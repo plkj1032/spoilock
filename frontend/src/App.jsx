@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-
 import { authApi } from "./api/authApi";
 
 import Header from "./components/common/Header";
 import AuthModal from "./components/auth/AuthModal";
 import AppRouter from "./router/AppRouter";
+import Toast from "./components/common/Toast";
 
 import "./App.css";
 
@@ -119,18 +118,7 @@ function App() {
         onNotice={setNotice}
       />
 
-      {notice && (
-        <div className="toast" role="status">
-          <span>{notice}</span>
-          <button
-            type="button"
-            aria-label="알림 닫기"
-            onClick={() => setNotice("")}
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <Toast message={notice} onClose={() => setNotice("")} />
 
       {mode && (
         <AuthModal

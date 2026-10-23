@@ -1,0 +1,145 @@
+.drama-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 12px;
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
+}
+
+.drama-card:hover {
+  transform: translateY(-3px);
+  border-color: #5273c2;
+}
+
+.drama-cover {
+  height: 195px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.drama-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 45%, #0b1629aa);
+  z-index: -1;
+}
+
+.cover-night {
+  background:
+    radial-gradient(ellipse at 30% 75%, #325b94 0%, transparent 28%),
+    radial-gradient(ellipse at 72% 28%, #152c52 0%, transparent 55%),
+    linear-gradient(145deg, #101729, #164274 55%, #040913);
+}
+
+.drama-cover::before {
+  content: "";
+  position: absolute;
+  inset: 25% -15% -28%;
+  opacity: 0.38;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 16px,
+      #4e78bb22 16px 26px,
+      transparent 26px 47px
+    ),
+    linear-gradient(0deg, #000a17 20%, transparent 95%);
+  transform: skewY(-8deg);
+}
+
+.demo-mark {
+  position: absolute;
+  bottom: 10px;
+  left: 11px;
+  z-index: 2;
+  font-size: 9px;
+  border: 1px solid #6d8cc84d;
+  border-radius: 5px;
+  padding: 3px 6px;
+  background: #102647bb;
+  color: #a6c3ff;
+  letter-spacing: 1px;
+}
+
+.drama-description {
+  padding: 14px 14px 8px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.muted {
+  color: #889dc4;
+}
+
+.drama-description h3 {
+  margin-top: 8px;
+  margin-bottom: 18px;
+  font-size: 15px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  color: #8ea3c8;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  height: 3px;
+  background: #384d71;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-track > span {
+  display: block;
+  height: 100%;
+  background: #6992ff;
+  border-radius: 10px;
+}
+
+.card-action {
+  border: 0;
+  background: none;
+  color: #a2bbff;
+  padding: 13px 0 3px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.card-action:hover {
+  color: white;
+}
+
+.card-action span {
+  font-size: 18px;
+  line-height: 10px;
+}
+
+@media (max-width: 570px) {
+  .drama-cover {
+    height: 145px;
+  }
+
+  .drama-description {
+    padding: 12px 10px 10px;
+  }
+
+  .drama-description h3 {
+    font-size: 13px;
+    min-height: 32px;
+    margin-bottom: 13px;
+  }
+}

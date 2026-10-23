@@ -1,8 +1,10 @@
 package com.spoilock.backend.chat.controller;
 
+import com.spoilock.backend.chat.domain.dto.ChatKickRequest;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.redis.ChatRedisPublisher;
 import com.spoilock.backend.chat.service.ChatService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -56,6 +58,25 @@ public class ChatRoomMemberController {
                 event.isPresent(),
                 event.map(ChatRedisEvent::messageId).orElse(null)
         );
+    }
+
+    @PostMapping("/{roomId}/kick")
+    public ChatRedisEvent kick(
+            @PathVariable("roomId") Long roomId,
+            @Valid @RequestBody ChatKickRequest request,
+            @AuthenticationPrincipal Jwt jwt
+            ){
+        Long actorId = Long.valueOf(jwt.getSubject());
+
+        ChatRedisEvent event = chatService.kickMember(
+                roomId,
+                actorId,
+                request.userId(),
+                request.reason()
+        );
+        chatRedisPublisher.publish(event);
+
+        return event;
     }
 
     public record MembershipResponse(

@@ -1,0 +1,73 @@
+.drama-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.drama-grid.all-dramas {
+  gap: 20px;
+}
+
+/* 시청 진도 설정창 */
+.progress-dialog {
+  max-width: 450px;
+}
+
+.progress-current {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 750;
+  color: #a6bfff;
+  margin-bottom: 18px;
+}
+
+.progress-hint {
+  margin: 14px 0;
+  color: #a7b9d9;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.progress-episodes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.progress-episodes button {
+  min-height: 43px;
+  border-radius: 9px;
+  background: #111e34;
+  border: 1px solid #34496f;
+  color: #d6e2fc;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.progress-episodes button:hover:not(:disabled) {
+  background: #2b426a;
+}
+
+.progress-episodes button.active {
+  background: #456fe8;
+  border-color: #7296ff;
+  color: white;
+}
+
+.progress-save {
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px;
+}
+
+@media (max-width: 860px) {
+  .drama-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 570px) {
+  .drama-grid {
+    gap: 12px;
+  }
+}
