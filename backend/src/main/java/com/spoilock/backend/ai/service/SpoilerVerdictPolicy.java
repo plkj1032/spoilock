@@ -17,17 +17,20 @@ public final class SpoilerVerdictPolicy {
     private final boolean publishSkippedGeneral;
     private final boolean publishSkippedUnrelated;
     private final boolean publishNoMatch;
+    private final boolean publishOffTopic;
 
     public SpoilerVerdictPolicy(
             boolean allowUnverifiedDemo,
             boolean publishSkippedGeneral,
             boolean publishSkippedUnrelated,
-            boolean publishNoMatch
+            boolean publishNoMatch,
+            boolean publishOffTopic
     ) {
         this.allowUnverifiedDemo = allowUnverifiedDemo;
         this.publishSkippedGeneral = publishSkippedGeneral;
         this.publishSkippedUnrelated = publishSkippedUnrelated;
         this.publishNoMatch = publishNoMatch;
+        this.publishOffTopic = publishOffTopic;
     }
 
     public AnalysisDecision decide(
@@ -50,12 +53,12 @@ public final class SpoilerVerdictPolicy {
                     ? AnalysisDecision.publishAll("1차 필터: 사건과 무관")
                     : AnalysisDecision.hold("1차 필터: 사건과 무관(공개 설정 꺼짐)");
 
-            // 등록된 사건과 맞지 않음 ≠ 스포일러 아님. 기본은 보류
-            case "NO_MATCH" -> publishNoMatch
-                    ? AnalysisDecision.publishAll("NO_MATCH 공개 정책")
-                    : AnalysisDecision.hold("NO_MATCH: 검토 대기");
+            // 등록된 사건과 맞지 않음 ≠ 스포일러 아님.
+            // 단, Gemini가 '드라마 이야기가 아님'으로 판단한 일상 대화는 공개 (about_story=false 일 때만)
+            case "NO_MATCH" -> decideNoMatch(response);
 
-            case "UNCERTAIN" -> AnalysisDecision.hold("UNCERTAIN: 검토 대기");
+            // 사건과 맞는지 확신 못 함. 단, 드라마 이야기가 아니라고 판단했으면 공개 (about_story=false 일 때만)
+            case "UNCERTAIN" -> decideUncertain(response);
 
             // Python 쪽 Gemini 오류·시간 초과 → 재시도 대상
             case "ERROR" -> AnalysisDecision.failed(
@@ -64,6 +67,24 @@ public final class SpoilerVerdictPolicy {
 
             default -> AnalysisDecision.failed("알 수 없는 판정: " + response.verdict());
         };
+    }
+
+    private AnalysisDecision decideNoMatch(SpoilerJudgeResponse response) {
+        if (publishNoMatch) {
+            return AnalysisDecision.publishAll("NO_MATCH 공개 정책");
+        }
+        if (publishOffTopic && Boolean.FALSE.equals(response.aboutStory())) {
+            return AnalysisDecision.publishAll("NO_MATCH: 작품과 무관한 대화");
+        }
+        // about_story=true 또는 알 수 없음(null) → 등록되지 않은 사건일 수 있으므로 보류
+        return AnalysisDecision.hold("NO_MATCH: 검토 대기");
+    }
+
+    private AnalysisDecision decideUncertain(SpoilerJudgeResponse response) {
+        if (publishOffTopic && Boolean.FALSE.equals(response.aboutStory())) {
+            return AnalysisDecision.publishAll("UNCERTAIN: 작품과 무관한 대화");
+        }
+        return AnalysisDecision.hold("UNCERTAIN: 검토 대기");
     }
 
     private AnalysisDecision decideMatch(

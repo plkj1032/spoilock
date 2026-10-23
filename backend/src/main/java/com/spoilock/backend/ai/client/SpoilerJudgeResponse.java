@@ -35,6 +35,11 @@ public record SpoilerJudgeResponse(
         String reason,
 
         @JsonProperty("error")
-        String error
+        String error,
+
+        // 메시지가 드라마 줄거리·인물 이야기인지 (Gemini 판단, 1차 필터 통과 시 false)
+        // null 이면 알 수 없음 → 보수적으로 처리
+        @JsonProperty("about_story")
+        Boolean aboutStory
 ) {
 }
