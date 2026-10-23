@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -8,12 +9,18 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor
 public class ChatStompInterceptor implements ChannelInterceptor {
+
+    private final JwtDecoder jwtDecoder;
 
     private static final Set<String> SEND_DESTINATIONS = Set.of(
             "/app/chat.send",
@@ -50,6 +57,22 @@ public class ChatStompInterceptor implements ChannelInterceptor {
                 || authentication instanceof
                 org.springframework.security.authentication.AnonymousAuthenticationToken) {
             throw new AccessDeniedException("로그인이 필요합니다.");
+        }
+
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuthentication)) {
+            throw new AccessDeniedException("JWT 인증이 필요합니다.");
+        }
+
+        try {
+            // 연결할 때 사용한 JWT를 현재 기준으로 다시 검증
+            jwtDecoder.decode(
+                    jwtAuthentication.getToken().getTokenValue()
+            );
+        } catch (JwtException e) {
+            throw new AccessDeniedException(
+                    "인증이 만료되었거나 더 이상 유효하지 않습니다.",
+                    e
+            );
         }
 
         String destination = accessor.getDestination();

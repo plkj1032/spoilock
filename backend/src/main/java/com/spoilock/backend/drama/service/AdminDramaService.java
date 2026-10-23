@@ -1,6 +1,8 @@
 
 package com.spoilock.backend.drama.service;
 
+import com.spoilock.backend.chat.domain.entity.ChatRoom;
+import com.spoilock.backend.chat.repository.ChatRoomRepository;
 import com.spoilock.backend.drama.dto.AdminDramaDetailResponse;
 import com.spoilock.backend.drama.dto.AdminDramaResponse;
 import com.spoilock.backend.drama.dto.CreateDramaRequest;
@@ -10,6 +12,9 @@ import com.spoilock.backend.drama.enums.DramaStatus;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 
+import com.spoilock.backend.user.entity.User;
+import com.spoilock.backend.user.enums.UserRole;
+import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -26,6 +31,8 @@ public class AdminDramaService {
 
     private final DramaRepository dramaRepository;
     private final EpisodeRepository episodeRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository  userRepository;
 
     @Transactional(readOnly = true)
     public List<AdminDramaResponse> getAll() {
@@ -37,7 +44,22 @@ public class AdminDramaService {
     }
 
     @Transactional
-    public AdminDramaResponse create(CreateDramaRequest request) {
+    public AdminDramaResponse create(
+            CreateDramaRequest request,
+            Long adminId
+    ) {
+        User administrator = userRepository.findById(adminId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "로그인 회원을 찾을 수 없습니다."
+                ));
+
+        if (administrator.getRole() != UserRole.ADMIN) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "관리자만 드라마를 등록할 수 있습니다."
+            );
+        }
 
         validateEpisodes(
                 request.totalEpisodeCount(),
@@ -65,6 +87,14 @@ public class AdminDramaService {
                 .toList();
 
         episodeRepository.saveAll(episodes);
+
+        ChatRoom defaultRoom = ChatRoom.createDefault(
+                savedDrama,
+                administrator,
+                "기본 토론방"
+        );
+
+        chatRoomRepository.save(defaultRoom);
 
         return AdminDramaResponse.from(savedDrama);
     }

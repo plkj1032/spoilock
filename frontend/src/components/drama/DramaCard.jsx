@@ -6,6 +6,8 @@ export default function DramaCard({
   loggedIn,
   progressLoading,
   onAction,
+  selected = false,
+  onSelect,
 }) {
   const total = drama.totalEpisodeCount ?? 0;
 
@@ -23,7 +25,7 @@ export default function DramaCard({
           : `${watched}화 시청`;
 
   return (
-    <article className="drama-card">
+    <article className="drama-card" onClick={onSelect}>
       <div className="drama-cover cover-night">
         {drama.posterUrl && (
           <img
@@ -51,7 +53,29 @@ export default function DramaCard({
           <span style={{ width: `${progress}%` }} />
         </div>
 
-        <button type="button" className="card-action" onClick={onAction}>
+        {onSelect && (
+          <button
+            type="button"
+            className="card-action"
+            aria-pressed={selected}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect();
+            }}
+          >
+            {selected ? "선택된 드라마의 채팅방" : "이 드라마 채팅방 보기"}
+            <span aria-hidden="true">›</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="card-action"
+          onClick={(event) => {
+            event.stopPropagation();
+            onAction();
+          }}
+        >
           시청 진도 설정
           <span aria-hidden="true">›</span>
         </button>

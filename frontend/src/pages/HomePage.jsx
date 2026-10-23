@@ -14,6 +14,11 @@ export default function HomePage({ user, onLogin, onNotice }) {
   const [roomsLoading, setRoomsLoading] = useState(true);
   const [enteringRoomId, setEnteringRoomId] = useState(null);
   const [createRoomOpen, setCreateRoomOpen] = useState(false);
+  const [selectedDrama, setSelectedDrama] = useState(null);
+
+  const visibleRooms = selectedDrama
+    ? rooms.filter((room) => String(room.dramaId) === String(selectedDrama.id))
+    : rooms;
   useEffect(() => {
     let active = true;
 
@@ -88,11 +93,25 @@ export default function HomePage({ user, onLogin, onNotice }) {
         onLogin={onLogin}
         onNotice={onNotice}
         limit={4}
+        selectedDramaId={selectedDrama?.id}
+        onSelectDrama={setSelectedDrama}
       />
       <div className="section-top rooms-title">
         <div>
           <span className="section-overline">LIVE ROOMS</span>
-          <h2>실시간 채팅방</h2>
+          <h2>
+            {selectedDrama ? `${selectedDrama.title} 채팅방` : "실시간 채팅방"}
+          </h2>
+
+          {selectedDrama && (
+            <button
+              type="button"
+              className="room-filter-reset"
+              onClick={() => setSelectedDrama(null)}
+            >
+              전체 채팅방 보기
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -106,12 +125,12 @@ export default function HomePage({ user, onLogin, onNotice }) {
         <div className="room-list">
           {roomsLoading && <p>채팅방을 불러오는 중입니다.</p>}
 
-          {!roomsLoading && rooms.length === 0 && (
+          {!roomsLoading && visibleRooms.length === 0 && (
             <p>현재 참여할 수 있는 채팅방이 없습니다.</p>
           )}
 
           {!roomsLoading &&
-            rooms.map((room) => (
+            visibleRooms.map((room) => (
               <button
                 type="button"
                 className="room-card"

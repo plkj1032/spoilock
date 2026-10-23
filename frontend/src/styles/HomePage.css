@@ -12,6 +12,28 @@
   margin-top: 58px;
 }
 
+/* 드라마 선택 해제 버튼 */
+.room-filter-reset {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid #354968;
+  border-radius: 6px;
+  background: transparent;
+  color: #a5b9db;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.room-filter-reset:hover {
+  background: #1b2b45;
+  color: #f4f7ff;
+  border-color: #6484b8;
+}
+
 .room-layout {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(230px, 1fr);
