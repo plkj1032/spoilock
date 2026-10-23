@@ -8,6 +8,16 @@ import {
 import { Client } from "@stomp/stompjs";
 import { chatApi } from "../api/chatApi";
 
+// 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
+const BLOCK_MESSAGES = {
+  ANALYZING: "⏳ 스포일러 여부를 확인하고 있어요…",
+  NOT_WATCHED: "🔒 아직 시청하지 않은 회차의 내용이 포함된 메시지예요.",
+  REVIEW: "🔒 스포일러 여부를 확인할 수 없어 가려진 메시지예요.",
+  FAILED: "⏳ 확인이 지연되고 있어요. 잠시 후 다시 표시돼요.",
+  HIDDEN: "🚫 관리자가 숨긴 메시지예요.",
+  DEFAULT: "🔒 아직 공개되지 않은 메시지입니다.",
+};
+
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
   const merged = new Map(
@@ -387,7 +397,7 @@ export default function ChatRoomPage({ user }) {
 
               <p style={{ margin: "8px 0", whiteSpace: "pre-wrap" }}>
                 {blocked
-                  ? "🔒 아직 공개되지 않은 메시지입니다."
+                  ? BLOCK_MESSAGES[message.blockReason] ?? BLOCK_MESSAGES.DEFAULT
                   : message.content}
               </p>
 
