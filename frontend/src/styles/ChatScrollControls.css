@@ -1,0 +1,98 @@
+/* 메시지 목록과 하단 이동 버튼을 담는 영역 */
+.chat-message-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chat-message-area .chat-message-list {
+  overflow-anchor: none;
+}
+
+/* 입력창 바로 위에 떠 있는 버튼 영역 */
+.chat-scroll-controls {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.chat-scroll-controls > button {
+  pointer-events: auto;
+}
+
+/* 반투명 새 메시지 안내 */
+.chat-new-message-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #7c94bd55;
+  border-radius: 12px;
+  background: #253651d9;
+  color: #e0e9fa;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 18px #0003;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chat-new-message-notice:hover {
+  background: #344b6eea;
+}
+
+/* 최신 메시지로 이동 */
+.chat-scroll-bottom {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #cad5e5;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #34445e;
+  box-shadow: 0 4px 16px #0004;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.chat-scroll-bottom:hover {
+  background: #e4edfb;
+  transform: translateY(2px);
+}
+
+@media (max-width: 570px) {
+  .chat-scroll-controls {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    gap: 8px;
+  }
+
+  .chat-new-message-notice {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .chat-scroll-bottom {
+    width: 38px;
+    height: 38px;
+  }
+}

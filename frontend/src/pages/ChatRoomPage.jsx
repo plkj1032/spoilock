@@ -11,6 +11,10 @@ import ChatBanPanel from "../components/chat/ChatBanPanel";
 import { apiRequest, authApi } from "../api/authApi";
 import Button from "../components/common/Button";
 import "../styles/ChatRoomPage.css";
+import "../styles/ChatScrollControls.css";
+import useChatPresence from "../hooks/useChatPresence";
+import "../styles/ChatPresence.css";
+import ChatMemberPanel from "../components/chat/ChatMemberPanel";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -60,9 +64,60 @@ export default function ChatRoomPage({ user }) {
   const [hasNext, setHasNext] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [kickingUserId, setKickingUserId] = useState(null);
+  const [showMemberPanel, setShowMemberPanel] = useState(false);
   const [showBanPanel, setShowBanPanel] = useState(false);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const kickingRef = useRef(false);
+  const [bans, setBans] = useState([]);
+  const [bansLoading, setBansLoading] = useState(true);
+  const [bansError, setBansError] = useState("");
+  const [banRevision, setBanRevision] = useState(0);
+  const historyAnchorRef = useRef(null);
+  const [isAwayFromBottom, setIsAwayFromBottom] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const seenMessageIdsRef = useRef(new Set());
+  const {
+    members,
+    membersLoading,
+    membersError,
+    startPresence,
+    stopPresence,
+    refreshMembers,
+  } = useChatPresence(roomId);
+
+  const onlineUserIds = new Set(
+    connected
+      ? members
+          .filter((member) => member.online)
+          .map((member) => String(member.userId))
+      : [],
+  );
+  function goToBottom() {
+    const list = messageListRef.current;
+    if (!list) return;
+
+    historyAnchorRef.current = null;
+    followBottomRef.current = true;
+    list.scrollTop = list.scrollHeight;
+
+    setIsAwayFromBottom(false);
+    setNewMessageCount(0);
+  }
+
+  function handleMessageScroll(event) {
+    const list = event.currentTarget;
+    const distance = list.scrollHeight - list.scrollTop - list.clientHeight;
+
+    const away = distance > 80;
+
+    followBottomRef.current = !away;
+    setIsAwayFromBottom(away);
+
+    if (!away) {
+      setNewMessageCount(0);
+    }
+  }
+  const bannedUserIds = new Set(bans.map((ban) => String(ban.userId)));
 
   const canKick = Boolean(
     room &&
@@ -71,9 +126,59 @@ export default function ChatRoomPage({ user }) {
       : ["CUSTOM", "PRIVATE"].includes(room.roomType) &&
         String(room.createdById) === String(user.id)),
   );
+  useEffect(() => {
+    if (!canKick) return;
+
+    let active = true;
+
+    chatApi
+      .getBans(Number(roomId))
+      .then((data) => {
+        if (!active) return;
+
+        setBans(data);
+        setBansError("");
+      })
+      .catch((err) => {
+        if (!active) return;
+
+        setBansError(
+          err.status === 403
+            ? "강퇴 목록을 조회할 권한이 없습니다."
+            : "강퇴 목록을 불러오지 못했습니다.",
+        );
+      })
+      .finally(() => {
+        if (active) setBansLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [roomId, canKick, banRevision]);
+
   useLayoutEffect(() => {
     const list = messageListRef.current;
     if (!list || loading) return;
+
+    const anchor = historyAnchorRef.current;
+
+    if (anchor) {
+      const element = Array.from(
+        list.querySelectorAll("[data-message-id]"),
+      ).find((item) => item.dataset.messageId === anchor.messageId);
+
+      if (element) {
+        const currentOffset =
+          element.getBoundingClientRect().top -
+          list.getBoundingClientRect().top;
+
+        list.scrollTop += currentOffset - anchor.offset;
+      }
+
+      historyAnchorRef.current = null;
+      return;
+    }
 
     if (!initialScrollDoneRef.current || followBottomRef.current) {
       list.scrollTop = list.scrollHeight;
@@ -140,6 +245,9 @@ export default function ChatRoomPage({ user }) {
           setMessages((current) => mergeMessages(data.messages, current));
           setNextCursor(data.nextCursor);
           setHasNext(data.hasNext);
+          data.messages.forEach((message) => {
+            seenMessageIdsRef.current.add(String(message.messageId));
+          });
         }
       } catch (err) {
         showError(err);
@@ -154,6 +262,11 @@ export default function ChatRoomPage({ user }) {
 
         if (String(event.roomId) !== roomId) return;
         if (!active) return;
+        if (event.eventType === "PRESENCE_CHANGED") {
+          // 다음 단계에서 회원 목록을 다시 조회하도록 연결
+          refreshMembers();
+          return;
+        }
         if (event.eventType == "KICKED") {
           setConnected(false);
           setMessages([]);
@@ -167,8 +280,27 @@ export default function ChatRoomPage({ user }) {
         const message = await getJson(
           `/api/chat/rooms/${roomId}/messages/${event.messageId}`,
         );
+        if (active && message.messageType !== "CHAT") {
+          // 가입·탈퇴·강퇴 알림을 받으면 회원 목록도 갱신
+          refreshMembers();
+        }
 
         if (active) {
+          const messageId = String(message.messageId);
+          const isNew = !seenMessageIdsRef.current.has(messageId);
+
+          seenMessageIdsRef.current.add(messageId);
+
+          if (
+            isNew &&
+            initialScrollDoneRef.current &&
+            !followBottomRef.current &&
+            message.messageType === "CHAT" &&
+            String(message.userId) !== String(user.id)
+          ) {
+            setNewMessageCount((current) => current + 1);
+          }
+
           setMessages((current) => mergeMessages(current, [message]));
         }
       } catch (err) {
@@ -197,6 +329,11 @@ export default function ChatRoomPage({ user }) {
         setHasNext(false);
         setLoadingOlder(false);
         initialScrollDoneRef.current = false;
+        historyAnchorRef.current = null;
+        followBottomRef.current = true;
+        seenMessageIdsRef.current.clear();
+        setIsAwayFromBottom(false);
+        setNewMessageCount(0);
         try {
           const me = await authApi.restore();
 
@@ -232,12 +369,14 @@ export default function ChatRoomPage({ user }) {
 
         setConnected(true);
         setError("");
+
+        startPresence(client);
         loadHistory();
       },
 
       onStompError: () => {
         if (!active) return;
-
+        stopPresence();
         setConnected(false);
         setLoading(false);
         setError(
@@ -255,7 +394,7 @@ export default function ChatRoomPage({ user }) {
 
       onWebSocketClose: () => {
         if (!active) return;
-
+        stopPresence();
         setConnected(false);
         setLoading(false);
         setError(
@@ -269,11 +408,21 @@ export default function ChatRoomPage({ user }) {
 
     return () => {
       active = false;
+      stopPresence();
       controller.abort();
       clientRef.current = null;
       void client.deactivate();
     };
-  }, [roomId, user.id, useSecondServer, navigate, connectionAttempt]);
+  }, [
+    roomId,
+    user.id,
+    useSecondServer,
+    navigate,
+    connectionAttempt,
+    startPresence,
+    stopPresence,
+    refreshMembers,
+  ]);
   async function loadOlderMessages() {
     if (!hasNext || nextCursor === null || olderLoadingRef.current) {
       return;
@@ -296,6 +445,29 @@ export default function ChatRoomPage({ user }) {
       );
 
       if (clientRef.current !== currentClient) return;
+      data.messages.forEach((message) => {
+        seenMessageIdsRef.current.add(String(message.messageId));
+      });
+
+      const list = messageListRef.current;
+
+      if (list) {
+        const listTop = list.getBoundingClientRect().top;
+
+        // 현재 화면에 보이는 첫 번째 메시지를 기준점으로 기록
+        const firstVisible = Array.from(
+          list.querySelectorAll("[data-message-id]"),
+        ).find((element) => element.getBoundingClientRect().bottom > listTop);
+
+        if (firstVisible) {
+          historyAnchorRef.current = {
+            messageId: firstVisible.dataset.messageId,
+            offset: firstVisible.getBoundingClientRect().top - listTop,
+          };
+        }
+      }
+
+      followBottomRef.current = false;
 
       setMessages((current) => mergeMessages(data.messages, current));
 
@@ -318,14 +490,21 @@ export default function ChatRoomPage({ user }) {
     }
   }
   async function kickMember(targetUserId, nickname) {
-    if (!canKick || kickingRef.current) return;
+    if (
+      !canKick ||
+      kickingRef.current ||
+      bansLoading ||
+      bansError ||
+      bannedUserIds.has(String(targetUserId))
+    ) {
+      return;
+    }
 
     const reason = window.prompt(
       `${nickname}님을 강퇴합니다.\n사유를 입력하세요. 비워두어도 됩니다.`,
       "",
     );
 
-    // 취소 버튼을 누르면 요청하지 않음
     if (reason === null) return;
 
     if (reason.length > 500) {
@@ -343,12 +522,24 @@ export default function ChatRoomPage({ user }) {
         targetUserId,
         reason.trim() || null,
       );
+
+      // 목록 재조회가 끝날 때까지 중복 클릭 방지
+      setBansLoading(true);
+      setBanRevision((current) => current + 1);
     } catch (err) {
-      setError(
-        err.status === 403
-          ? "강퇴 권한이 없거나 인증 상태가 변경되었습니다."
-          : err.message,
-      );
+      if (err.status === 409) {
+        setError("이미 강퇴된 회원입니다.");
+        setBansLoading(true);
+        setBanRevision((current) => current + 1);
+      } else {
+        setError(
+          err.status === 403
+            ? "강퇴 권한이 없거나 인증 상태가 변경되었습니다."
+            : err.status === 404
+              ? "현재 방에 참여 중인 회원이 아닙니다."
+              : err.message,
+        );
+      }
     } finally {
       kickingRef.current = false;
       setKickingUserId(null);
@@ -425,11 +616,34 @@ export default function ChatRoomPage({ user }) {
                 <Button
                   variant="outline"
                   aria-expanded={showBanPanel}
-                  onClick={() => setShowBanPanel((current) => !current)}
+                  onClick={() => {
+                    setShowMemberPanel(false);
+
+                    if (!showBanPanel) {
+                      setBansLoading(true);
+                      setBanRevision((current) => current + 1);
+                    }
+
+                    setShowBanPanel((current) => !current);
+                  }}
                 >
                   {showBanPanel ? "강퇴 관리 닫기" : "강퇴 관리"}
                 </Button>
               )}
+              <Button
+                variant="outline"
+                aria-haspopup="dialog"
+                aria-expanded={showMemberPanel}
+                disabled={!connected}
+                onClick={() => {
+                  setShowBanPanel(false);
+                  setShowMemberPanel(true);
+                  refreshMembers();
+                }}
+              >
+                참여자
+                {!membersLoading && !membersError && ` ${members.length}`}
+              </Button>
 
               <Button variant="outline" onClick={leaveRoom} disabled={leaving}>
                 {leaving ? "나가는 중..." : "채팅방 나가기"}
@@ -453,94 +667,177 @@ export default function ChatRoomPage({ user }) {
           )}
         </header>
 
-        {canKick && showBanPanel && (
-          <aside className="chat-room-management">
-            <ChatBanPanel key={roomId} roomId={Number(roomId)} />
-          </aside>
+        {showMemberPanel && (
+          <ChatMemberPanel
+            key={roomId}
+            members={members}
+            loading={membersLoading}
+            error={membersError}
+            connected={connected}
+            currentUserId={user.id}
+            onClose={() => setShowMemberPanel(false)}
+            onReload={refreshMembers}
+          />
         )}
 
-        <div
-          ref={messageListRef}
-          className="chat-message-list"
-          aria-label="채팅 메시지"
-          tabIndex={0}
-          onScroll={(event) => {
-            const list = event.currentTarget;
-            const distance =
-              list.scrollHeight - list.scrollTop - list.clientHeight;
+        {canKick && showBanPanel && (
+          <ChatBanPanel
+            key={roomId}
+            roomId={Number(roomId)}
+            bans={bans}
+            loading={bansLoading}
+            error={bansError}
+            onClose={() => setShowBanPanel(false)}
+            onReleased={(banId) => {
+              setBans((current) =>
+                current.filter((ban) => ban.banId !== banId),
+              );
+            }}
+            onReload={() => {
+              setBansLoading(true);
+              setBanRevision((current) => current + 1);
+            }}
+          />
+        )}
+        <div className="chat-message-area">
+          <div
+            ref={messageListRef}
+            className="chat-message-list"
+            aria-label="채팅 메시지"
+            tabIndex={0}
+            onScroll={handleMessageScroll}
+          >
+            {!loading && hasNext && (
+              <div className="chat-history-action">
+                <Button
+                  variant="outline"
+                  onClick={loadOlderMessages}
+                  disabled={loadingOlder}
+                >
+                  {loadingOlder ? "불러오는 중..." : "이전 메시지 불러오기"}
+                </Button>
+              </div>
+            )}
 
-            followBottomRef.current = distance < 80;
-          }}
-        >
-          {!loading && hasNext && (
-            <div className="chat-history-action">
-              <Button
-                variant="outline"
-                onClick={loadOlderMessages}
-                disabled={loadingOlder}
+            {!loading && !error && messages.length === 0 && (
+              <p className="chat-empty">아직 대화가 없습니다.</p>
+            )}
+
+            {messages.map((message) => {
+              const blocked = message.visibility !== "SHOW";
+              const system = message.messageType !== "CHAT";
+              const mine = String(message.userId) === String(user.id);
+
+              if (system) {
+                return (
+                  <div
+                    key={message.messageId}
+                    data-message-id={message.messageId}
+                    className="chat-system-message"
+                  >
+                    {blocked ? "공개되지 않은 알림입니다." : message.content}
+                  </div>
+                );
+              }
+
+              return (
+                <article
+                  key={message.messageId}
+                  data-message-id={message.messageId}
+                  className={`chat-message ${mine ? "mine" : "other"}`}
+                >
+                  <div className="chat-message-header">
+                    <div className="chat-author">
+                      <strong>{message.nickname}</strong>
+
+                      {onlineUserIds.has(String(message.userId)) && (
+                        <span
+                          className="chat-online-dot"
+                          role="img"
+                          aria-label="현재 이 채팅방에 접속 중"
+                          title="현재 이 채팅방에 접속 중"
+                        />
+                      )}
+                    </div>
+
+                    {canKick &&
+                      !mine &&
+                      (bannedUserIds.has(String(message.userId)) ? (
+                        <span className="chat-kicked-label">강퇴됨</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="chat-kick-button"
+                          onClick={() =>
+                            kickMember(message.userId, message.nickname)
+                          }
+                          disabled={
+                            kickingUserId !== null ||
+                            bansLoading ||
+                            Boolean(bansError)
+                          }
+                        >
+                          {kickingUserId === message.userId
+                            ? "처리 중…"
+                            : "강퇴"}
+                        </button>
+                      ))}
+                  </div>
+
+                  <p className="chat-message-content">
+                    {blocked
+                      ? (BLOCK_MESSAGES[message.blockReason] ??
+                        BLOCK_MESSAGES.DEFAULT)
+                      : message.content}
+                  </p>
+
+                  <time
+                    dateTime={message.createdAt}
+                    className="chat-message-time"
+                  >
+                    {new Date(message.createdAt).toLocaleTimeString("ko-KR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </time>
+                </article>
+              );
+            })}
+          </div>
+          {isAwayFromBottom && (
+            <div className="chat-scroll-controls">
+              {newMessageCount > 0 && (
+                <button
+                  type="button"
+                  className="chat-new-message-notice"
+                  onClick={goToBottom}
+                >
+                  <span role="status">새 메시지 {newMessageCount}개</span>
+                  <span aria-hidden="true">↓</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="chat-scroll-bottom"
+                onClick={goToBottom}
+                aria-label="최신 메시지로 이동"
+                title="최신 메시지로 이동"
               >
-                {loadingOlder ? "불러오는 중..." : "이전 메시지 불러오기"}
-              </Button>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="22"
+                  height="22"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
             </div>
           )}
-
-          {!loading && !error && messages.length === 0 && (
-            <p className="chat-empty">아직 대화가 없습니다.</p>
-          )}
-
-          {messages.map((message) => {
-            const blocked = message.visibility !== "SHOW";
-            const system = message.messageType !== "CHAT";
-            const mine = String(message.userId) === String(user.id);
-
-            if (system) {
-              return (
-                <div key={message.messageId} className="chat-system-message">
-                  {blocked ? "공개되지 않은 알림입니다." : message.content}
-                </div>
-              );
-            }
-
-            return (
-              <article
-                key={message.messageId}
-                className={`chat-message ${mine ? "mine" : "other"}`}
-              >
-                <div className="chat-message-header">
-                  <strong>{message.nickname}</strong>
-
-                  {canKick && !mine && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        kickMember(message.userId, message.nickname)
-                      }
-                      disabled={kickingUserId !== null}
-                    >
-                      {kickingUserId === message.userId ? "처리 중..." : "강퇴"}
-                    </button>
-                  )}
-                </div>
-
-                <p className="chat-message-content">
-                  {blocked
-                    ? (BLOCK_MESSAGES[message.blockReason] ??
-                      BLOCK_MESSAGES.DEFAULT)
-                    : message.content}
-                </p>
-
-                <time
-                  dateTime={message.createdAt}
-                  className="chat-message-time"
-                >
-                  {new Date(message.createdAt).toLocaleTimeString("ko-KR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </time>
-              </article>
-            );
-          })}
         </div>
 
         <form onSubmit={sendMessage} className="chat-input-form">

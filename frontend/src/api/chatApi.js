@@ -28,7 +28,11 @@ export const chatApi = {
   getRooms: () => chatRequest("/api/chat/rooms"),
 
   getRoom: (roomId) => chatRequest(`/api/chat/rooms/${roomId}`),
-
+  getMembers: (roomId, options = {}) =>
+    chatRequest(`/api/chat/rooms/${roomId}/members`, {
+      ...options,
+      cache: "no-store",
+    }),
   createRoom: (dramaId, roomName, description) =>
     chatRequest("/api/chat/rooms", {
       method: "POST",
