@@ -57,6 +57,10 @@ public record SpoilerApiProperties(
         @DefaultValue("false")
         boolean publishNoMatch,
 
+        // NO_MATCH 이면서 Gemini가 '드라마 이야기가 아님(about_story=false)'으로 판단한 일상 대화 공개
+        @DefaultValue("true")
+        boolean publishOffTopic,
+
         // Spring 작품 ID → Python 사건 DB 정보. 등록되지 않은 작품은 분석 보류
         Map<Long, DramaKb> dramas,
 

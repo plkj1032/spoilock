@@ -20,16 +20,22 @@ class SpoilerVerdictPolicyTest {
 
     // 데모 허용, 일반 대화 공개, 나머지 보수적
     private final SpoilerVerdictPolicy demoPolicy =
-            new SpoilerVerdictPolicy(true, true, false, false);
+            new SpoilerVerdictPolicy(true, true, false, false, true);
 
     // 운영 기본값: 미검증 회차 불허
     private final SpoilerVerdictPolicy strictPolicy =
-            new SpoilerVerdictPolicy(false, true, false, false);
+            new SpoilerVerdictPolicy(false, true, false, false, true);
 
     private static SpoilerJudgeResponse response(
             String verdict, String eventId, Integer episode, String basis, Boolean needsReview
     ) {
-        return new SpoilerJudgeResponse(1L, verdict, eventId, episode, basis, needsReview, "r", null);
+        return response(verdict, eventId, episode, basis, needsReview, null);
+    }
+
+    private static SpoilerJudgeResponse response(
+            String verdict, String eventId, Integer episode, String basis, Boolean needsReview, Boolean aboutStory
+    ) {
+        return new SpoilerJudgeResponse(1L, verdict, eventId, episode, basis, needsReview, "r", null, aboutStory);
     }
 
     @Test
@@ -94,13 +100,44 @@ class SpoilerVerdictPolicyTest {
 
     @Test
     void no_match_can_be_published_by_policy() {
-        SpoilerVerdictPolicy openNoMatch = new SpoilerVerdictPolicy(true, true, false, true);
+        SpoilerVerdictPolicy openNoMatch = new SpoilerVerdictPolicy(true, true, false, true, true);
 
         AnalysisDecision d = openNoMatch.decide(
                 response("NO_MATCH", null, null, DEMO_BASIS, true), EPISODES);
 
         assertTrue(d.publish());
         assertNull(d.requiredEpisode());
+    }
+
+    @Test
+    void no_match_off_topic_is_published() {
+        AnalysisDecision d = demoPolicy.decide(
+                response("NO_MATCH", null, null, DEMO_BASIS, true, false), EPISODES);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+    }
+
+    @Test
+    void no_match_about_story_or_unknown_is_held() {
+        assertFalse(demoPolicy.decide(
+                response("NO_MATCH", null, null, DEMO_BASIS, true, true), EPISODES).publish());
+        assertFalse(demoPolicy.decide(
+                response("NO_MATCH", null, null, DEMO_BASIS, true, null), EPISODES).publish());
+    }
+
+    @Test
+    void no_match_off_topic_is_held_when_disabled() {
+        SpoilerVerdictPolicy closed = new SpoilerVerdictPolicy(true, true, false, false, false);
+
+        assertFalse(closed.decide(
+                response("NO_MATCH", null, null, DEMO_BASIS, true, false), EPISODES).publish());
+    }
+
+    @Test
+    void uncertain_is_held_even_if_off_topic() {
+        assertFalse(demoPolicy.decide(
+                response("UNCERTAIN", null, null, DEMO_BASIS, true, false), EPISODES).publish());
     }
 
     @Test

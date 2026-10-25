@@ -42,7 +42,8 @@ public class ChatAnalysisService {
                 properties.allowUnverifiedDemo(),
                 properties.publishSkippedGeneral(),
                 properties.publishSkippedUnrelated(),
-                properties.publishNoMatch()
+                properties.publishNoMatch(),
+                properties.publishOffTopic()
         );
     }
 
