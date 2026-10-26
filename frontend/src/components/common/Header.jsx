@@ -13,7 +13,7 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
         </NavLink>
 
         <nav className="nav-links" aria-label="주 메뉴">
-          <NavLink to="/" end>
+          <NavLink to="/dramas" end>
             드라마
           </NavLink>
           <NavLink to="/chat">채팅</NavLink>
@@ -25,9 +25,14 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
             <span className="auth-loading">로그인 확인 중...</span>
           ) : user ? (
             <>
-              <span className="user-greeting">
+              <NavLink
+                to="/mypage"
+                className="user-greeting"
+                aria-label={`${user.nickname}님 마이페이지`}
+                title="마이페이지"
+              >
                 <strong>{user.nickname}</strong>님
-              </span>
+              </NavLink>
 
               <NotificationBell key={user.id} />
               {/* ADMIN에게만 관리자 버튼 표시 */}

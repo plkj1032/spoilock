@@ -84,7 +84,10 @@ public class ChatStompInterceptor implements ChannelInterceptor {
         }
 
         if (command == StompCommand.SUBSCRIBE
-                && "/user/queue/chat".equals(destination)) {
+                && (
+                "/user/queue/chat".equals(destination)
+                        || "/topic/chat.rooms".equals(destination)
+        )) {
             return message;
         }
 

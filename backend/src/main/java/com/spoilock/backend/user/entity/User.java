@@ -67,4 +67,19 @@ public class User extends AuditedEntity {
 
         return user;
     }
+    public void updateNickname(String nickname) {
+        if (nickname == null) {
+            throw new IllegalArgumentException("닉네임을 입력해주세요.");
+        }
+
+        String normalized = nickname.trim();
+
+        if (normalized.length() < 2 || normalized.length() > 20) {
+            throw new IllegalArgumentException(
+                    "닉네임은 2~20자로 입력해주세요."
+            );
+        }
+
+        this.nickname = normalized;
+    }
 }
