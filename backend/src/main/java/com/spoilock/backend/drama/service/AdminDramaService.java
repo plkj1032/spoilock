@@ -25,6 +25,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
+
 @Service
 @RequiredArgsConstructor
 public class AdminDramaService {
@@ -33,6 +35,7 @@ public class AdminDramaService {
     private final EpisodeRepository episodeRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository  userRepository;
+    private final EpisodeVideoRepository episodeVideoRepository;
 
     @Transactional(readOnly = true)
     public List<AdminDramaResponse> getAll() {
@@ -205,6 +208,15 @@ public class AdminDramaService {
                         )
                         .toList()
         );
+
+        if(episodeVideoRepository.existsByEpisode_Drama_Id(dramaId))
+        {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "MP4 영상이 등록된 작품입니다. "
+                    + "연결된 회차를 전체 교체할 수 없습니다."
+            );
+        }
 
         // 5. QueryDSL로 기존 초안 회차 삭제
         episodeRepository.deleteDraftEpisodes(dramaId);

@@ -27,6 +27,8 @@ public class QChatReport extends EntityPathBase<ChatReport> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final StringPath detail = createString("detail");
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final com.spoilock.backend.chat.domain.entity.QChatMessage message;
