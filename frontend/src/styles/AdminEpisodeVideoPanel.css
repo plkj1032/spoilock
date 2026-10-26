@@ -1,0 +1,308 @@
+/* =======================================
+   SPOILOCK ADMIN VIDEO PANEL
+   ======================================= */
+
+.admin-video {
+  margin-bottom: 20px;
+  min-width: 0;
+}
+
+.admin-video,
+.admin-video * {
+  box-sizing: border-box;
+}
+
+.admin-video__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-video__heading > div {
+  min-width: 0;
+}
+
+.admin-video__eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #82adff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.admin-video__heading h2 {
+  margin: 0 0 8px;
+  color: #f4f7ff;
+  font-size: clamp(19px, 2.5vw, 23px);
+}
+
+.admin-video__description,
+.admin-video__help {
+  margin: 0;
+  color: #a9bddd;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.admin-video__status {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border: 1px solid #455a78;
+  border-radius: 999px;
+  background: #273951;
+  color: #c3d1eb;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-video__status--ready {
+  background: #183f39;
+  color: #a3e9c9;
+  border-color: #35705d;
+}
+
+/* 업로드 폼 */
+
+.admin-video__upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-video__upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  padding: 32px 20px;
+  text-align: center;
+
+  background: #14243e;
+  border: 1px dashed #52709e;
+  border-radius: 14px;
+}
+
+.admin-video__upload-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 48px;
+  height: 48px;
+
+  background: #294a7d;
+  border-radius: 14px;
+
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.admin-video__upload-area strong {
+  color: #eaf1ff;
+  font-size: 16px;
+}
+
+.admin-video__upload-area p {
+  margin: 0;
+  color: #a9bddd;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.admin-video__upload-area p span {
+  display: block;
+}
+
+.admin-video__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.admin-video__file-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 43px;
+  padding: 11px 18px;
+
+  color: white;
+  background: #2c4e87;
+  border: 1px solid #587cbb;
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-video__file-button:hover {
+  background: #385f9e;
+}
+
+.admin-video__file-input:focus-visible + .admin-video__file-button {
+  outline: 2px solid #a7c5ff;
+  outline-offset: 3px;
+}
+
+.admin-video__selected-file {
+  max-width: 100%;
+  color: #b7cbed;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.admin-video__submit {
+  min-height: 46px;
+  padding: 12px 18px;
+
+  color: white;
+  background: #416de4;
+  border: 1px solid #416de4;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-video__submit:disabled,
+.admin-video__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 등록 완료 */
+
+.admin-video__registered {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+
+  background: #14243e;
+  border: 1px solid #35517a;
+  border-radius: 14px;
+}
+
+.admin-video__file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 48px;
+  height: 48px;
+
+  background: #274b85;
+  color: white;
+  border-radius: 12px;
+}
+
+.admin-video__file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-video__file-info strong {
+  display: block;
+  color: #ffffff;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.admin-video__file-info p,
+.admin-video__file-note {
+  display: block;
+  margin: 6px 0 0;
+  color: #aec1df;
+  font-size: 12px;
+}
+
+.admin-video__delete {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 10px 14px;
+
+  color: #ffd2d2;
+  background: transparent;
+  border: 1px solid #9d5764;
+  border-radius: 10px;
+
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-video__help {
+  margin-top: 16px;
+}
+
+.admin-video__alert {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-video__alert--error {
+  color: #ffd0d0;
+  background: #462b34;
+}
+
+.admin-video__alert--success {
+  color: #acebd0;
+  background: #20443a;
+}
+
+/* =======================================
+   MOBILE
+   ======================================= */
+
+@media (max-width: 600px) {
+  .admin-video {
+    margin-bottom: 14px;
+  }
+
+  .admin-video__heading {
+    flex-wrap: wrap;
+  }
+
+  .admin-video__upload-area {
+    padding: 24px 14px;
+  }
+
+  .admin-video__file-button {
+    width: 100%;
+  }
+
+  .admin-video__submit {
+    width: 100%;
+  }
+
+  .admin-video__registered {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+
+  .admin-video__file-info {
+    flex: 1 1 calc(100% - 64px);
+  }
+
+  .admin-video__delete {
+    width: 100%;
+  }
+}

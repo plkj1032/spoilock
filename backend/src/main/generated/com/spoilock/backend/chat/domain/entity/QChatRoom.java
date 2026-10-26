@@ -39,6 +39,8 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
 
     public final StringPath roomName = createString("roomName");
 
+    public final EnumPath<com.spoilock.backend.chat.domain.type.ChatRoomType> roomType = createEnum("roomType", com.spoilock.backend.chat.domain.type.ChatRoomType.class);
+
     public QChatRoom(String variable) {
         this(ChatRoom.class, forVariable(variable), INITS);
     }
