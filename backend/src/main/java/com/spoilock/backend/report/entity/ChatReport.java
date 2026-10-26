@@ -103,4 +103,19 @@ public class ChatReport extends CreatedAtEntity {
 
         return report;
     }
+
+    public void process(ReportStatus result){
+        if(status!= ReportStatus.PENDING){
+            throw new IllegalStateException(
+                    "이미 처리된 신고입니다."
+            );
+        }
+        if(result != ReportStatus.APPROVED && result != ReportStatus.REJECTED){
+            throw new IllegalArgumentException(
+                    "승인 또는 반려만 가능합니다."
+            );
+        }
+        status = result;
+        processedAt = LocalDateTime.now();
+    }
 }

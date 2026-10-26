@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import Brand from "./Brand";
 import Button from "./Button";
 import "../../styles/Header.css";
+import NotificationBell from "./NotificationBell";
 
 export default function Header({ user, pending, onLogin, onLogout, busy }) {
   return (
@@ -27,6 +28,8 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
               <span className="user-greeting">
                 <strong>{user.nickname}</strong>님
               </span>
+
+              <NotificationBell key={user.id} />
               {/* ADMIN에게만 관리자 버튼 표시 */}
               {user.role === "ADMIN" && (
                 <NavLink

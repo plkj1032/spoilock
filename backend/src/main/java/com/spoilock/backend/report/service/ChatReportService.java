@@ -74,6 +74,12 @@ public class ChatReportService {
         }
 
         Long targetUserId = message.getUser().getId();
+        if (room.getCreatedBy().getId().equals(targetUserId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "방장의 메시지는 신고할 수 없습니다."
+            );
+        }
 
         if (targetUserId.equals(reporterId)) {
             throw new ResponseStatusException(
