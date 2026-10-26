@@ -1,8 +1,10 @@
 package com.spoilock.backend.chat.controller;
 
 import com.spoilock.backend.chat.domain.dto.ChatKickRequest;
+import com.spoilock.backend.chat.domain.dto.ChatMemberStatusResponse;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.redis.ChatRedisPublisher;
+import com.spoilock.backend.chat.service.ChatRoomMemberQueryService;
 import com.spoilock.backend.chat.service.ChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -19,6 +22,17 @@ public class ChatRoomMemberController {
 
     private final ChatService chatService;
     private final ChatRedisPublisher chatRedisPublisher;
+    private final ChatRoomMemberQueryService chatRoomMemberQueryService;
+
+    @GetMapping("/{roomId}/members")
+    public List<ChatMemberStatusResponse> getMembers(
+            @PathVariable("roomId") Long roomId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        Long userId = Long.valueOf(jwt.getSubject());
+
+        return chatRoomMemberQueryService.getMembers(roomId, userId);
+    }
 
     @PostMapping("/{roomId}/enter")
     public MembershipResponse enter(

@@ -6,7 +6,6 @@ export default function DramaCard({
   loggedIn,
   progressLoading,
   onAction,
-  selected = false,
   onSelect,
 }) {
   const total = drama.totalEpisodeCount ?? 0;
@@ -52,21 +51,6 @@ export default function DramaCard({
         <div className="progress-track" aria-label={`${drama.title} 시청 진도`}>
           <span style={{ width: `${progress}%` }} />
         </div>
-
-        {onSelect && (
-          <button
-            type="button"
-            className="card-action"
-            aria-pressed={selected}
-            onClick={(event) => {
-              event.stopPropagation();
-              onSelect();
-            }}
-          >
-            {selected ? "선택된 드라마의 채팅방" : "이 드라마 채팅방 보기"}
-            <span aria-hidden="true">›</span>
-          </button>
-        )}
 
         <button
           type="button"

@@ -1,56 +1,52 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { chatApi } from "../../api/chatApi";
 import "../../styles/ChatBanPanel.css";
-import Button from "../common/Button";
 
-export default function ChatBanPanel({ roomId }) {
-  const [bans, setBans] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [releasingId, setReleasingId] = useState(null);
+export default function ChatBanPanel({
+  roomId,
+  bans,
+  loading,
+  error,
+  onClose,
+  onReleased,
+  onReload,
+}) {
+  const dialogRef = useRef(null);
   const releasingRef = useRef(false);
+  const [releasingId, setReleasingId] = useState(null);
+  const [releaseError, setReleaseError] = useState("");
 
   useEffect(() => {
-    let active = true;
+    const dialog = dialogRef.current;
+    const previousFocus = document.activeElement;
 
-    async function loadBans() {
-      try {
-        const data = await chatApi.getBans(roomId);
-        if (active) setBans(data);
-      } catch (err) {
-        if (active) {
-          setError(
-            err.status === 403
-              ? "강퇴 목록을 조회할 권한이 없습니다."
-              : err.message,
-          );
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    loadBans();
+    dialog.showModal();
 
     return () => {
-      active = false;
+      dialog.close();
+
+      if (previousFocus instanceof HTMLElement) {
+        previousFocus.focus();
+      }
     };
-  }, [roomId]);
+  }, []);
 
   async function releaseBan(ban) {
     if (releasingRef.current) return;
 
     releasingRef.current = true;
     setReleasingId(ban.banId);
-    setError("");
+    setReleaseError("");
 
     try {
       await chatApi.releaseBan(roomId, ban.banId);
-
-      setBans((current) => current.filter((item) => item.banId !== ban.banId));
+      onReleased(ban.banId);
     } catch (err) {
-      setError(
-        err.status === 403 ? "강퇴를 해제할 권한이 없습니다." : err.message,
+      setReleaseError(
+        err.status === 403
+          ? "강퇴를 해제할 권한이 없습니다."
+          : "강퇴 해제에 실패했습니다. 다시 시도해 주세요.",
       );
     } finally {
       releasingRef.current = false;
@@ -58,33 +54,86 @@ export default function ChatBanPanel({ roomId }) {
     }
   }
 
-  return (
-    <section aria-label="강퇴 관리" className="chat-ban-panel">
-      <h2>강퇴 관리</h2>
-      <p>해제된 회원은 채팅방에 다시 입장할 수 있습니다.</p>
-
-      {loading && <p role="status">목록을 불러오는 중입니다.</p>}
-      {error && <p role="alert">{error}</p>}
-
-      {!loading && !error && bans.length === 0 && (
-        <p>현재 강퇴된 회원이 없습니다.</p>
-      )}
-
-      {bans.map((ban) => (
-        <div key={ban.banId} className="chat-ban-panel__item">
-          <strong>{ban.nickname}</strong>
-          <p>사유: {ban.reason || "입력된 사유 없음"}</p>
-          <p>강퇴 시각: {new Date(ban.createdAt).toLocaleString("ko-KR")}</p>
-
-          <Button
-            variant="outline"
-            disabled={releasingId !== null}
-            onClick={() => releaseBan(ban)}
-          >
-            {releasingId === ban.banId ? "해제 중..." : "강퇴 해제"}
-          </Button>
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className="chat-ban-dialog"
+      aria-labelledby="chat-ban-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <header className="chat-ban-dialog__header">
+        <div>
+          <h2 id="chat-ban-title">강퇴 관리</h2>
+          <p>해제된 회원은 다시 입장할 수 있습니다.</p>
         </div>
-      ))}
-    </section>
+
+        <button
+          type="button"
+          className="chat-ban-dialog__close"
+          onClick={onClose}
+          aria-label="강퇴 관리 닫기"
+          autoFocus
+        >
+          ×
+        </button>
+      </header>
+
+      <div className="chat-ban-dialog__body">
+        {loading && <p role="status">목록을 불러오는 중입니다.</p>}
+
+        {error && (
+          <div role="alert">
+            <p>{error}</p>
+            <button
+              type="button"
+              className="chat-ban-release"
+              onClick={onReload}
+              disabled={loading}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {releaseError && (
+          <p className="chat-ban-error" role="alert">
+            {releaseError}
+          </p>
+        )}
+
+        {!loading && !error && bans.length === 0 && (
+          <p className="chat-ban-empty">현재 강퇴된 회원이 없습니다.</p>
+        )}
+
+        {!loading &&
+          !error &&
+          bans.map((ban) => (
+            <article key={ban.banId} className="chat-ban-item">
+              <div className="chat-ban-item__top">
+                <strong>{ban.nickname}</strong>
+
+                <button
+                  type="button"
+                  className="chat-ban-release"
+                  disabled={releasingId !== null}
+                  onClick={() => releaseBan(ban)}
+                >
+                  {releasingId === ban.banId ? "해제 중…" : "강퇴 해제"}
+                </button>
+              </div>
+
+              <p>{ban.reason || "입력된 사유 없음"}</p>
+
+              <time dateTime={ban.createdAt}>
+                {new Date(ban.createdAt).toLocaleString("ko-KR")}
+              </time>
+            </article>
+          ))}
+      </div>
+    </dialog>,
+    document.body,
   );
 }

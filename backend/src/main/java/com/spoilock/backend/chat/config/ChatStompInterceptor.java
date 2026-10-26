@@ -25,7 +25,8 @@ public class ChatStompInterceptor implements ChannelInterceptor {
     private static final Set<String> SEND_DESTINATIONS = Set.of(
             "/app/chat.send",
             "/app/chat.enter",
-            "/app/chat.leave"
+            "/app/chat.leave",
+            "/app/chat.presence"
     );
 
     @Override

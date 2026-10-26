@@ -1,7 +1,9 @@
 package com.spoilock.backend.chat.repository;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.spoilock.backend.chat.domain.dto.ChatMemberResponse;
 import com.spoilock.backend.chat.domain.type.ChatRoomBanStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,36 @@ public class ChatRoomMemberRepositoryCustomImpl
                                         )
                                 )
                                 .notExists()
+                )
+                .fetch();
+    }
+
+    @Override
+    public List<ChatMemberResponse> findMembersByRoomId(Long roomId){
+        return queryFactory
+                .select(Projections.constructor(
+                        ChatMemberResponse.class,
+                        chatRoomMember.user.id,
+                        chatRoomMember.user.nickname
+                ))
+                .from(chatRoomMember)
+                .where(
+                        chatRoomMember.id.roomId.eq(roomId),
+                        JPAExpressions.
+                                selectOne()
+                                .from(chatRoomBan)
+                                .where(
+                                        chatRoomBan.room.id.eq(roomId),
+                                        chatRoomBan.user.id.eq(
+                                                chatRoomMember.id.userId),
+                                        chatRoomBan.status.eq(
+                                                ChatRoomBanStatus.ACTIVE)
+                                )
+                                .notExists()
+                )
+                .orderBy(
+                        chatRoomMember.user.nickname.asc(),
+                        chatRoomMember.id.userId.asc()
                 )
                 .fetch();
     }

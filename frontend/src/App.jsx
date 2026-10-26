@@ -15,6 +15,18 @@ function App() {
   const [mode, setMode] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // 토스트 메시지가 표시되면 5초 후 자동으로 닫기
+  useEffect(() => {
+    if (!notice) return;
+
+    const timer = window.setTimeout(() => {
+      setNotice("");
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [notice]);
 
   // 새로고침 시 로그인 상태 복구
   useEffect(() => {

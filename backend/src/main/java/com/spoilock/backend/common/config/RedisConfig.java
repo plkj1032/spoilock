@@ -1,5 +1,6 @@
 package com.spoilock.backend.common.config;
 
+import com.spoilock.backend.chat.redis.ChatPresenceNotifier;
 import com.spoilock.backend.chat.redis.ChatRedisSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,19 +23,24 @@ public class RedisConfig {
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
             ChatRedisSubscriber subscriber,
-            ChannelTopic chatTopic
+            ChannelTopic chatTopic,
+            ChatPresenceNotifier presenceNotifier
     ) {
-
         RedisMessageListenerContainer container =
                 new RedisMessageListenerContainer();
 
-        container.setConnectionFactory(
-                connectionFactory
-        );
+        container.setConnectionFactory(connectionFactory);
 
+        // 기존 채팅 메시지 알림
         container.addMessageListener(
                 subscriber,
                 chatTopic
+        );
+
+        // 접속 상태 변경 알림
+        container.addMessageListener(
+                presenceNotifier,
+                new ChannelTopic(ChatPresenceNotifier.CHANNEL)
         );
 
         return container;
