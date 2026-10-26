@@ -15,6 +15,7 @@ import "../styles/ChatScrollControls.css";
 import useChatPresence from "../hooks/useChatPresence";
 import "../styles/ChatPresence.css";
 import ChatMemberPanel from "../components/chat/ChatMemberPanel";
+import ChatReportModal from "../components/chat/ChatReportModal";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -76,6 +77,7 @@ export default function ChatRoomPage({ user }) {
   const [isAwayFromBottom, setIsAwayFromBottom] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const seenMessageIdsRef = useRef(new Set());
+  const [reportTarget, setReportTarget] = useState(null);
   const {
     members,
     membersLoading,
@@ -699,6 +701,14 @@ export default function ChatRoomPage({ user }) {
             }}
           />
         )}
+        {reportTarget && (
+          <ChatReportModal
+            key={`${roomId}:${reportTarget.messageId}`}
+            roomId={roomId}
+            message={reportTarget}
+            onClose={() => setReportTarget(null)}
+          />
+        )}
         <div className="chat-message-area">
           <div
             ref={messageListRef}
@@ -727,6 +737,9 @@ export default function ChatRoomPage({ user }) {
               const blocked = message.visibility !== "SHOW";
               const system = message.messageType !== "CHAT";
               const mine = String(message.userId) === String(user.id);
+              const isRoomOwner =
+                room?.createdById != null &&
+                String(message.userId) === String(room.createdById);
 
               if (system) {
                 return (
@@ -759,7 +772,24 @@ export default function ChatRoomPage({ user }) {
                         />
                       )}
                     </div>
-
+                    {room && !mine && !isRoomOwner && (
+                      <button
+                        type="button"
+                        className="chat-report-trigger"
+                        aria-haspopup="dialog"
+                        aria-label={`${message.nickname}님의 메시지 신고`}
+                        onClick={() => {
+                          setShowBanPanel(false);
+                          setShowMemberPanel(false);
+                          setReportTarget({
+                            messageId: message.messageId,
+                            nickname: message.nickname,
+                          });
+                        }}
+                      >
+                        신고
+                      </button>
+                    )}
                     {canKick &&
                       !mine &&
                       (bannedUserIds.has(String(message.userId)) ? (

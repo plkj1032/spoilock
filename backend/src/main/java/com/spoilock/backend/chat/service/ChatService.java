@@ -214,7 +214,7 @@ public class ChatService {
             Long targetUserId,
             String reason
     ){
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findOneById(roomId)
                 .orElseThrow(() ->
                         new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
