@@ -25,7 +25,11 @@ async function changeMembership(roomId, action) {
 }
 
 export const chatApi = {
-  getRooms: () => chatRequest("/api/chat/rooms"),
+  getRooms: (options = {}) =>
+    chatRequest("/api/chat/rooms", {
+      ...options,
+      cache: "no-store",
+    }),
 
   getRoom: (roomId) => chatRequest(`/api/chat/rooms/${roomId}`),
   getMembers: (roomId, options = {}) =>

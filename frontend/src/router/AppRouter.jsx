@@ -7,8 +7,15 @@ import ChatRoomPage from "../pages/ChatRoomPage";
 import CommunityPage from "../pages/CommunityPage";
 import AdminDramaPage from "../pages/AdminDramaPage";
 import AdminSubtitlesPage from "../pages/AdminSubtitlesPage";
+import MyPage from "../pages/MyPage";
 
-export default function AppRouter({ user, pending, onLogin, onNotice }) {
+export default function AppRouter({
+  user,
+  pending,
+  onLogin,
+  onNotice,
+  onProfileUpdated,
+}) {
   return (
     <Routes>
       <Route
@@ -84,6 +91,27 @@ export default function AppRouter({ user, pending, onLogin, onNotice }) {
             <AdminSubtitlesPage />
           ) : (
             <Navigate to="/" replace />
+          )
+        }
+      />
+      <Route
+        path="/mypage"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user ? (
+            <MyPage key={user.id} onProfileUpdated={onProfileUpdated} />
+          ) : (
+            <main className="container main-content">
+              <p>로그인 후 마이페이지를 이용할 수 있습니다.</p>
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={onLogin}
+              >
+                로그인
+              </button>
+            </main>
           )
         }
       />

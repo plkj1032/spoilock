@@ -1,7 +1,10 @@
 package com.spoilock.backend.chat.service;
 
 import com.spoilock.backend.chat.domain.dto.ChatRoomListResponse;
+import com.spoilock.backend.chat.domain.type.ChatRoomType;
+import com.spoilock.backend.chat.repository.ChatRoomPageQueryRepository;
 import com.spoilock.backend.chat.repository.ChatRoomQueryRepository;
+import com.spoilock.backend.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,9 +19,28 @@ import java.util.List;
 public class ChatRoomQueryService {
 
     private final ChatRoomQueryRepository chatRoomQueryRepository;
+    private final ChatRoomPageQueryRepository chatRoomPageQueryRepository;
 
     public List<ChatRoomListResponse> getActiveRooms() {
         return chatRoomQueryRepository.findActiveRooms();
+    }
+
+    public PageResponse<ChatRoomListResponse> getRoomPage(
+            int page,
+            int size,
+            String keyword,
+            Long dramaId,
+            ChatRoomType roomType,
+            String sort
+    ) {
+        return chatRoomPageQueryRepository.findPage(
+                page,
+                size,
+                keyword,
+                dramaId,
+                roomType,
+                sort
+        );
     }
 
     public ChatRoomListResponse getActiveRoom(Long roomId) {

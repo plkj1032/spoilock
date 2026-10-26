@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.service;
 
+import com.spoilock.backend.chat.domain.dto.ChatRoomCreatedEvent;
 import com.spoilock.backend.chat.domain.dto.ChatRoomCreateRequest;
 import com.spoilock.backend.chat.domain.dto.ChatRoomCreateResponse;
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
@@ -10,6 +11,7 @@ import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class ChatRoomCommandService {
     private final ChatRoomRepository chatRoomRepository;
     private final DramaRepository dramaRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ChatRoomCreateResponse createRoom(
@@ -63,6 +66,10 @@ public class ChatRoomCommandService {
         );
 
         ChatRoom savedRoom = chatRoomRepository.save(room);
+
+        eventPublisher.publishEvent(
+                new ChatRoomCreatedEvent(savedRoom.getId())
+        );
 
         return new ChatRoomCreateResponse(
                 savedRoom.getId(),

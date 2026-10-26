@@ -1,0 +1,394 @@
+.mypage {
+  max-width: 1100px;
+  padding-bottom: 64px;
+}
+
+.mypage-heading {
+  margin-bottom: 28px;
+}
+
+.mypage-heading h1 {
+  margin: 8px 0 12px;
+  font-size: 30px;
+}
+
+.mypage-heading p {
+  margin: 0;
+  color: #9bacc8;
+  line-height: 1.6;
+}
+
+.mypage-panel {
+  margin-bottom: 24px;
+  padding: 28px;
+  border: 1px solid #2b3d59;
+  border-radius: 20px;
+  background: #142035;
+}
+
+.mypage-profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.mypage-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.mypage-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border: 1px solid #47649a;
+  border-radius: 22px;
+  background: #263d64;
+  color: #dbe6ff;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.mypage-identity h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.mypage-identity p {
+  margin: 0;
+  color: #9bacc8;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.mypage-stats {
+  display: flex;
+  flex-shrink: 0;
+  gap: 30px;
+  margin: 0;
+}
+
+.mypage-stats div {
+  text-align: center;
+}
+
+.mypage-stats dt {
+  margin-bottom: 8px;
+  color: #a6b7d3;
+  font-size: 13px;
+}
+
+.mypage-stats dd {
+  margin: 0;
+  color: #f3f6ff;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.mypage-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mypage-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.mypage-link {
+  color: #9db9ff;
+  font-size: 13px;
+}
+
+.mypage-link:hover {
+  color: #d1dfff;
+  text-decoration: underline;
+}
+
+.mypage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mypage-tabs button {
+  padding: 8px 14px;
+  border: 1px solid #334765;
+  border-radius: 999px;
+  background: transparent;
+  color: #a8b9d5;
+  font-size: 13px;
+}
+
+.mypage-tabs button[aria-pressed="true"] {
+  border-color: #6d93f8;
+  background: #284578;
+  color: #f3f7ff;
+}
+
+.mypage-drama-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.mypage-drama-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #2c405f;
+  border-radius: 14px;
+  background: #192940;
+}
+
+.mypage-poster {
+  display: grid;
+  place-items: center;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 108px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #294b78, #101c30);
+  color: #a9c7ff;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.mypage-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mypage-drama-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.mypage-drama-copy h3 {
+  margin: 10px 0 8px;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mypage-drama-copy p {
+  margin: 0 0 12px;
+  color: #a7b8d2;
+  font-size: 12px;
+}
+
+.mypage-drama-copy progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #334761;
+  accent-color: #7c9fff;
+}
+
+.mypage-drama-copy progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #334761;
+}
+
+.mypage-drama-copy progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #7c9fff;
+}
+
+.mypage-drama-copy progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: #7c9fff;
+}
+
+.mypage-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid #405879;
+  border-radius: 6px;
+  color: #b9cfff;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.mypage-room-list {
+  display: grid;
+  gap: 12px;
+}
+
+.mypage-room {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #304462;
+  border-radius: 14px;
+  background: #192940;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.mypage-room:hover {
+  border-color: #6589cf;
+  background: #20334f;
+}
+
+.mypage-room > div {
+  min-width: 0;
+}
+
+.mypage-room-drama {
+  color: #9eafd0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.mypage-room h3 {
+  margin: 7px 0 10px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.mypage-room-enter {
+  flex-shrink: 0;
+  color: #b6cdff;
+  font-size: 13px;
+}
+
+.mypage-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 480px;
+}
+
+.mypage-form label {
+  margin-bottom: 10px;
+  color: #d6e2f5;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mypage-form input {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid #405776;
+  border-radius: 10px;
+  background: #0f1a2d;
+  color: #eef4ff;
+}
+
+.mypage-form input[readonly] {
+  background: #1b2a40;
+  color: #96a7c1;
+}
+
+.mypage-help {
+  margin: 8px 0 22px;
+  color: #98abc8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mypage-button {
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 1px solid #668cf0;
+  border-radius: 10px;
+  background: #416bdd;
+  color: #fff;
+  font-weight: 700;
+}
+
+.mypage-button:hover:not(:disabled) {
+  background: #507bec;
+}
+
+.mypage-error {
+  margin: 0 0 16px;
+  color: #ffaaaa;
+  line-height: 1.6;
+}
+
+.mypage-success {
+  margin: 0 0 16px;
+  color: #8bdfbc;
+  line-height: 1.6;
+}
+
+.mypage-empty {
+  margin: 0;
+  padding: 30px 12px;
+  color: #a2b4cf;
+  text-align: center;
+  line-height: 1.8;
+}
+
+@media (max-width: 760px) {
+  .mypage-panel {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .mypage-profile {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mypage-stats {
+    justify-content: space-around;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid #30425f;
+  }
+
+  .mypage-drama-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .mypage-panel {
+    padding: 16px;
+  }
+
+  .mypage-heading h1 {
+    font-size: 26px;
+  }
+
+  .mypage-drama-card {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .mypage-room {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .mypage-poster {
+    flex-basis: 60px;
+    width: 60px;
+    height: 88px;
+  }
+}

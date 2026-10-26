@@ -112,6 +112,15 @@ function App() {
       setBusy(false);
     }
   }
+  function handleProfileUpdated(profile) {
+    setUser((current) => {
+      if (!current || String(current.id) !== String(profile.id)) {
+        return current;
+      }
+
+      return { ...current, ...profile };
+    });
+  }
 
   return (
     <>
@@ -128,6 +137,7 @@ function App() {
         pending={pending}
         onLogin={() => openModal("login")}
         onNotice={setNotice}
+        onProfileUpdated={handleProfileUpdated}
       />
 
       <Toast message={notice} onClose={() => setNotice("")} />
