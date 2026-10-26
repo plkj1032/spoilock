@@ -59,4 +59,41 @@ public class EpisodeAnalysis extends AuditedEntity {
 
     @Column(name = "analyzed_at")
     private LocalDateTime analyzedAt;
+
+    @Column(name = "analysis_requested_at")
+    private LocalDateTime analysisRequestedAt;
+
+    public static EpisodeAnalysis create(
+            Episode episode,
+            String filename
+    )
+    {
+        EpisodeAnalysis analysis = new EpisodeAnalysis();
+
+        analysis.episode = episode;
+        analysis.subtitleFilename = filename;
+        analysis.analysisStatus = AnalysisStatus.PENDING;
+
+        return analysis;
+    }
+
+    public void attachSubtitle(String filename)
+    {
+        if(this.subtitleFilename != null)
+        {
+            throw new IllegalStateException(
+                    "이미 자막이 등록되어 있습니다."
+            );
+        }
+
+        this.subtitleFilename = filename;
+        this.analysisStatus = AnalysisStatus.PENDING;
+    }
+
+    public void requestAnalysis()
+    {
+        this.analysisRequestedAt = LocalDateTime.now();
+        this.analysisStatus = AnalysisStatus.PENDING;
+        this.errorMessage = null;
+    }
 }

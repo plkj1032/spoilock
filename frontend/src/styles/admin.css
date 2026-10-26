@@ -1,0 +1,57 @@
+.admin-episode-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.admin-ai-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 18px 0 24px;
+}
+
+.admin-ai-form input[type="file"] {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #101d31;
+  color: #e5edff;
+}
+
+.admin-ai-form textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px;
+  border: 1px solid #34496f;
+  border-radius: 8px;
+  background: #101d31;
+  color: #e5edff;
+  resize: vertical;
+}
+
+.admin-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.admin-event-card {
+  padding: 18px;
+  border: 1px solid #34496f;
+  border-radius: 12px;
+  background: #16243b;
+}
+
+.admin-event-card p {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.admin-event-card .button {
+  margin-top: 12px;
+}

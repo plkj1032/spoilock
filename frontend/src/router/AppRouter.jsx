@@ -6,6 +6,7 @@ import ChatPage from "../pages/ChatPage";
 import ChatRoomPage from "../pages/ChatRoomPage";
 import CommunityPage from "../pages/CommunityPage";
 import AdminDramaPage from "../pages/AdminDramaPage";
+import AdminSubtitlesPage from "../pages/AdminSubtitlesPage";
 
 export default function AppRouter({ user, pending, onLogin, onNotice }) {
   return (
@@ -60,7 +61,7 @@ export default function AppRouter({ user, pending, onLogin, onNotice }) {
         }
       />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 관리자 드라마 관리 */}
       <Route
         path="/admin/dramas"
         element={
@@ -73,6 +74,21 @@ export default function AppRouter({ user, pending, onLogin, onNotice }) {
           )
         }
       />
+      {/* 관리자 자막 및 AI 관리 */}
+      <Route
+        path="/admin/dramas/:dramaId/subtitles"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminSubtitlesPage />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      {/* 존재하지 않는 URL 처리 - 가장 마지막 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
