@@ -60,6 +60,10 @@ public class ChatReport extends CreatedAtEntity {
     )
     private ReportReason reason;
 
+    // 관리자 확안용 상세 설명
+    @Column(name = "detail", length = 500)
+    private String detail;
+
     // 신고 처리 상태
     @Enumerated(EnumType.STRING)
     @Column(
@@ -72,4 +76,31 @@ public class ChatReport extends CreatedAtEntity {
     // 신고 처리 완료 시간
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
+
+    public static ChatReport create(
+            ChatMessage message,
+            User reporter,
+            ReportReason reason,
+            String detail
+    ){
+        if (message == null || reporter == null || reason == null){
+            throw new IllegalArgumentException(
+                    "신고 메시지, 신고자, 신고 사유는 필수 입니다."
+            );
+        }
+        if (detail != null && detail.length() > 500){
+            throw new IllegalArgumentException(
+                    "상세 설명은 500자 이하로 입력해 주세요"
+            );
+        }
+        ChatReport report =  new ChatReport();
+
+        report.message = message;
+        report.reporter = reporter;
+        report.reason = reason;
+        report.detail = detail == null || detail.isBlank() ? null : detail.strip();
+        report.status = ReportStatus.PENDING;
+
+        return report;
+    }
 }
