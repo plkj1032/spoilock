@@ -1,12 +1,10 @@
 
 package com.spoilock.backend.spoiler.service;
 
-import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.spoiler.dto.*;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
-import com.spoilock.backend.spoiler.entity.SpoilerEvent;
 import com.spoilock.backend.spoiler.repository.*;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +25,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.List;
 import java.util.Locale;
 
 @Slf4j
@@ -41,10 +38,6 @@ public class AdminEpisodeAiService {
     private final EpisodeRepository episodeRepository;
 
     private final EpisodeAnalysisRepository analysisRepository;
-
-    private final SpoilerEventRepository eventRepository;
-
-    private final SpoilerEventQueryRepository eventQueryRepository;
 
     @Value("${app.subtitle-storage-dir:./private/subtitles}")
     private String subtitleStorageDir;
@@ -337,147 +330,50 @@ public class AdminEpisodeAiService {
 
 
     // ============================================
-    // 3. AI 분석 요청
+    // 3. 자막 삭제 (교체 업로드용)
+    //    Python 에 등록된 사건은 그대로 남음 → 새 자막은 재분석(replace)으로 요청
+    //    분석 요청은 SubtitleAnalysisService, 사건 관리는 SpoilerEventAdminService
     // ============================================
     @Transactional
-    public AdminEpisodeAiResponse requestAnalysis(
-            Long episodeId
-    ) {
+    public AdminEpisodeAiResponse deleteSubtitle(Long episodeId) {
 
         findEpisode(episodeId);
 
-        // 1) 자막 분석 데이터 조회
         EpisodeAnalysis analysis = analysisRepository
                 .findByEpisode_Id(episodeId)
+                .filter(a -> a.getSubtitleFilename() != null)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "자막 업로드가 먼저 필요합니다."
+                        HttpStatus.NOT_FOUND,
+                        "등록된 자막이 없습니다."
                 ));
 
-        // 2) 자막 등록 여부 확인
-        if (analysis.getSubtitleFilename() == null) {
-
+        if (analysis.isJobActive()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "등록된 자막이 없습니다."
+                    "분석이 진행 중인 자막은 삭제할 수 없습니다."
             );
         }
 
-        // 3) 중복 분석 요청 차단
-        if (analysis.getAnalysisRequestedAt() != null
-                && analysis.getAnalysisStatus()
-                != AnalysisStatus.FAILED) {
+        analysis.detachSubtitle();
 
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "이미 요청했거나 분석이 완료된 회차입니다."
-            );
-        }
-
-        // 4) 실제 자막 파일 존재 여부 검사
         Path target = Path.of(subtitleStorageDir)
                 .toAbsolutePath()
                 .normalize()
                 .resolve(episodeId + ".srt");
 
-        if (!Files.isRegularFile(target)) {
+        // DB 커밋 이후 파일 삭제
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
 
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "저장된 자막 파일을 찾을 수 없습니다."
-            );
-        }
-
-        // 5) 분석 요청 기록
-        analysis.requestAnalysis();
-
-        log.info(
-                "AI 분석 요청 등록: episodeId={}",
-                episodeId
+                    @Override
+                    public void afterCommit() {
+                        deleteFileQuietly(target);
+                    }
+                }
         );
 
-        // 실제 FastAPI/AI 워커 호출은 별도 연동
+        log.info("자막 삭제: episodeId={}", episodeId);
+
         return AdminEpisodeAiResponse.from(analysis);
-    }
-
-
-    // ============================================
-    // 4. 회차별 스포일러 이벤트 조회
-    // ============================================
-    @Transactional(readOnly = true)
-    public List<AdminSpoilerEventResponse> getEvents(
-            Long episodeId
-    ) {
-
-        findEpisode(episodeId);
-
-        // QueryDSL 조회
-        return eventQueryRepository
-                .findByEpisodeId(episodeId)
-                .stream()
-                .map(AdminSpoilerEventResponse::from)
-                .toList();
-    }
-
-
-    // ============================================
-    // 5. 스포일러 사건 수동 등록
-    // ============================================
-    @Transactional
-    public AdminSpoilerEventResponse createManualEvent(
-            Long episodeId,
-            CreateManualEventRequest request
-    ) {
-
-        Episode episode = findEpisode(episodeId);
-
-        // 검수 전 상태로 사건 생성
-        SpoilerEvent event = SpoilerEvent.createManual(
-                episode,
-                request.eventSummary().trim()
-        );
-
-        SpoilerEvent savedEvent =
-                eventRepository.save(event);
-
-        log.info(
-                "스포일러 사건 수동 등록: episodeId={}, eventId={}",
-                episodeId,
-                savedEvent.getId()
-        );
-
-        return AdminSpoilerEventResponse.from(
-                savedEvent
-        );
-    }
-
-
-    // ============================================
-    // 6. 스포일러 사건 검수
-    // ============================================
-    @Transactional
-    public AdminSpoilerEventResponse reviewEvent(
-            Long eventId,
-            ReviewSpoilerEventRequest request
-    ) {
-
-        // 1) 사건 조회
-        SpoilerEvent event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "스포일러 이벤트를 찾을 수 없습니다."
-                ));
-
-        // 2) 검수 상태 변경
-        event.review(request.verified());
-
-        log.info(
-                "스포일러 사건 검수: eventId={}, verified={}",
-                eventId,
-                request.verified()
-        );
-
-        // JPA Dirty Checking으로 변경 반영
-        return AdminSpoilerEventResponse.from(event);
     }
 }

@@ -35,4 +35,34 @@ public class SpoilerApiConfig {
                 .requestFactory(requestFactory)
                 .build();
     }
+
+    /**
+     * Python 관리자 API 전용 (자막 분석 작업·사건 관리).
+     * 업로드가 있어 판정용보다 응답 제한시간이 길고, X-Admin-Token 헤더를 자동으로 붙인다.
+     */
+    @Bean
+    public RestClient spoilerAdminRestClient(SpoilerApiProperties properties) {
+
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMillis(properties.connectTimeoutMs()))
+                .build();
+
+        JdkClientHttpRequestFactory requestFactory =
+                new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(
+                Duration.ofMillis(properties.admin().readTimeoutMs())
+        );
+
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl(properties.baseUrl())
+                .requestFactory(requestFactory);
+
+        String token = properties.admin().token();
+        if (token != null && !token.isBlank()) {
+            builder.defaultHeader("X-Admin-Token", token.trim());
+        }
+
+        return builder.build();
+    }
 }

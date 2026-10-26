@@ -11,13 +11,15 @@ public record AdminEpisodeAiResponse (
         Integer eventCount,
         String errorMessage,
         LocalDateTime requestedAt,
-        LocalDateTime analyzedAt
+        LocalDateTime analyzedAt,
+        // 분석 진행률 0 ~ 100 (진행 전이면 null)
+        Integer progress
 ){
     public static AdminEpisodeAiResponse empty(Long episodeId)
     {
         return new AdminEpisodeAiResponse(
                 episodeId, null, "NOT_UPLOADED",
-                0, null, null, null
+                0, null, null, null, null
         );
     }
     public static AdminEpisodeAiResponse from(
@@ -31,7 +33,8 @@ public record AdminEpisodeAiResponse (
                 analysis.getEventCount(),
                 analysis.getErrorMessage(),
                 analysis.getAnalysisRequestedAt(),
-                analysis.getAnalyzedAt()
+                analysis.getAnalyzedAt(),
+                analysis.getAnalysisProgress()
         );
     }
 }
