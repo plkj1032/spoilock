@@ -139,3 +139,60 @@ export async function apiRequest(path, options = {}) {
     return request(path, requestOptions);
   }
 }
+
+async function request(path, { method = "GET", body, formData } = {}) {
+  if (body !== undefined && formData !== undefined) {
+    throw new Error("JSON과 FormData를 동시에 보낼 수 없습니다.");
+  }
+
+  const headers = {};
+
+  // JSON 전송에만 Content-Type 직접 설정
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    headers["X-XSRF-TOKEN"] = await csrfToken();
+  }
+
+  const requestBody =
+    formData !== undefined
+      ? formData
+      : body !== undefined
+        ? JSON.stringify(body)
+        : undefined;
+
+  const response = await fetch(path, {
+    method,
+    headers,
+    credentials: "include",
+    ...(requestBody !== undefined ? { body: requestBody } : {}),
+  });
+
+  const contentType = response.headers.get("content-type") || "";
+  let data = null;
+
+  if (response.status !== 204 && contentType.includes("application/json")) {
+    data = await response.json().catch(() => null);
+  }
+
+  if (!response.ok) {
+    const messages = {
+      400: "입력값 또는 파일 형식을 확인해 주세요.",
+      401: "로그인이 필요합니다.",
+      403: "요청 권한이 없습니다.",
+      404: "요청한 데이터를 찾지 못했습니다.",
+      409: "현재 상태에서 처리할 수 없는 요청입니다.",
+      413: "업로드 파일이 너무 큽니다.",
+      500: "서버 오류가 발생했습니다.",
+    };
+
+    throw new ApiError(
+      response.status,
+      messages[response.status] ?? "요청 처리에 실패했습니다.",
+    );
+  }
+
+  return data;
+}

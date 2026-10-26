@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { adminDramaApi } from "../api/adminDramaApi";
+import { Link } from "react-router-dom";
 import "../styles/AdminDramaPage.css";
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
@@ -393,6 +394,12 @@ export default function AdminDramaPage() {
                 </div>
 
                 <div className="admin-item-actions">
+                  <Link
+                    to={`/admin/dramas/${drama.id}/subtitles`}
+                    className="button button-outline"
+                  >
+                    자막 · AI 관리
+                  </Link>
                   {drama.status === "DRAFT" && (
                     <button
                       type="button"

@@ -61,4 +61,25 @@ public class SpoilerEvent extends AuditedEntity {
     )
     private IndexStatus indexStatus =
             IndexStatus.PENDING;
+
+    public static SpoilerEvent createManual(
+            Episode episode,
+            String eventSummary
+    )
+    {
+        SpoilerEvent event = new SpoilerEvent();
+
+        event.episode = episode;
+        event.eventSummary = eventSummary;
+        event.sourceType = SpoilerSourceType.MANUAL;
+        event.verified = false;
+        event.indexStatus = IndexStatus.PENDING;
+
+        return event;
+    }
+
+    public void review(boolean verified)
+    {
+        this.verified = verified;
+    }
 }
