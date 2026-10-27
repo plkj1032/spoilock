@@ -6,6 +6,7 @@ import MyDramaActions from "../components/drama/MyDramaActions";
 import "../styles/MyPage.css";
 import Pagination from "../components/common/Pagination";
 import useRoomPage from "../hooks/useRoomPage";
+import MySocialStats from "../components/common/MySocialStats";
 
 function getWatchStatus(drama) {
   const watched = Number(drama.watchedEpisodeNumber ?? 0);
@@ -232,25 +233,22 @@ export default function MyPage({ onProfileUpdated }) {
           </div>
         </div>
 
-        <dl className="mypage-stats">
-          <div>
-            <dt>시청 중</dt>
-            <dd>{watchingCount}</dd>
-          </div>
-          <div>
-            <dt>완주</dt>
-            <dd>{completedCount}</dd>
-          </div>
-          <div>
-            <dt>참여 채팅방</dt>
-            <dd>{roomsLoading ? "…" : roomsError ? "—" : roomTotalElements}</dd>
-          </div>
-        </dl>
+        <MySocialStats key={profile.id} currentUser={profile} />
       </section>
-
       <section className="mypage-panel" aria-labelledby="mypage-dramas">
         <div className="mypage-section-heading">
-          <h2 id="mypage-dramas">내 시청 목록</h2>
+          <div>
+            <h2 id="mypage-dramas">내 시청 목록</h2>
+
+            <div className="mypage-section-counts">
+              <span>
+                시청 중 <strong>{watchingCount}</strong>
+              </span>
+              <span>
+                완주 <strong>{completedCount}</strong>
+              </span>
+            </div>
+          </div>
           <Link className="mypage-link" to="/dramas">
             드라마 둘러보기 →
           </Link>
@@ -323,7 +321,18 @@ export default function MyPage({ onProfileUpdated }) {
 
       <section className="mypage-panel" aria-labelledby="mypage-rooms">
         <div className="mypage-section-heading">
-          <h2 id="mypage-rooms">참여 중인 채팅방</h2>
+          <div>
+            <h2 id="mypage-rooms">참여 중인 채팅방</h2>
+
+            <div className="mypage-section-counts">
+              <span>
+                전체
+                <strong>
+                  {roomsLoading ? "…" : roomsError ? "—" : roomTotalElements}
+                </strong>
+              </span>
+            </div>
+          </div>
 
           <Link className="mypage-link" to="/chat">
             채팅방 둘러보기 →

@@ -9,6 +9,8 @@ public record NotificationResponse(
         Long notificationId,
         NotificationType type,
         Long roomId,
+        Long senderUserId,
+        Long invitationId,
         String content,
         boolean read,
         LocalDateTime createdAt
@@ -18,6 +20,8 @@ public record NotificationResponse(
                 notification.getId(),
                 notification.getType(),
                 notification.getRoomId(),
+                notification.getSenderUserId(),
+                notification.getInvitationId(),
                 notification.getContent(),
                 notification.getReadAt() != null,
                 notification.getCreatedAt()
