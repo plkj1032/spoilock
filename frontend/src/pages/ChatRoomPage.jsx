@@ -66,6 +66,7 @@ export default function ChatRoomPage({ user }) {
   const [hasNext, setHasNext] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [kickingUserId, setKickingUserId] = useState(null);
+  const [kickError, setKickError] = useState("");
   const [showMemberPanel, setShowMemberPanel] = useState(false);
   const [showBanPanel, setShowBanPanel] = useState(false);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
@@ -496,13 +497,17 @@ export default function ChatRoomPage({ user }) {
   async function kickMember(targetUserId, nickname) {
     if (
       !canKick ||
+      !connected ||
       kickingRef.current ||
       bansLoading ||
       bansError ||
+      String(targetUserId) === String(user.id) ||
       bannedUserIds.has(String(targetUserId))
     ) {
       return;
     }
+
+    setKickError("");
 
     const reason = window.prompt(
       `${nickname}님을 강퇴합니다.\n사유를 입력하세요. 비워두어도 됩니다.`,
@@ -512,7 +517,9 @@ export default function ChatRoomPage({ user }) {
     if (reason === null) return;
 
     if (reason.length > 500) {
-      setError("강퇴 사유는 500자 이하로 입력해 주세요.");
+      const message = "강퇴 사유는 500자 이하로 입력해 주세요.";
+      setKickError(message);
+      setError(message);
       return;
     }
 
@@ -527,22 +534,31 @@ export default function ChatRoomPage({ user }) {
         reason.trim() || null,
       );
 
-      // 목록 재조회가 끝날 때까지 중복 클릭 방지
+      // 두 목록을 모두 갱신
       setBansLoading(true);
       setBanRevision((current) => current + 1);
+      refreshMembers();
     } catch (err) {
+      const messages = {
+        401: "로그인 상태를 확인해 주세요.",
+        403: "강퇴 권한이 없거나 인증 상태가 변경되었습니다.",
+        404: "현재 방에 참여 중인 회원이 아닙니다.",
+        409: "이미 강퇴된 회원입니다.",
+      };
+
+      const message = messages[err.status] || err.message;
+
+      // 참여자 모달과 기존 채팅 화면 양쪽에서 오류 확인 가능
+      setKickError(message);
+      setError(message);
+
       if (err.status === 409) {
-        setError("이미 강퇴된 회원입니다.");
         setBansLoading(true);
         setBanRevision((current) => current + 1);
-      } else {
-        setError(
-          err.status === 403
-            ? "강퇴 권한이 없거나 인증 상태가 변경되었습니다."
-            : err.status === 404
-              ? "현재 방에 참여 중인 회원이 아닙니다."
-              : err.message,
-        );
+      }
+
+      if (err.status === 404 || err.status === 409) {
+        refreshMembers();
       }
     } finally {
       kickingRef.current = false;
@@ -692,6 +708,12 @@ export default function ChatRoomPage({ user }) {
             error={membersError}
             connected={connected}
             currentUserId={user.id}
+            canKick={canKick}
+            kickingUserId={kickingUserId}
+            kickDisabled={bansLoading || Boolean(bansError)}
+            kickError={kickError || bansError}
+            bannedUserIds={bannedUserIds}
+            onKick={kickMember}
             currentUser={user}
             onClose={() => setShowMemberPanel(false)}
             onReload={refreshMembers}
@@ -842,12 +864,13 @@ export default function ChatRoomPage({ user }) {
                             kickMember(message.userId, message.nickname)
                           }
                           disabled={
+                            !connected ||
                             kickingUserId !== null ||
                             bansLoading ||
                             Boolean(bansError)
                           }
                         >
-                          {kickingUserId === message.userId
+                          {String(kickingUserId) === String(message.userId)
                             ? "처리 중…"
                             : "강퇴"}
                         </button>

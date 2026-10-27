@@ -230,10 +230,43 @@ export default function ChatReportReviewModal({
                   {review.reports.map((report) => (
                     <li key={report.reportId}>
                       <strong>{report.reasonLabel}</strong>
-                      <p>{report.detail || "상세 설명 없음"}</p>
-                      <time dateTime={report.createdAt}>
-                        {new Date(report.createdAt).toLocaleString("ko-KR")}
-                      </time>
+
+                      <p>신고 사유: {report.detail || "상세 설명 없음"}</p>
+
+                      <details>
+                        <summary>
+                          신고된 채팅 원문 보기 · 스포일러 포함 가능
+                        </summary>
+
+                        <p>
+                          <strong>{review.targetNickname}</strong>
+                          {" · 메시지 #"}
+                          {report.messageId}
+                        </p>
+
+                        <p>
+                          {report.messageContent ??
+                            "메시지 내용을 확인할 수 없습니다."}
+                        </p>
+
+                        {report.messageCreatedAt && (
+                          <p>
+                            작성 시각:{" "}
+                            <time dateTime={report.messageCreatedAt}>
+                              {new Date(report.messageCreatedAt).toLocaleString(
+                                "ko-KR",
+                              )}
+                            </time>
+                          </p>
+                        )}
+                      </details>
+
+                      <p>
+                        신고 시각:{" "}
+                        <time dateTime={report.createdAt}>
+                          {new Date(report.createdAt).toLocaleString("ko-KR")}
+                        </time>
+                      </p>
                     </li>
                   ))}
                 </ol>

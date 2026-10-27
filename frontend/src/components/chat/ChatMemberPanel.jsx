@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import FollowButton from "../common/FollowButton";
 
 import "../../styles/ChatMemberPanel.css";
+import "../../styles/ChatMemberActions.css";
 
 export default function ChatMemberPanel({
   members,
@@ -11,6 +12,12 @@ export default function ChatMemberPanel({
   error,
   connected,
   currentUserId,
+  canKick,
+  kickingUserId,
+  kickDisabled,
+  kickError,
+  bannedUserIds,
+  onKick,
   currentUser,
   onClose,
   onReload,
@@ -19,12 +26,19 @@ export default function ChatMemberPanel({
   const dialogRef = useRef(null);
   const titleId = useId();
 
+  const visibleMembers = members.filter(
+    (member) => !bannedUserIds?.has(String(member.userId)),
+  );
+
+  const onlineMembers = visibleMembers.filter((member) => member.online);
+  const offlineMembers = visibleMembers.filter((member) => !member.online);
   // 접속 중 / 미접속 사용자 분리
   const onlineMembers = members.filter((member) => member.online);
 
   const offlineMembers = members.filter((member) => !member.online);
 
   const ready = connected && !loading && !error;
+  const processing = kickingUserId != null;
 
   // =============================================
   // 모달 열기 및 포커스 복원
@@ -48,6 +62,10 @@ export default function ChatMemberPanel({
     };
   }, []);
 
+  function close() {
+    if (!processing) onClose();
+  }
+
   // =============================================
   // 참여자 프로필 열기
   // 부모 ChatRoomPage에서 모달 전환 처리
@@ -64,6 +82,8 @@ export default function ChatMemberPanel({
   // =============================================
   function renderMember(member) {
     const mine = String(member.userId) === String(currentUserId);
+    const initial = Array.from(member.nickname?.trim() || "?")[0];
+    const kicking = String(kickingUserId) === String(member.userId);
 
     const nickname = member.nickname || "사용자";
 
@@ -76,6 +96,10 @@ export default function ChatMemberPanel({
           member.online ? "is-online" : "is-offline"
         }`}
       >
+        <div className="chat-member-avatar" aria-hidden="true">
+          {initial}
+          {member.online && <span className="chat-member-avatar__dot" />}
+        </div>
         {/* 프로필 클릭 영역 */}
         <button
           type="button"
@@ -98,6 +122,22 @@ export default function ChatMemberPanel({
               {mine && <span className="chat-member-me">나</span>}
             </div>
 
+          <span className="chat-member-status">
+            {member.online ? "현재 방에 접속 중" : "현재 방에 미접속"}
+          </span>
+        </div>
+
+        {canKick && !mine && (
+          <button
+            type="button"
+            className="chat-member-kick"
+            disabled={processing || kickDisabled}
+            aria-label={`${member.nickname}님 강퇴`}
+            onClick={() => onKick(member.userId, member.nickname)}
+          >
+            {kicking ? "처리 중…" : "강퇴"}
+          </button>
+        )}
             <span className="chat-member-status">
               {member.online ? "현재 방에 접속 중" : "현재 방에 미접속"}
             </span>
@@ -127,7 +167,7 @@ export default function ChatMemberPanel({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        close();
       }}
     >
       {/* 상단 */}
@@ -137,7 +177,7 @@ export default function ChatMemberPanel({
 
           <p>
             {ready
-              ? `전체 ${members.length}명 · 접속 중 ${onlineMembers.length}명`
+              ? `전체 ${visibleMembers.length}명 · 접속 중 ${onlineMembers.length}명`
               : "이 채팅방에 가입한 회원 목록"}
           </p>
         </div>
@@ -145,7 +185,8 @@ export default function ChatMemberPanel({
         <button
           type="button"
           className="chat-member-close"
-          onClick={onClose}
+          onClick={close}
+          disabled={processing}
           aria-label="참여자 목록 닫기"
           autoFocus
         >
@@ -155,6 +196,12 @@ export default function ChatMemberPanel({
 
       {/* 본문 */}
       <div className="chat-member-dialog__body">
+        {canKick && kickError && (
+          <p className="chat-member-action-error" role="alert">
+            {kickError}
+          </p>
+        )}
+
         {/* 연결 끊김 */}
         {!connected && (
           <p className="chat-member-notice" role="status">
@@ -184,25 +231,20 @@ export default function ChatMemberPanel({
           </div>
         )}
 
-        {/* 참여자 없음 */}
-        {ready && members.length === 0 && (
+        {ready && visibleMembers.length === 0 && (
           <p className="chat-member-notice">현재 가입한 회원이 없습니다.</p>
         )}
 
-        {/* 접속 중 */}
         {ready && onlineMembers.length > 0 && (
           <section className="chat-member-group">
             <h3>접속 중 · {onlineMembers.length}</h3>
-
             <ul>{onlineMembers.map(renderMember)}</ul>
           </section>
         )}
 
-        {/* 미접속 */}
         {ready && offlineMembers.length > 0 && (
           <section className="chat-member-group">
             <h3>미접속 · {offlineMembers.length}</h3>
-
             <ul>{offlineMembers.map(renderMember)}</ul>
           </section>
         )}

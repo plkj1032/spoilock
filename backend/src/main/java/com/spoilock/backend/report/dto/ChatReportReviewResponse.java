@@ -10,16 +10,19 @@ public record ChatReportReviewResponse(
         Long roomId,
         String roomName,
         Long targetUserId,
-        String targetNickName,
+        String targetNickname,
         boolean processed,
         List<ReportItem> reports
 ) {
     public record ReportItem(
-            Long reporterId,
+            Long reportId,
             ReportReason reason,
             String reasonLabel,
             String detail,
-            LocalDateTime createdAt
-    ){
+            LocalDateTime createdAt,
+            Long messageId,
+            String messageContent,
+            LocalDateTime messageCreatedAt
+    ) {
     }
 }
