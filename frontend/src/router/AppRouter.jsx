@@ -8,6 +8,7 @@ import CommunityPage from "../pages/CommunityPage";
 import AdminDramaPage from "../pages/AdminDramaPage";
 import AdminSubtitlesPage from "../pages/AdminSubtitlesPage";
 import MyPage from "../pages/MyPage";
+import UserFeedPage from "../pages/UserFeedPage";
 
 export default function AppRouter({
   user,
@@ -66,6 +67,10 @@ export default function AppRouter({
         element={
           <CommunityPage user={user} onLogin={onLogin} onNotice={onNotice} />
         }
+      />
+      <Route
+        path="/community/users/:userId"
+        element={<UserFeedPage user={user} onLogin={onLogin} />}
       />
 
       {/* 관리자 드라마 관리 */}
