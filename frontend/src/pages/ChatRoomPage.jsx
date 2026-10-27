@@ -16,6 +16,7 @@ import useChatPresence from "../hooks/useChatPresence";
 import "../styles/ChatPresence.css";
 import ChatMemberPanel from "../components/chat/ChatMemberPanel";
 import ChatReportModal from "../components/chat/ChatReportModal";
+import UserFollowDialog from "../components/common/UserFollowDialog";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -78,6 +79,7 @@ export default function ChatRoomPage({ user }) {
   const [newMessageCount, setNewMessageCount] = useState(0);
   const seenMessageIdsRef = useRef(new Set());
   const [reportTarget, setReportTarget] = useState(null);
+  const [profileTarget, setProfileTarget] = useState(null);
   const {
     members,
     membersLoading,
@@ -599,6 +601,19 @@ export default function ChatRoomPage({ user }) {
     }
   }
 
+  function openMemberProfile(member) {
+    // 다른 모달이 떠 있지 않도록 정리
+    setShowMemberPanel(false);
+    setShowBanPanel(false);
+    setReportTarget(null);
+
+    // 선택한 사용자의 프로필 열기
+    setProfileTarget({
+      userId: member.userId,
+      nickname: member.nickname,
+    });
+  }
+
   return (
     <main className="chat-room-page">
       <section className="chat-room-shell" aria-label="채팅방">
@@ -677,8 +692,10 @@ export default function ChatRoomPage({ user }) {
             error={membersError}
             connected={connected}
             currentUserId={user.id}
+            currentUser={user}
             onClose={() => setShowMemberPanel(false)}
             onReload={refreshMembers}
+            onOpenProfile={openMemberProfile}
           />
         )}
 
@@ -707,6 +724,14 @@ export default function ChatRoomPage({ user }) {
             roomId={roomId}
             message={reportTarget}
             onClose={() => setReportTarget(null)}
+          />
+        )}
+        {profileTarget && (
+          <UserFollowDialog
+            key={profileTarget.userId}
+            target={profileTarget}
+            currentUser={user}
+            onClose={() => setProfileTarget(null)}
           />
         )}
         <div className="chat-message-area">
@@ -761,7 +786,22 @@ export default function ChatRoomPage({ user }) {
                 >
                   <div className="chat-message-header">
                     <div className="chat-author">
-                      <strong>{message.nickname}</strong>
+                      {mine ? (
+                        <strong>{message.nickname}</strong>
+                      ) : (
+                        <button
+                          type="button"
+                          className="chat-author-button"
+                          onClick={() => {
+                            setProfileTarget({
+                              userId: message.userId,
+                              nickname: message.nickname,
+                            });
+                          }}
+                        >
+                          {message.nickname}
+                        </button>
+                      )}
 
                       {onlineUserIds.has(String(message.userId)) && (
                         <span

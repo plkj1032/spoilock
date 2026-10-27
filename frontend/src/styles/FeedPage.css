@@ -1,0 +1,590 @@
+.feed-page {
+  max-width: 760px;
+  padding-bottom: 80px;
+  color: #eaf0fc;
+}
+
+.feed-page__heading {
+  margin: 12px 0 26px;
+}
+
+.feed-page__heading h1 {
+  margin: 8px 0;
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+.feed-page__heading p {
+  margin: 0;
+  color: #9caccc;
+  line-height: 1.7;
+}
+
+/* 피드 작성 */
+.feed-composer {
+  padding: 22px;
+  border: 1px solid #293a56;
+  border-radius: 18px;
+  background: #121e32;
+}
+
+.feed-composer__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.feed-composer__avatar,
+.feed-card__avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #416ff0, #6c4fda);
+  color: white;
+  font-weight: 800;
+}
+
+.feed-composer__heading strong {
+  font-size: 14px;
+}
+
+.feed-composer__heading p {
+  margin: 4px 0 0;
+  color: #95a6c6;
+  font-size: 12px;
+}
+
+.feed-composer__select,
+.feed-composer__textarea {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #334665;
+  border-radius: 10px;
+  background: #0c1729;
+  color: #edf2ff;
+  font: inherit;
+}
+
+.feed-composer__select {
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.feed-composer__textarea {
+  resize: vertical;
+  min-height: 110px;
+  padding: 14px;
+  line-height: 1.7;
+}
+
+.feed-composer__textarea::placeholder {
+  color: #7085a8;
+}
+
+.feed-composer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.feed-composer__bottom span {
+  color: #899bbb;
+  font-size: 12px;
+}
+
+.feed-composer__submit,
+.feed-composer__login,
+.feed-empty button,
+.feed-list__error button {
+  padding: 11px 21px;
+  border: none;
+  border-radius: 10px;
+  background: #416ce2;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-composer__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.feed-error {
+  margin: 12px 0 0;
+  color: #ffaaaa;
+  font-size: 13px;
+}
+
+/* 전체 / 팔로잉 탭 */
+.feed-page__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin: 24px 0 18px;
+  padding: 5px;
+  background: #121e32;
+  border: 1px solid #293a56;
+  border-radius: 13px;
+}
+
+.feed-page__tabs button {
+  padding: 13px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #99abc9;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-page__tabs button.is-active {
+  background: #2d4e9b;
+  color: white;
+}
+
+/* 피드 카드 */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feed-card {
+  padding: 22px;
+  border: 1px solid #293a56;
+  border-radius: 17px;
+  background: #121e32;
+  min-width: 0;
+}
+
+.feed-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed-card__author {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 11px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-card__author:hover strong {
+  color: #8cb0ff;
+  text-decoration: underline;
+}
+
+.feed-card__author-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 5px;
+}
+
+.feed-card__author-info strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.feed-card__author-info span {
+  color: #90a2c1;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.feed-card__follow {
+  flex-shrink: 0;
+}
+
+.feed-card__follow .button {
+  min-width: 85px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+
+.feed-card__body {
+  margin-top: 19px;
+}
+
+.feed-card__content {
+  margin: 0;
+  color: #e0e8f7;
+  font-size: 14px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 스포일러 보호 */
+.feed-card__protected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 30px 16px;
+  border: 1px solid #34496a;
+  border-radius: 13px;
+  background: #1a2a43;
+  text-align: center;
+}
+
+.feed-card__shield {
+  font-size: 27px;
+}
+
+.feed-card__protected strong {
+  font-size: 14px;
+}
+
+.feed-card__protected p {
+  margin: 0;
+  color: #9eb1d0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.feed-card__footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding-top: 17px;
+  margin-top: 19px;
+  border-top: 1px solid #293a56;
+  color: #94a8c9;
+  font-size: 12px;
+}
+
+.feed-card__pending {
+  margin-left: auto;
+  color: #eab96c;
+}
+
+/* 빈 화면 / 로딩 / 오류 */
+.feed-empty,
+.feed-list__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 45px 20px;
+  border: 1px dashed #344660;
+  border-radius: 15px;
+  background: #121e32;
+  text-align: center;
+}
+
+.feed-empty > span {
+  font-size: 28px;
+}
+
+.feed-empty strong {
+  font-size: 15px;
+}
+
+.feed-empty p,
+.feed-list__error p {
+  margin: 0;
+  color: #9bacc8;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.feed-list__loading,
+.feed-list__end {
+  padding: 20px;
+  color: #91a3c2;
+  text-align: center;
+  font-size: 13px;
+}
+
+.feed-list__sentinel {
+  width: 100%;
+  height: 1px;
+}
+
+@media (max-width: 560px) {
+  .feed-composer,
+  .feed-card {
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .feed-card__header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .feed-card__follow .button {
+    min-width: 70px;
+    padding: 8px;
+    font-size: 11px;
+  }
+
+  .feed-card__avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .feed-card__author-info span {
+    font-size: 11px;
+  }
+}
+
+/* =========================================
+   이미지 첨부 작성
+========================================= */
+.feed-composer__images {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed #3c5072;
+  border-radius: 12px;
+  background: #15243a;
+}
+
+.feed-composer__images label {
+  display: block;
+  margin-bottom: 10px;
+  color: #bdd0f0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feed-composer__images input {
+  width: 100%;
+  max-width: 100%;
+  color: #aebfdb;
+  font-size: 12px;
+}
+
+.feed-composer__selection {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #91b4ff;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   사진 캐러셀
+========================================= */
+.feed-card__media {
+  position: relative;
+  margin-top: 18px;
+  background: #080e18;
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.feed-card__media img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+.feed-card__media-prev,
+.feed-card__media-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(14, 23, 40, 0.85);
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.feed-card__media-prev {
+  left: 12px;
+}
+
+.feed-card__media-next {
+  right: 12px;
+}
+
+.feed-card__media-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 11px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 12px;
+}
+
+/* =========================================
+   좋아요 / 댓글
+========================================= */
+.feed-card__action {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #aabbd8;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-card__action:hover {
+  color: #f8fafc;
+}
+
+.feed-card__action.is-liked {
+  color: #ff708d;
+}
+
+.feed-card__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feed-card__comments {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #2a3a55;
+}
+
+.feed-card__comments h3 {
+  margin: 0 0 15px;
+  font-size: 15px;
+}
+
+.feed-card__comment {
+  padding: 12px;
+  margin-bottom: 9px;
+  border-radius: 11px;
+  background: #1c2a43;
+}
+
+.feed-card__comment strong {
+  font-size: 13px;
+  color: #e5edff;
+}
+
+.feed-card__comment p {
+  margin: 7px 0 0;
+  color: #b6c6df;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.feed-card__comment-empty,
+.feed-card__status {
+  color: #91a5c6;
+  font-size: 12px;
+  text-align: center;
+}
+
+.feed-card__comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.feed-card__comment-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #3a4b69;
+  border-radius: 9px;
+  background: #0c1627;
+  color: white;
+}
+
+.feed-card__comment-form button {
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 9px;
+  background: #416ce2;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-card__comment-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feed-card__more {
+  display: block;
+  margin: 12px auto;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: #8eafff;
+  cursor: pointer;
+}
+
+/* =========================================
+   사용자별 피드
+========================================= */
+.feed-page__back {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: #91b3ff;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.feed-page__back:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .feed-card__media-prev,
+  .feed-card__media-next {
+    width: 30px;
+    height: 30px;
+    font-size: 22px;
+  }
+
+  .feed-card__comment-form {
+    gap: 5px;
+  }
+
+  .feed-card__comment-form button {
+    padding: 9px 11px;
+  }
+}
+.feed-composer__selection ul {
+  margin: 8px 0;
+  padding-left: 18px;
+  color: #aebfdb;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.feed-composer__selection button {
+  padding: 6px 10px;
+  border: 1px solid #405577;
+  border-radius: 8px;
+  background: #253755;
+  color: #e2eaff;
+  cursor: pointer;
+}

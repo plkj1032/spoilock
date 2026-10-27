@@ -1,0 +1,321 @@
+.user-follow-dialog {
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(850px, 88dvh);
+  margin: auto;
+  padding: 26px 24px;
+  position: fixed;
+  overflow-y: auto;
+
+  border: 1px solid #32435f;
+  border-radius: 22px;
+  background: #121e32;
+  color: #f8fafc;
+  text-align: center;
+
+  box-shadow: 0 25px 90px rgba(0, 0, 0, 0.5);
+}
+
+.user-follow-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.user-follow-dialog__close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #263752;
+  color: #c5d1e5;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.user-follow-dialog__close:hover {
+  background: #344967;
+}
+
+/* 프로필 상단 */
+.user-follow-dialog__profile {
+  padding-top: 12px;
+}
+
+.user-follow-dialog__avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #437cf3, #7051e7);
+  color: #fff;
+  font-size: 29px;
+  font-weight: 800;
+}
+
+.user-follow-dialog__profile h2 {
+  margin: 0;
+  font-size: 23px;
+  color: #f8fafc;
+}
+
+.user-follow-dialog__profile p {
+  margin: 8px 0 0;
+  color: #95a7c4;
+  font-size: 13px;
+}
+
+/* 3개 통계 */
+.user-follow-dialog__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.user-follow-dialog__stat {
+  min-width: 0;
+  padding: 15px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #2b3d58;
+  border-radius: 12px;
+  background: #1c2a43;
+}
+
+.user-follow-dialog__stat strong {
+  font-size: 21px;
+  color: white;
+  font-variant-numeric: tabular-nums;
+}
+
+.user-follow-dialog__stat span {
+  font-size: 12px;
+  color: #a4b6d0;
+}
+
+.user-follow-dialog__stat .user-follow-dialog__pending {
+  font-size: 12px;
+  color: #8fa5c7;
+}
+
+.user-follow-dialog__error {
+  margin: 12px 0;
+  color: #ffaaaa;
+  font-size: 12px;
+}
+
+/* 팔로우 버튼 */
+.user-follow-dialog__actions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.user-follow-dialog__actions .button {
+  min-width: 190px;
+  min-height: 42px;
+}
+
+.user-follow-dialog__me {
+  margin: 20px 0 0;
+  font-size: 13px;
+  color: #95a7c4;
+}
+
+.follow-button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.follow-button-error {
+  margin: 0;
+  color: #ffaaaa;
+  font-size: 11px;
+}
+
+/* 최근 피드 */
+.user-follow-dialog__feeds {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #2c3e59;
+  text-align: left;
+}
+
+.user-follow-dialog__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.user-follow-dialog__section-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.user-follow-dialog__section-heading span {
+  color: #8196b7;
+  font-size: 12px;
+}
+
+.user-follow-dialog__feed-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 27px 14px;
+  border: 1px dashed #344660;
+  border-radius: 14px;
+  background: #19273d;
+  text-align: center;
+}
+
+.user-follow-dialog__feed-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #273b5b;
+  color: #a8c7ff;
+  font-size: 28px;
+}
+
+.user-follow-dialog__feed-placeholder strong {
+  font-size: 13px;
+}
+
+.user-follow-dialog__feed-placeholder p {
+  max-width: 245px;
+  margin: 0;
+  color: #9bacbf;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.user-follow-dialog__all-feeds {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid #344660;
+  border-radius: 10px;
+  background: #19273d;
+  color: #95a7c4;
+  font-weight: 700;
+}
+
+.user-follow-dialog__all-feeds:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* 채팅 닉네임 클릭 */
+.chat-author-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-author-button:hover {
+  text-decoration: underline;
+}
+
+.chat-author-button:focus-visible {
+  outline: 2px solid #416ce2;
+  outline-offset: 3px;
+}
+
+/* 모바일 */
+@media (max-width: 480px) {
+  .user-follow-dialog {
+    padding: 24px 15px;
+    border-radius: 16px;
+  }
+
+  .user-follow-dialog__stat {
+    padding: 13px 3px;
+  }
+
+  .user-follow-dialog__stat strong {
+    font-size: 18px;
+  }
+
+  .user-follow-dialog__profile h2 {
+    font-size: 20px;
+  }
+}
+.user-follow-dialog__feed-status {
+  padding: 12px;
+  color: #99accb;
+  font-size: 12px;
+  text-align: center;
+}
+
+.user-follow-dialog__feed-preview {
+  margin-bottom: 9px;
+  padding: 13px;
+  border: 1px solid #2b3e5d;
+  border-radius: 11px;
+  background: #19283f;
+}
+
+.user-follow-dialog__feed-preview span {
+  color: #91b2ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.user-follow-dialog__feed-preview p {
+  margin: 8px 0 0;
+  color: #d2ddef;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.user-follow-dialog__all-feeds {
+  box-sizing: border-box;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  color: #acc7ff;
+}
+
+.user-follow-dialog__all-feeds:hover {
+  border-color: #658fe9;
+  background: #263a5b;
+}
+.user-follow-dialog__all-feeds {
+  box-sizing: border-box;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  color: #acc7ff;
+}
+
+.user-follow-dialog__all-feeds:hover {
+  border-color: #658fe9;
+  background: #263a5b;
+}

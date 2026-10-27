@@ -37,4 +37,15 @@ public class PostLike extends CreatedAtEntity {
             nullable = false
     )
     private Post post;
+
+    public static PostLike create(User user, Post post)
+    {
+        PostLike like = new PostLike();
+
+        like.id = new PostLikeId(user.getId(), post.getId());
+        like.user = user;
+        like.post = post;
+
+        return like;
+    }
 }

@@ -215,3 +215,155 @@
     max-height: calc(100dvh - 32px);
   }
 }
+/* 참여자 목록의 팔로우 버튼 */
+.chat-member-follow {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.chat-member-follow .button {
+  min-width: 85px;
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.chat-member-follow .follow-button-error {
+  max-width: 105px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.chat-member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chat-member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .chat-member-item {
+    gap: 8px;
+  }
+
+  .chat-member-follow .button {
+    min-width: 72px;
+    padding: 7px;
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   참여자 프로필 클릭 영역
+========================================== */
+
+.chat-member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chat-member-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+
+  padding: 8px;
+  margin: -8px 0 -8px -8px;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.chat-member-profile-button:hover {
+  background: rgba(84, 122, 205, 0.12);
+  border-color: rgba(111, 151, 238, 0.22);
+}
+
+.chat-member-profile-button:hover .chat-member-name strong {
+  color: #88aeff;
+  text-decoration: underline;
+}
+
+.chat-member-profile-button:focus-visible {
+  outline: 2px solid #6b96ff;
+  outline-offset: 2px;
+}
+
+.chat-member-profile-button .chat-member-avatar {
+  flex-shrink: 0;
+}
+
+.chat-member-profile-button .chat-member-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-member-profile-button .chat-member-name {
+  min-width: 0;
+}
+
+.chat-member-profile-button .chat-member-name strong {
+  overflow-wrap: anywhere;
+}
+
+/* 팔로우 버튼은 프로필 클릭 영역과 분리 */
+.chat-member-follow {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.chat-member-follow .button {
+  min-width: 80px;
+  padding: 8px 11px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 참여자 안내 문구 */
+.chat-member-profile-hint {
+  margin: 18px 0 0;
+  padding: 12px;
+  border-top: 1px solid #2c3e59;
+  color: #96a9c7;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .chat-member-item,
+  .chat-member-profile-button {
+    gap: 8px;
+  }
+
+  .chat-member-profile-button {
+    padding: 6px;
+    margin: -6px 0 -6px -6px;
+  }
+
+  .chat-member-follow .button {
+    min-width: 72px;
+    padding: 7px;
+    font-size: 11px;
+  }
+}
