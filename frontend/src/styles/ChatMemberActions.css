@@ -1,0 +1,40 @@
+.chat-member-dialog .chat-member-info {
+  flex: 1;
+}
+
+.chat-member-kick {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 6px 11px;
+  border: 1px solid #754858;
+  border-radius: 8px;
+  background: #362436;
+  color: #f0a8b7;
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.chat-member-kick:hover:not(:disabled) {
+  border-color: #ce768c;
+  background: #563044;
+}
+
+.chat-member-dialog button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chat-member-action-error {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid #754858;
+  border-radius: 10px;
+  background: #362436;
+  color: #ffb4c3;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}

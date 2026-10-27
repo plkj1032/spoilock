@@ -110,7 +110,10 @@ public class ChatReportReviewService {
                                     report.getReason(),
                                     report.getReason().getLabel(),
                                     report.getDetail(),
-                                    report.getCreatedAt()
+                                    report.getCreatedAt(),
+                                    report.getMessage().getId(),
+                                    report.getMessage().getContent(),
+                                    report.getMessage().getCreatedAt()
                             )
                     )
                     .toList();

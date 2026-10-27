@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
+
 import "../../styles/ChatMemberPanel.css";
+import "../../styles/ChatMemberActions.css";
 
 export default function ChatMemberPanel({
   members,
@@ -8,15 +10,26 @@ export default function ChatMemberPanel({
   error,
   connected,
   currentUserId,
+  canKick,
+  kickingUserId,
+  kickDisabled,
+  kickError,
+  bannedUserIds,
+  onKick,
   onClose,
   onReload,
 }) {
   const dialogRef = useRef(null);
   const titleId = useId();
 
-  const onlineMembers = members.filter((member) => member.online);
-  const offlineMembers = members.filter((member) => !member.online);
+  const visibleMembers = members.filter(
+    (member) => !bannedUserIds?.has(String(member.userId)),
+  );
+
+  const onlineMembers = visibleMembers.filter((member) => member.online);
+  const offlineMembers = visibleMembers.filter((member) => !member.online);
   const ready = connected && !loading && !error;
+  const processing = kickingUserId != null;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -33,9 +46,14 @@ export default function ChatMemberPanel({
     };
   }, []);
 
+  function close() {
+    if (!processing) onClose();
+  }
+
   function renderMember(member) {
     const mine = String(member.userId) === String(currentUserId);
     const initial = Array.from(member.nickname?.trim() || "?")[0];
+    const kicking = String(kickingUserId) === String(member.userId);
 
     return (
       <li
@@ -46,7 +64,6 @@ export default function ChatMemberPanel({
       >
         <div className="chat-member-avatar" aria-hidden="true">
           {initial}
-
           {member.online && <span className="chat-member-avatar__dot" />}
         </div>
 
@@ -60,6 +77,18 @@ export default function ChatMemberPanel({
             {member.online ? "현재 방에 접속 중" : "현재 방에 미접속"}
           </span>
         </div>
+
+        {canKick && !mine && (
+          <button
+            type="button"
+            className="chat-member-kick"
+            disabled={processing || kickDisabled}
+            aria-label={`${member.nickname}님 강퇴`}
+            onClick={() => onKick(member.userId, member.nickname)}
+          >
+            {kicking ? "처리 중…" : "강퇴"}
+          </button>
+        )}
       </li>
     );
   }
@@ -71,16 +100,15 @@ export default function ChatMemberPanel({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        close();
       }}
     >
       <header className="chat-member-dialog__header">
         <div>
           <h2 id={titleId}>참여자</h2>
-
           <p>
             {ready
-              ? `전체 ${members.length}명 · 접속 중 ${onlineMembers.length}명`
+              ? `전체 ${visibleMembers.length}명 · 접속 중 ${onlineMembers.length}명`
               : "이 채팅방에 가입한 회원 목록"}
           </p>
         </div>
@@ -88,7 +116,8 @@ export default function ChatMemberPanel({
         <button
           type="button"
           className="chat-member-close"
-          onClick={onClose}
+          onClick={close}
+          disabled={processing}
           aria-label="참여자 목록 닫기"
           autoFocus
         >
@@ -97,6 +126,12 @@ export default function ChatMemberPanel({
       </header>
 
       <div className="chat-member-dialog__body">
+        {canKick && kickError && (
+          <p className="chat-member-action-error" role="alert">
+            {kickError}
+          </p>
+        )}
+
         {!connected && (
           <p className="chat-member-notice" role="status">
             채팅에 다시 연결하면 참여자 목록을 확인할 수 있습니다.
@@ -122,7 +157,7 @@ export default function ChatMemberPanel({
           </div>
         )}
 
-        {ready && members.length === 0 && (
+        {ready && visibleMembers.length === 0 && (
           <p className="chat-member-notice">현재 가입한 회원이 없습니다.</p>
         )}
 
