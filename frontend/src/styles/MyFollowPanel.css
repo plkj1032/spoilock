@@ -1,0 +1,153 @@
+.my-follow-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.my-follow-counts button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid #344a6a;
+  border-radius: 14px;
+  background: #192940;
+  color: #c5d5ed;
+  text-align: left;
+}
+
+.my-follow-counts button:hover,
+.my-follow-counts button[aria-pressed="true"] {
+  border-color: #7a9df1;
+  background: #223959;
+}
+
+.my-follow-counts span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.my-follow-counts strong {
+  color: #f2f6ff;
+  font-size: 28px;
+}
+
+.my-follow-counts small {
+  color: #9bafcf;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.my-follow-collapse {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: #a9c3ff;
+  font-size: 12px;
+}
+
+.my-follow-list {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-follow-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid #2b3d59;
+}
+
+.my-follow-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #405b83;
+  border-radius: 15px;
+  background: #263e62;
+  color: #deebff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.my-follow-person {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.my-follow-person strong {
+  color: #edf3ff;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.my-follow-person a {
+  color: #a6bfff;
+  font-size: 12px;
+}
+
+.my-follow-person a:hover {
+  text-decoration: underline;
+}
+
+.my-follow-item .follow-button-wrapper {
+  max-width: 100%;
+}
+
+.my-follow-item .follow-button-error {
+  max-width: 240px;
+  color: #ffb2bb;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.my-follow-status {
+  margin: 0;
+  padding: 28px 10px;
+  color: #a2b5d0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.my-follow-error {
+  margin-top: 16px;
+  color: #ffb2bb;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.my-follow-error button {
+  padding: 8px 12px;
+  border: 1px solid #49638d;
+  border-radius: 8px;
+  background: #1b2d47;
+  color: #d3e2ff;
+}
+
+@media (max-width: 420px) {
+  .my-follow-counts {
+    gap: 10px;
+  }
+
+  .my-follow-counts button {
+    padding: 15px;
+  }
+
+  .my-follow-counts small {
+    font-size: 11px;
+  }
+
+  .my-follow-item {
+    gap: 10px;
+  }
+}

@@ -21,6 +21,14 @@ import java.util.Objects;
                                 "source_report_id",
                                 "notification_type"
                         }
+                ),
+                @UniqueConstraint(
+                        name = "uk_notification_receiver_invitation_type",
+                        columnNames = {
+                                "receiver_id",
+                                "invitation_id",
+                                "notification_type"
+                        }
                 )
         }
 )
@@ -32,9 +40,11 @@ public class Notification extends CreatedAtEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 알림을 받는 회원
     @Column(name = "receiver_id", nullable = false)
     private Long receiverId;
+
+    @Column(name = "sender_user_id")
+    private Long senderUserId;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -44,26 +54,28 @@ public class Notification extends CreatedAtEntity {
     )
     private NotificationType type;
 
-    // 신고가 발생한 방
-    @Column(name = "room_id", nullable = false)
+    @Column(name = "room_id")
     private Long roomId;
 
-    // 피신고자
-    @Column(name = "target_user_id", nullable = false)
+    @Column(name = "target_user_id")
     private Long targetUserId;
 
-    // 이 알림을 발생시킨 신고
-    @Column(name = "source_report_id", nullable = false)
+    @Column(name = "source_report_id")
     private Long sourceReportId;
 
-    // 알림 생성 당시의 안내 문구
+    @Column(name = "invitation_id")
+    private Long invitationId;
+
     @Column(name = "content", nullable = false, length = 1000)
     private String content;
 
-    // null이면 안 읽은 알림
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
+    @Column(name = "dismissed_at")
+    private LocalDateTime dismissedAt;
+
+    // 기존 신고 알림 생성 메서드
     public static Notification create(
             Long receiverId,
             NotificationType type,
@@ -72,22 +84,69 @@ public class Notification extends CreatedAtEntity {
             Long sourceReportId,
             String content
     ) {
-        if (content == null
-                || content.isBlank()
-                || content.length() > 1000) {
+        if (type != NotificationType.CHAT_REPORT_RECEIVED
+                && type != NotificationType.CHAT_REPORT_THRESHOLD) {
             throw new IllegalArgumentException(
-                    "알림 내용은 1자 이상 1000자 이하로 입력해 주세요."
+                    "신고 알림 타입만 사용할 수 있습니다."
             );
         }
 
-        Notification notification = new Notification();
+        Notification notification = base(
+                receiverId,
+                type,
+                content
+        );
 
-        notification.receiverId = Objects.requireNonNull(receiverId);
-        notification.type = Objects.requireNonNull(type);
         notification.roomId = Objects.requireNonNull(roomId);
         notification.targetUserId = Objects.requireNonNull(targetUserId);
         notification.sourceReportId = Objects.requireNonNull(sourceReportId);
-        notification.content = content;
+
+        // 신고자의 신원은 알림 발신자로 저장하지 않는다.
+        return notification;
+    }
+
+    public static Notification createFollow(
+            Long receiverId,
+            Long senderUserId,
+            String senderNickname
+    ) {
+        validateSender(receiverId, senderUserId);
+        requireText(senderNickname, "발신자 닉네임");
+
+        Notification notification = base(
+                receiverId,
+                NotificationType.FOLLOW_RECEIVED,
+                senderNickname + "님이 회원님을 팔로우했습니다."
+        );
+
+        notification.senderUserId = senderUserId;
+
+        return notification;
+    }
+
+    // 실제 초대 기록 생성 후 초대 서비스에서 호출
+    public static Notification createInvitation(
+            Long receiverId,
+            Long senderUserId,
+            String senderNickname,
+            Long roomId,
+            String roomName,
+            Long invitationId
+    ) {
+        validateSender(receiverId, senderUserId);
+        requireText(senderNickname, "발신자 닉네임");
+        requireText(roomName, "채팅방 이름");
+
+        Notification notification = base(
+                receiverId,
+                NotificationType.CHAT_ROOM_INVITATION,
+                senderNickname + "님이 ‘" + roomName
+                        + "’ 채팅방에 초대했습니다."
+        );
+
+        notification.senderUserId = senderUserId;
+        notification.roomId = Objects.requireNonNull(roomId);
+        notification.invitationId = Objects.requireNonNull(invitationId);
 
         return notification;
     }
@@ -95,6 +154,57 @@ public class Notification extends CreatedAtEntity {
     public void markAsRead() {
         if (readAt == null) {
             readAt = LocalDateTime.now();
+        }
+    }
+
+    // 원본 신고·초대 기록은 유지하고 알림창에서만 숨김
+    public void dismiss() {
+        if (dismissedAt == null) {
+            dismissedAt = LocalDateTime.now();
+        }
+    }
+
+    private static Notification base(
+            Long receiverId,
+            NotificationType type,
+            String content
+    ) {
+        requireText(content, "알림 내용");
+
+        if (content.length() > 1000) {
+            throw new IllegalArgumentException(
+                    "알림 내용은 1000자 이하로 입력해 주세요."
+            );
+        }
+
+        Notification notification = new Notification();
+
+        notification.receiverId = Objects.requireNonNull(receiverId);
+        notification.type = Objects.requireNonNull(type);
+        notification.content = content;
+
+        return notification;
+    }
+
+    private static void validateSender(
+            Long receiverId,
+            Long senderUserId
+    ) {
+        Objects.requireNonNull(receiverId);
+        Objects.requireNonNull(senderUserId);
+
+        if (receiverId.equals(senderUserId)) {
+            throw new IllegalArgumentException(
+                    "자기 자신에게 이 알림을 보낼 수 없습니다."
+            );
+        }
+    }
+
+    private static void requireText(String value, String name) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(
+                    name + "이 필요합니다."
+            );
         }
     }
 }
