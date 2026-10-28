@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface RefreshSessionRepositoryCustom {
 
+    Optional<Long> findUserIdByTokenHash(String hash);
+
     Optional<RefreshSession> findByHashForUpdate(String hash);
 
     long revokeAll(Long userId, LocalDateTime now);

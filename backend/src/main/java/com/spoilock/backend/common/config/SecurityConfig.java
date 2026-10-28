@@ -63,12 +63,17 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
-                                "/api/auth/logout"
+                                "/api/auth/logout",
+
+                                "/api/auth/email/send",
+                                "/api/auth/email/verify"
                         ).permitAll()
 
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/auth/csrf",
+                                "/api/auth/nickname/check",
+                                "/api/terms/current",
                                 "/api/dramas",
                                 "/api/dramas/**"
                         ).permitAll()
@@ -105,7 +110,10 @@ public class SecurityConfig {
 
             if("GET".equals(request.getMethod())
                 && (path.equals("/api/dramas")
-                || path.startsWith("/api/dramas/"))
+                || path.startsWith("/api/dramas/")
+                || path.equals("/api/auth/nickname/check")
+                || path.equals("/api/terms/current")
+            )
             )
             {
                 return null;
@@ -118,7 +126,10 @@ public class SecurityConfig {
                     || path.equals("/api/auth/signup")
                     || path.equals("/api/auth/csrf")
                     || path.equals("/api/auth/refresh")
-                    || path.equals("/api/auth/logout")) {
+                    || path.equals("/api/auth/logout")
+                    || path.equals("/api/auth/email/send")
+                    || path.equals("/api/auth/email/verify")
+            ) {
                 return null;
             }
 

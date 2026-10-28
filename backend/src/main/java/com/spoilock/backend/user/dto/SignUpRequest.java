@@ -1,25 +1,34 @@
+
 package com.spoilock.backend.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 public record SignUpRequest(
 
-        @NotBlank(message = "이메일을 입력해주세요.")
-        @Email(message = "이메일 형식이 올바르지 않습니다.")
+        @NotBlank
+        @Email
         @Size(max = 255)
         String email,
 
-        @NotBlank(message = "비밀번호를 입력해주세요.")
-        @Size(min = 8, max = 64,
-                message = "비밀번호는 8~64자로 입력해주세요.")
+        @NotBlank
+        @Size(min = 8, max = 64)
         String password,
 
-        @NotBlank(message = "닉네임을 입력해주세요.")
-        @Size(min = 2, max = 20,
-                message = "닉네임은 2~20자로 입력해주세요.")
-        String nickname
+        @NotBlank
+        @Size(min = 2, max = 20)
+        String nickname,
 
+        @NotBlank
+        String signupProof,
+
+        // 사용자가 동의한 현재 약관 ID 목록
+        @NotNull
+        @Size(max = 10)
+        List<Long> acceptedTermsIds
 ) {
 }
