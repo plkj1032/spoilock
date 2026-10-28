@@ -68,8 +68,35 @@ public record SpoilerApiProperties(
         Demo demo,
 
         @DefaultValue
-        Recovery recovery
+        Recovery recovery,
+
+        // 관리자 기능(자막 분석·사건 관리) 연동
+        @DefaultValue
+        Admin admin
 ) {
+
+    /** Python 관리자 API (/admin/subtitles/jobs, /admin/events, /kb/episodes) 연동 설정 */
+    public record Admin(
+            // Python .env 의 ADMIN_TOKEN 과 같은 값. X-Admin-Token 헤더로 전송 (비우면 헤더 생략)
+            String token,
+
+            // 자막 업로드·사건 수정 응답 제한시간 (판정용보다 길게)
+            @DefaultValue("30000")
+            long readTimeoutMs,
+
+            // 자막 언어 (현재 영어 자막만 운영)
+            @DefaultValue("en")
+            String language,
+
+            // 진행 중인 자막 분석 작업 상태 조회 주기
+            @DefaultValue("5000")
+            long pollIntervalMs,
+
+            // 작품별 사건 색인 회차 목록 캐시 시간
+            @DefaultValue("60")
+            long kbCacheSeconds
+    ) {
+    }
 
     public record DramaKb(
             // Python 사건 DB의 drama_id (Spring drama_id와 다를 수 있음)
@@ -111,7 +138,10 @@ public record SpoilerApiProperties(
     ) {
     }
 
-    /** Spring 작품 ID에 연결된 Python 사건 DB. 없으면 null (분석 보류) */
+    /**
+     * application.properties 에 직접 적은 작품 연결 (dramas[n] / demo).
+     * 기본 연결은 SpoilerKbService 가 Python /kb/episodes 로 조회하며, 이 값은 수동 지정·장애 시 대체용.
+     */
     public DramaKb findDrama(Long dramaId) {
         if (dramaId == null) {
             return null;

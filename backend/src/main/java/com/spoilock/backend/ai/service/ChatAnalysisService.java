@@ -27,15 +27,18 @@ public class ChatAnalysisService {
     private final ChatAnalysisStateService stateService;
     private final ChatRedisPublisher chatRedisPublisher;
     private final SpoilerVerdictPolicy policy;
+    private final SpoilerKbService kbService;
 
     public ChatAnalysisService(
             SpoilerApiClient spoilerApiClient,
             SpoilerApiProperties properties,
             ChatAnalysisStateService stateService,
-            ChatRedisPublisher chatRedisPublisher
+            ChatRedisPublisher chatRedisPublisher,
+            SpoilerKbService kbService
     ) {
         this.spoilerApiClient = spoilerApiClient;
         this.properties = properties;
+        this.kbService = kbService;
         this.stateService = stateService;
         this.chatRedisPublisher = chatRedisPublisher;
         this.policy = new SpoilerVerdictPolicy(
@@ -85,7 +88,8 @@ public class ChatAnalysisService {
 
     private AnalysisDecision judge(ChatAnalysisRequested event) {
 
-        SpoilerApiProperties.DramaKb kb = properties.findDrama(event.dramaId());
+        // 작품별 판정 범위: Python 에 사건이 등록된 회차 (관리자 페이지에서 적재·검수)
+        SpoilerApiProperties.DramaKb kb = kbService.findDrama(event.dramaId());
 
         if (kb == null || kb.kbDramaId() == null
                 || kb.episodes() == null || kb.episodes().isEmpty()) {
