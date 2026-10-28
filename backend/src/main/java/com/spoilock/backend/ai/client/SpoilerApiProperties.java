@@ -84,6 +84,10 @@ public record SpoilerApiProperties(
             @DefaultValue("30000")
             long readTimeoutMs,
 
+            // 영상(최대 100MB) 전송 제한시간. 전송 시간까지 포함되므로 길게
+            @DefaultValue("600000")
+            long uploadTimeoutMs,
+
             // 자막 언어 (현재 영어 자막만 운영)
             @DefaultValue("en")
             String language,

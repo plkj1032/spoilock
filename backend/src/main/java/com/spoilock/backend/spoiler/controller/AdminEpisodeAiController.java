@@ -4,6 +4,7 @@ import com.spoilock.backend.spoiler.dto.*;
 import com.spoilock.backend.spoiler.service.AdminEpisodeAiService;
 import com.spoilock.backend.spoiler.service.SpoilerEventAdminService;
 import com.spoilock.backend.spoiler.service.SubtitleAnalysisService;
+import com.spoilock.backend.spoiler.service.VideoAnalysisService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class AdminEpisodeAiController {
     private final AdminEpisodeAiService service;
     private final SubtitleAnalysisService analysisService;
     private final SpoilerEventAdminService eventService;
+    private final VideoAnalysisService videoAnalysisService;
 
     // ============================================
     // 자막·분석
@@ -61,6 +63,16 @@ public class AdminEpisodeAiController {
             @RequestParam(defaultValue = "false") boolean replace
     ) {
         return analysisService.requestAnalysis(episodeId, replace);
+    }
+
+    // 등록된 MP4 로 분석 (음성 인식 → 자막 → 사건 추출). replace=true: 재분석
+    @PostMapping("/episodes/{episodeId}/analysis/video-request")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public AdminEpisodeAiResponse requestVideoAnalysis(
+            @PathVariable Long episodeId,
+            @RequestParam(defaultValue = "false") boolean replace
+    ) {
+        return videoAnalysisService.requestAnalysis(episodeId, replace);
     }
 
     // ============================================

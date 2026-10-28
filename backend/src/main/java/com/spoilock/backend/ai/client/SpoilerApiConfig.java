@@ -42,6 +42,16 @@ public class SpoilerApiConfig {
      */
     @Bean
     public RestClient spoilerAdminRestClient(SpoilerApiProperties properties) {
+        return adminClient(properties, properties.admin().readTimeoutMs());
+    }
+
+    /** 영상 전송 전용 (전송 시간이 길어 제한시간을 따로 둠) */
+    @Bean
+    public RestClient spoilerUploadRestClient(SpoilerApiProperties properties) {
+        return adminClient(properties, properties.admin().uploadTimeoutMs());
+    }
+
+    private static RestClient adminClient(SpoilerApiProperties properties, long timeoutMs) {
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
@@ -50,9 +60,7 @@ public class SpoilerApiConfig {
 
         JdkClientHttpRequestFactory requestFactory =
                 new JdkClientHttpRequestFactory(httpClient);
-        requestFactory.setReadTimeout(
-                Duration.ofMillis(properties.admin().readTimeoutMs())
-        );
+        requestFactory.setReadTimeout(Duration.ofMillis(timeoutMs));
 
         RestClient.Builder builder = RestClient.builder()
                 .baseUrl(properties.baseUrl())

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -13,6 +14,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,13 +33,16 @@ public class SpoilerAdminClient {
             };
 
     private final RestClient restClient;
+    private final RestClient uploadClient;
     private final SpoilerApiProperties properties;
 
     public SpoilerAdminClient(
             @Qualifier("spoilerAdminRestClient") RestClient restClient,
+            @Qualifier("spoilerUploadRestClient") RestClient uploadClient,
             SpoilerApiProperties properties
     ) {
         this.restClient = restClient;
+        this.uploadClient = uploadClient;
         this.properties = properties;
     }
 
@@ -91,6 +96,59 @@ public class SpoilerAdminClient {
                 .uri("/admin/subtitles/jobs/{jobId}/retry", jobId)
                 .retrieve()
                 .body(KbIngestJob.class));
+    }
+
+    // ============================================
+    // 영상 분석 작업 (음성 인식 → 자막 → 사건 추출)
+    // ============================================
+
+    /**
+     * 저장된 MP4 를 보내 영상 분석 작업 생성.
+     * 파일은 메모리에 올리지 않고 디스크에서 읽으며 전송한다.
+     */
+    public KbVideoJob createVideoJob(
+            Path video,
+            long dramaId,
+            long episodeId,
+            int episodeNumber,
+            boolean replace
+    ) {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+
+        String filename = "episode-" + episodeId + ".mp4";
+        form.add("file", new FileSystemResource(video) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+        form.add("drama_id", String.valueOf(dramaId));
+        form.add("episode_id", String.valueOf(episodeId));
+        form.add("episode", String.valueOf(episodeNumber));
+        form.add("language", properties.admin().language());
+        form.add("replace", String.valueOf(replace));
+
+        return call(() -> uploadClient.post()
+                .uri("/admin/videos")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(form)
+                .retrieve()
+                .body(KbVideoJob.class));
+    }
+
+    public KbVideoJob getVideoJob(String jobId) {
+        return call(() -> restClient.get()
+                .uri("/admin/videos/{jobId}", jobId)
+                .retrieve()
+                .body(KbVideoJob.class));
+    }
+
+    /** 실패한 영상 작업 재시도 (사건 추출만 실패했으면 음성 인식은 다시 하지 않음) */
+    public KbVideoJob retryVideoJob(String jobId) {
+        return call(() -> restClient.post()
+                .uri("/admin/videos/{jobId}/retry", jobId)
+                .retrieve()
+                .body(KbVideoJob.class));
     }
 
     // ============================================

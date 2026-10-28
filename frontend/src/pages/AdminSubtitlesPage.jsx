@@ -158,8 +158,11 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 8. 분석 상태 한글 표시
   // ==========================================
+  // 영상으로 분석한 회차는 자막이 없어도 분석 상태를 표시
+  const analyzedByVideo = analysis?.analysisSource === "VIDEO";
+
   function getAnalysisLabel() {
-    if (!analysis?.subtitleFilename) {
+    if (!analysis?.subtitleFilename && !analyzedByVideo) {
       return "자막 미등록";
     }
 
@@ -167,11 +170,14 @@ function AdminSubtitlesContent({ dramaId }) {
       return "분석 요청 전";
     }
 
-    return ANALYSIS_LABELS[analysis.analysisStatus] ?? analysis.analysisStatus;
+    const label =
+      ANALYSIS_LABELS[analysis.analysisStatus] ?? analysis.analysisStatus;
+
+    return analyzedByVideo ? `${label} (영상)` : label;
   }
 
   function getStatusType() {
-    if (!analysis?.subtitleFilename) {
+    if (!analysis?.subtitleFilename && !analyzedByVideo) {
       return "idle";
     }
 
@@ -539,6 +545,7 @@ function AdminSubtitlesContent({ dramaId }) {
           <AdminEpisodeVideoPanel
             key={selectedEpisode.id}
             episodeId={selectedEpisode.id}
+            onAnalysisRequested={() => setReloadKey((prev) => prev + 1)}
           />
 
           {/* ==================================

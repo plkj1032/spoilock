@@ -5,6 +5,7 @@ import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
+import com.spoilock.backend.spoiler.enums.AnalysisSource;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +59,7 @@ public class SubtitleAnalysisService {
         // 실패한 작업은 같은 자막이면 Python 체크포인트에서 이어서 진행 (끝난 Gemini 배치 재호출 없음)
         if (!replace
                 && target.status() == AnalysisStatus.FAILED
+                && target.previousSource() != AnalysisSource.VIDEO
                 && target.previousJobId() != null) {
 
             KbIngestJob resumed = tryResume(target.previousJobId());
