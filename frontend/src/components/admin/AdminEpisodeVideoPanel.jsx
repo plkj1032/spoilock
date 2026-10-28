@@ -4,7 +4,7 @@ import { adminVideoApi } from "../../api/adminVideoApi";
 
 import "../../styles/AdminEpisodeVideoPanel.css";
 
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 400 * 1024 * 1024;
 
 function formatSize(bytes) {
   if (bytes == null) return "-";
@@ -100,7 +100,7 @@ export default function AdminEpisodeVideoPanel({
     }
 
     if (selected.size === 0 || selected.size > MAX_VIDEO_SIZE) {
-      setError("100MB 이하의 MP4 파일을 선택해 주세요.");
+      setError("400MB 이하의 MP4 파일을 선택해 주세요.");
       resetFile();
       return;
     }

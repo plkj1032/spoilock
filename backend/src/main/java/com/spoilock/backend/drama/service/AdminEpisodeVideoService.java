@@ -32,7 +32,7 @@ import java.util.UUID;
 public class AdminEpisodeVideoService {
 
     private static final long MAX_SIZE =
-            100L * 1024 * 1024;
+            400L * 1024 * 1024;
 
     private final EpisodeRepository episodeRepository;
     private final EpisodeVideoRepository videoRepository;
