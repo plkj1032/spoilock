@@ -48,8 +48,32 @@ public record KbEvent(
         String origin,
 
         @JsonProperty("evidence")
-        List<Evidence> evidence
+        List<Evidence> evidence,
+
+        // 화면 근거 (자막 + 영상 분석에서만)
+        @JsonProperty("visual_evidence")
+        List<VisualEvidence> visualEvidence,
+
+        // DIALOGUE / VISUAL / BOTH (수동 등록은 null)
+        @JsonProperty("evidence_type")
+        String evidenceType,
+
+        // SUBTITLE / SUBTITLE_VIDEO / VIDEO_STT (수동 등록·기존 데이터는 null)
+        @JsonProperty("source_mode")
+        String sourceMode
 ) {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record VisualEvidence(
+            // 회차 시작 기준 MM:SS
+            @JsonProperty("timestamp")
+            String timestamp,
+
+            @JsonProperty("description")
+            String description
+    ) {
+    }
+
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Evidence(

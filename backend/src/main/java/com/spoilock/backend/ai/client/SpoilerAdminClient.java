@@ -58,6 +58,22 @@ public class SpoilerAdminClient {
             int episodeNumber,
             boolean replace
     ) {
+        return createIngestJob(srt, dramaId, episodeId, episodeNumber, replace, null);
+    }
+
+    /**
+     * SRT + (선택) 같은 회차 MP4 로 분석 작업 생성.
+     * video 를 주면 Python 이 배치마다 그 시간대 영상 구간을 함께 보고 화면 근거 사건도 추출한다.
+     * 영상은 메모리에 올리지 않고 디스크에서 읽으며 전송 (영상 전송 전용 제한시간 사용).
+     */
+    public KbIngestJob createIngestJob(
+            byte[] srt,
+            long dramaId,
+            long episodeId,
+            int episodeNumber,
+            boolean replace,
+            Path video
+    ) {
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
 
         // 파일명은 Python 쪽 확장자 검사·기록용. 한글 파일명 인코딩 문제를 피하려고 고정 이름 사용
@@ -75,7 +91,20 @@ public class SpoilerAdminClient {
         form.add("language", properties.admin().language());
         form.add("replace", String.valueOf(replace));
 
-        return call(() -> restClient.post()
+        RestClient client = restClient;
+        if (video != null) {
+            String videoName = "episode-" + episodeId + ".mp4";
+            form.add("video", new FileSystemResource(video) {
+                @Override
+                public String getFilename() {
+                    return videoName;
+                }
+            });
+            client = uploadClient;
+        }
+
+        RestClient selected = client;
+        return call(() -> selected.post()
                 .uri("/admin/subtitles/jobs")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(form)

@@ -4,6 +4,7 @@ import com.spoilock.backend.ai.client.KbIngestJob;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
 import com.spoilock.backend.common.enums.AnalysisStatus;
+import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
 import com.spoilock.backend.spoiler.enums.AnalysisSource;
 
@@ -36,16 +37,28 @@ public class SubtitleAnalysisService {
 
     private final SubtitleAnalysisStateService stateService;
     private final SpoilerAdminClient adminClient;
+    private final EpisodeVideoRepository videoRepository;
 
     @Value("${app.subtitle-storage-dir:./private/subtitles}")
     private String subtitleStorageDir;
 
-    /**
-     * @param replace 이미 사건이 등록된 회차를 다시 분석 (미검수 사건 교체, 검수·수동 사건 보존)
-     */
+    @Value("${app.video-storage-dir:./private/videos}")
+    private String videoStorageDir;
+
     public AdminEpisodeAiResponse requestAnalysis(Long episodeId, boolean replace) {
+        return requestAnalysis(episodeId, replace, false);
+    }
+
+    /**
+     * @param replace   이미 사건이 등록된 회차를 다시 분석 (미검수 사건 교체, 검수·수동 사건 보존)
+     * @param withVideo 같은 회차에 등록된 MP4 화면도 함께 분석 (자막 + 영상)
+     */
+    public AdminEpisodeAiResponse requestAnalysis(Long episodeId, boolean replace, boolean withVideo) {
 
         SubtitleAnalysisStateService.Target target = stateService.prepare(episodeId);
+
+        AnalysisSource source = withVideo ? AnalysisSource.SUBTITLE_VIDEO : AnalysisSource.SUBTITLE;
+        Path video = withVideo ? findVideo(episodeId) : null;
 
         if (target.requestedBefore()
                 && target.status() == AnalysisStatus.COMPLETED
@@ -56,16 +69,20 @@ public class SubtitleAnalysisService {
             );
         }
 
-        // 실패한 작업은 같은 자막이면 Python 체크포인트에서 이어서 진행 (끝난 Gemini 배치 재호출 없음)
+        // 실패한 작업은 같은 방식(자막만 / 자막 + 영상)이면 Python 체크포인트에서 이어서 진행
+        // (끝난 Gemini 배치 재호출 없음). 방식이 바뀌었으면 새 작업으로 시작
+        AnalysisSource previous = target.previousSource() == null
+                ? AnalysisSource.SUBTITLE : target.previousSource();
+
         if (!replace
                 && target.status() == AnalysisStatus.FAILED
-                && target.previousSource() != AnalysisSource.VIDEO
+                && previous == source
                 && target.previousJobId() != null) {
 
             KbIngestJob resumed = tryResume(target.previousJobId());
 
             if (resumed != null) {
-                return stateService.markStarted(episodeId, resumed);
+                return stateService.markStarted(episodeId, resumed.jobId(), source);
             }
         }
 
@@ -78,10 +95,11 @@ public class SubtitleAnalysisService {
                     target.dramaId(),
                     episodeId,
                     target.episodeNumber(),
-                    replace
+                    replace,
+                    video
             );
         } catch (SpoilerAdminException ex) {
-            if (ex.upstreamStatus() == 400) {
+            if (ex.upstreamStatus() == 400 || ex.upstreamStatus() == 413) {
                 // 자막 형식 문제는 화면에 남겨 관리자가 원인을 볼 수 있게
                 stateService.markRequestFailed(episodeId, ex.getReason());
             }
@@ -95,7 +113,29 @@ public class SubtitleAnalysisService {
             );
         }
 
-        return stateService.markStarted(episodeId, job);
+        return stateService.markStarted(episodeId, job.jobId(), source);
+    }
+
+    /** 같은 회차에 등록된 MP4 (자막 + 영상 분석용) */
+    private Path findVideo(Long episodeId) {
+
+        String storageKey = videoRepository.findByEpisode_Id(episodeId)
+                .map(v -> v.getStorageKey())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "등록된 영상이 없습니다. 영상 없이 분석하거나 MP4 를 먼저 업로드해 주세요."
+                ));
+
+        Path directory = Path.of(videoStorageDir).toAbsolutePath().normalize();
+        Path target = directory.resolve(storageKey).normalize();
+
+        if (!target.startsWith(directory) || !Files.isRegularFile(target)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "저장된 영상 파일을 찾을 수 없습니다."
+            );
+        }
+        return target;
     }
 
     /** 이전 실패 작업 재시도. 재시도할 수 없으면 null (새 작업 생성) */

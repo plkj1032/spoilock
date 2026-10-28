@@ -21,6 +21,7 @@ function formatDate(value) {
 export default function AdminEpisodeVideoPanel({
   episodeId,
   onAnalysisRequested,
+  onVideoChange,
 }) {
   const fileInputRef = useRef(null);
 
@@ -67,6 +68,14 @@ export default function AdminEpisodeVideoPanel({
       active = false;
     };
   }, [episodeId]);
+
+  // =========================================
+  // 영상 등록 여부를 상위(자막·분석 화면)에 알림
+  // → '영상 화면도 함께 분석' 옵션 표시
+  // =========================================
+  useEffect(() => {
+    onVideoChange?.(Boolean(video?.registered));
+  }, [video, onVideoChange]);
 
   // =========================================
   // 파일 입력 초기화
@@ -274,7 +283,7 @@ export default function AdminEpisodeVideoPanel({
               disabled={busy}
               onClick={requestAnalysis}
             >
-              {busy ? "처리 중..." : "영상으로 사건 분석"}
+              {busy ? "처리 중..." : "영상만으로 분석 (음성 인식)"}
             </button>
 
             <label className="admin-video__replace">

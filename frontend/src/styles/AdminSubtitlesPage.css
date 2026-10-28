@@ -675,6 +675,77 @@
    ERROR / SUCCESS ALERT
    ========================================== */
 
+/* 분석 옵션 */
+
+.admin-subtitles__options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.admin-subtitles__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #c9d3ea;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.admin-subtitles__option-note {
+  color: #8fa3c4;
+  font-size: 12px;
+}
+
+/* 사건 근거 */
+
+.admin-subtitles__evidence {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+
+  list-style: none;
+  color: #c9d3ea;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.admin-subtitles__evidence strong {
+  color: #9cc0ff;
+}
+
+/* 검수 */
+
+.admin-subtitles__review {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-subtitles__reveal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #c9d3ea;
+  font-size: 13px;
+}
+
+.admin-subtitles__reveal input {
+  width: 56px;
+  padding: 6px 8px;
+
+  color: white;
+  background: #0f1b33;
+  border: 1px solid #34507e;
+  border-radius: 8px;
+}
+
 .admin-subtitles__alert {
   padding: 14px 16px;
   margin-bottom: 20px;

@@ -58,11 +58,13 @@ public class AdminEpisodeAiController {
     // 분석 요청 버튼. replace=true: 재분석 (미검수 사건 교체, 검수·수동 사건 보존)
     @PostMapping("/episodes/{episodeId}/analysis/request")
     @ResponseStatus(HttpStatus.ACCEPTED)
+    // withVideo=true: 같은 회차에 등록된 MP4 화면도 함께 분석 (자막 + 영상)
     public AdminEpisodeAiResponse requestAnalysis(
             @PathVariable Long episodeId,
-            @RequestParam(defaultValue = "false") boolean replace
+            @RequestParam(defaultValue = "false") boolean replace,
+            @RequestParam(defaultValue = "false") boolean withVideo
     ) {
-        return analysisService.requestAnalysis(episodeId, replace);
+        return analysisService.requestAnalysis(episodeId, replace, withVideo);
     }
 
     // 등록된 MP4 로 분석 (음성 인식 → 자막 → 사건 추출). replace=true: 재분석
