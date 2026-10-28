@@ -1,5 +1,6 @@
 package com.spoilock.backend.post.service;
 
+import com.spoilock.backend.ai.service.PostAnalysisRequested;
 import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.post.entity.PostLike;
@@ -11,6 +12,7 @@ import com.spoilock.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -30,6 +32,7 @@ public class FeedSocialService {
     private final PostLikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostVisibilityService visibilityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final List<ModerationStatus> ALLOWED =
             List.of(
@@ -164,6 +167,16 @@ public class FeedSocialService {
 
         Post saved = postRepository.saveAndFlush(
                 Post.createComment(user, parent, value)
+        );
+
+        // 커밋 후 스포일러 분석 시작 (PostAnalysisListener, AFTER_COMMIT)
+        // 댓글은 원글과 같은 드라마 기준으로 판정
+        eventPublisher.publishEvent(
+                new PostAnalysisRequested(
+                        saved.getId(),
+                        parent.getDrama().getId(),
+                        saved.getContent()
+                )
         );
 
         return toResponse(saved, userId);

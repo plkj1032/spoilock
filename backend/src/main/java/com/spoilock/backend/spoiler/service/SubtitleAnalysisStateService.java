@@ -5,7 +5,9 @@ import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
+import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
+import com.spoilock.backend.spoiler.enums.AnalysisSource;
 import com.spoilock.backend.spoiler.repository.EpisodeAnalysisRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class SubtitleAnalysisStateService {
 
     private final EpisodeRepository episodeRepository;
     private final EpisodeAnalysisRepository analysisRepository;
+    private final EpisodeVideoRepository videoRepository;
 
     /** 분석 요청 전 확인 결과 */
     public record Target(
@@ -37,7 +40,11 @@ public class SubtitleAnalysisStateService {
             int episodeNumber,
             String previousJobId,
             AnalysisStatus status,
-            boolean requestedBefore
+            boolean requestedBefore,
+            // 이전 분석의 원본 (null = V12 이전 자막 분석)
+            AnalysisSource previousSource,
+            // 영상 분석일 때 저장된 MP4 키 (자막 분석이면 null)
+            String videoStorageKey
     ) {
     }
 
@@ -73,13 +80,54 @@ public class SubtitleAnalysisStateService {
             );
         }
 
+        return toTarget(episode, analysis, null);
+    }
+
+    // ============================================
+    // 1-1. 영상 분석 요청 가능 여부 확인
+    //      자막 없이도 가능 (분석 정보가 없으면 새로 만듦)
+    // ============================================
+    @Transactional
+    public Target prepareVideo(Long episodeId) {
+
+        Episode episode = episodeRepository.findById(episodeId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "회차를 찾을 수 없습니다."
+                ));
+
+        String storageKey = videoRepository.findByEpisode_Id(episodeId)
+                .map(v -> v.getStorageKey())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "등록된 영상이 없습니다. MP4 를 먼저 업로드해 주세요."
+                ));
+
+        EpisodeAnalysis analysis = analysisRepository.findByEpisode_Id(episodeId)
+                .orElseGet(() -> analysisRepository.saveAndFlush(
+                        EpisodeAnalysis.createForVideo(episode)
+                ));
+
+        if (analysis.isJobActive()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 분석이 진행 중입니다."
+            );
+        }
+
+        return toTarget(episode, analysis, storageKey);
+    }
+
+    private static Target toTarget(Episode episode, EpisodeAnalysis analysis, String storageKey) {
         return new Target(
-                episodeId,
+                episode.getId(),
                 episode.getDrama().getId(),
                 episode.getEpisodeNumber(),
                 analysis.getAnalysisJobId(),
                 analysis.getAnalysisStatus(),
-                analysis.getAnalysisRequestedAt() != null
+                analysis.getAnalysisRequestedAt() != null,
+                analysis.getAnalysisSource(),
+                storageKey
         );
     }
 
@@ -88,12 +136,18 @@ public class SubtitleAnalysisStateService {
     // ============================================
     @Transactional
     public AdminEpisodeAiResponse markStarted(Long episodeId, KbIngestJob job) {
+        return markStarted(episodeId, job.jobId(), AnalysisSource.SUBTITLE);
+    }
+
+    @Transactional
+    public AdminEpisodeAiResponse markStarted(Long episodeId, String jobId, AnalysisSource source) {
 
         EpisodeAnalysis analysis = findAnalysis(episodeId);
 
-        analysis.startJob(job.jobId());
+        analysis.startJob(jobId, source);
 
-        log.info("자막 분석 작업 시작: episodeId={}, jobId={}", episodeId, job.jobId());
+        log.info("{} 분석 작업 시작: episodeId={}, jobId={}",
+                source == AnalysisSource.VIDEO ? "영상" : "자막", episodeId, jobId);
 
         return AdminEpisodeAiResponse.from(analysis);
     }

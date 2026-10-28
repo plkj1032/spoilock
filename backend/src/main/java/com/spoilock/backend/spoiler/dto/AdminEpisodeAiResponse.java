@@ -13,13 +13,15 @@ public record AdminEpisodeAiResponse (
         LocalDateTime requestedAt,
         LocalDateTime analyzedAt,
         // 분석 진행률 0 ~ 100 (진행 전이면 null)
-        Integer progress
+        Integer progress,
+        // SUBTITLE / VIDEO (분석 요청 전이면 null)
+        String analysisSource
 ){
     public static AdminEpisodeAiResponse empty(Long episodeId)
     {
         return new AdminEpisodeAiResponse(
                 episodeId, null, "NOT_UPLOADED",
-                0, null, null, null, null
+                0, null, null, null, null, null
         );
     }
     public static AdminEpisodeAiResponse from(
@@ -34,7 +36,9 @@ public record AdminEpisodeAiResponse (
                 analysis.getErrorMessage(),
                 analysis.getAnalysisRequestedAt(),
                 analysis.getAnalyzedAt(),
-                analysis.getAnalysisProgress()
+                analysis.getAnalysisProgress(),
+                analysis.getAnalysisSource() == null
+                        ? null : analysis.getAnalysisSource().name()
         );
     }
 }

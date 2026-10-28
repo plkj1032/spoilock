@@ -116,4 +116,48 @@ public class Post extends AuditedEntity {
 
         return comment;
     }
+
+    // ============================================
+    // 스포일러 분석 결과 반영 (ChatMessage 와 같은 규칙)
+    // ============================================
+
+    /**
+     * 분석 완료.
+     * publish=true  → 공개 (requiredEpisodeNumber=null 이면 전원, 값이 있으면 그 회차 이상 시청자)
+     * publish=false → 검토 대기 (원문 차단)
+     */
+    public void completeAnalysis(
+            boolean publish,
+            Integer requiredEpisodeNumber
+    )
+    {
+        this.analysisStatus = AnalysisStatus.COMPLETED;
+        this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
+
+        // 관리자가 이미 숨김/삭제한 글은 분석 결과로 다시 공개하지 않음
+        if (isModeratedByAdmin()) {
+            return;
+        }
+
+        this.moderationStatus = publish
+                ? ModerationStatus.VISIBLE
+                : ModerationStatus.PENDING;
+    }
+
+    /** 분석 실패: 원문 차단 유지, 복구 작업이 재시도 */
+    public void failAnalysis()
+    {
+        this.analysisStatus = AnalysisStatus.FAILED;
+        this.requiredEpisodeNumber = null;
+
+        if (!isModeratedByAdmin()) {
+            this.moderationStatus = ModerationStatus.PENDING;
+        }
+    }
+
+    private boolean isModeratedByAdmin()
+    {
+        return moderationStatus == ModerationStatus.HIDDEN
+                || moderationStatus == ModerationStatus.REMOVED;
+    }
 }

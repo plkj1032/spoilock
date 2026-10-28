@@ -19,6 +19,42 @@ const ANALYSIS_LABELS = {
   SKIPPED: "분석 건너뜀",
 };
 
+// 사건 출처 (분석 원본)
+const SOURCE_LABELS = {
+  SUBTITLE: "자막",
+  SUBTITLE_VIDEO: "자막 + 영상",
+  VIDEO_STT: "영상 음성 인식",
+  MANUAL: "수동 등록",
+  LICENSED_SUBTITLE: "자막 (기존 데이터)",
+};
+
+// 사건 근거 종류
+const EVIDENCE_LABELS = {
+  DIALOGUE: "대사 근거",
+  VISUAL: "화면 근거",
+  BOTH: "대사 + 화면 근거",
+};
+
+// 검수 상태
+const REVIEW_LABELS = {
+  PENDING: "검수 대기",
+  VERIFIED: "승인",
+  REJECTED: "반려",
+};
+
+const REVIEW_STATUS_CLASS = {
+  PENDING: "admin-subtitles__status--pending",
+  VERIFIED: "admin-subtitles__status--success",
+  REJECTED: "admin-subtitles__status--danger",
+};
+
+// 분석 원본 표시
+const ANALYSIS_SOURCE_LABELS = {
+  SUBTITLE: "자막",
+  SUBTITLE_VIDEO: "자막 + 영상",
+  VIDEO: "영상 음성 인식",
+};
+
 // ChromaDB 색인 상태
 const INDEX_LABELS = {
   PENDING: "색인 대기",
@@ -54,6 +90,14 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   const [analysis, setAnalysis] = useState(null);
   const [events, setEvents] = useState([]);
+
+  // 분석 옵션
+  const [videoRegistered, setVideoRegistered] = useState(false);
+  const [withVideo, setWithVideo] = useState(true);
+  const [replaceExisting, setReplaceExisting] = useState(false);
+
+  // 사건별 최초 공개 회차 입력값 (승인 시 사용)
+  const [revealDrafts, setRevealDrafts] = useState({});
 
   // ==========================================
   // 3. 입력값
@@ -158,8 +202,17 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 8. 분석 상태 한글 표시
   // ==========================================
+  // 영상으로 분석한 회차는 자막이 없어도 분석 상태를 표시
+  const analyzedByVideo = analysis?.analysisSource === "VIDEO";
+
+  // 분석 작업이 대기·진행 중인지
+  const analysisActive =
+    Boolean(analysis?.requestedAt) &&
+    (analysis?.analysisStatus === "PENDING" ||
+      analysis?.analysisStatus === "PROCESSING");
+
   function getAnalysisLabel() {
-    if (!analysis?.subtitleFilename) {
+    if (!analysis?.subtitleFilename && !analyzedByVideo) {
       return "자막 미등록";
     }
 
@@ -167,11 +220,20 @@ function AdminSubtitlesContent({ dramaId }) {
       return "분석 요청 전";
     }
 
-    return ANALYSIS_LABELS[analysis.analysisStatus] ?? analysis.analysisStatus;
+    let label =
+      ANALYSIS_LABELS[analysis.analysisStatus] ?? analysis.analysisStatus;
+
+    if (analysis.analysisStatus === "PROCESSING" && analysis.progress != null) {
+      label = `${label} ${analysis.progress}%`;
+    }
+
+    const source = ANALYSIS_SOURCE_LABELS[analysis.analysisSource];
+
+    return source ? `${label} (${source})` : label;
   }
 
   function getStatusType() {
-    if (!analysis?.subtitleFilename) {
+    if (!analysis?.subtitleFilename && !analyzedByVideo) {
       return "idle";
     }
 
@@ -313,13 +375,22 @@ function AdminSubtitlesContent({ dramaId }) {
       return;
     }
 
+    const useVideo = videoRegistered && withVideo;
+
     const result = await perform(
-      () => adminSubtitleApi.requestAnalysis(episodeId),
-      "AI 분석 요청이 DB에 등록되었습니다.",
+      () =>
+        adminSubtitleApi.requestAnalysis(episodeId, {
+          replace: replaceExisting,
+          withVideo: useVideo,
+        }),
+      useVideo
+        ? "자막 + 영상 분석을 시작했습니다. 영상 처리에 시간이 걸리니 새로고침으로 진행 상황을 확인해 주세요."
+        : "자막 분석을 시작했습니다. 새로고침으로 진행 상황을 확인해 주세요.",
     );
 
     if (result) {
       setAnalysis(result);
+      setReplaceExisting(false);
     }
   }
 
@@ -349,14 +420,29 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 17. 사건 승인 / 승인 취소
   // ==========================================
-  async function reviewEvent(eventId, verified) {
+  // 승인 시 최초 공개 회차 기본값: 사건이 나온 회차
+  function revealValue(item) {
+    return revealDrafts[item.id] ?? item.firstRevealEpisode ?? item.sourceEpisode ?? 1;
+  }
+
+  async function reviewEvent(item, status) {
     if (busy || loadingDetails) return;
 
+    const eventId = item.id;
+    const messages = {
+      VERIFIED: `승인했습니다. ${revealValue(item)}화부터 시청한 사용자에게 공개됩니다.`,
+      REJECTED: "반려했습니다. 이 사건은 스포일러 판정에 사용되지 않습니다.",
+      PENDING: "검수 대기로 되돌렸습니다.",
+    };
+
     const result = await perform(
-      () => adminSubtitleApi.reviewEvent(eventId, verified),
-      verified
-        ? "스포일러 사건 검수를 승인했습니다."
-        : "스포일러 사건 승인을 취소했습니다.",
+      () =>
+        adminSubtitleApi.reviewEvent(
+          eventId,
+          status,
+          status === "VERIFIED" ? Number(revealValue(item)) : null,
+        ),
+      messages[status],
     );
 
     if (result) {
@@ -390,11 +476,15 @@ function AdminSubtitlesContent({ dramaId }) {
 
   const canUpload = canChooseFile && Boolean(file);
 
+  // 분석 전 / 실패 / '기존 사건 교체'(재분석) 선택 시 요청 가능
   const canRequest =
     !busy &&
     !loadingDetails &&
     Boolean(analysis?.subtitleFilename) &&
-    (!analysis?.requestedAt || analysis.analysisStatus === "FAILED");
+    !analysisActive &&
+    (!analysis?.requestedAt ||
+      analysis.analysisStatus === "FAILED" ||
+      replaceExisting);
 
   // ==========================================
   // 20. 드라마 로딩
@@ -539,6 +629,8 @@ function AdminSubtitlesContent({ dramaId }) {
           <AdminEpisodeVideoPanel
             key={selectedEpisode.id}
             episodeId={selectedEpisode.id}
+            onAnalysisRequested={() => setReloadKey((prev) => prev + 1)}
+            onVideoChange={setVideoRegistered}
           />
 
           {/* ==================================
@@ -638,8 +730,40 @@ function AdminSubtitlesContent({ dramaId }) {
                     disabled={!canRequest}
                     onClick={requestAnalysis}
                   >
-                    AI 분석 요청
+                    {videoRegistered && withVideo
+                      ? "자막 + 영상 분석 요청"
+                      : "AI 분석 요청"}
                   </button>
+                </div>
+
+                <div className="admin-subtitles__options">
+                  {videoRegistered ? (
+                    <label className="admin-subtitles__option">
+                      <input
+                        type="checkbox"
+                        checked={withVideo}
+                        disabled={busy}
+                        onChange={(event) => setWithVideo(event.target.checked)}
+                      />
+                      영상 화면도 함께 분석 (위에 등록된 MP4 사용)
+                    </label>
+                  ) : (
+                    <span className="admin-subtitles__option-note">
+                      위에 MP4를 등록하면 영상 화면도 함께 분석할 수 있습니다.
+                    </span>
+                  )}
+
+                  <label className="admin-subtitles__option">
+                    <input
+                      type="checkbox"
+                      checked={replaceExisting}
+                      disabled={busy}
+                      onChange={(event) =>
+                        setReplaceExisting(event.target.checked)
+                      }
+                    />
+                    기존 사건 교체 (재분석 · 검수한 사건과 수동 사건은 유지)
+                  </label>
                 </div>
               </form>
 
@@ -685,8 +809,10 @@ function AdminSubtitlesContent({ dramaId }) {
                 )}
 
                 <p className="admin-subtitles__help">
-                  현재 AI 분석 요청은 DB에 등록됩니다. 실제 분석은 FastAPI 워커
-                  연동 후 실행됩니다.
+                  분석은 AI 서버에서 진행되며, 끝나면 오른쪽에 사건 후보가
+                  표시됩니다. 자막 + 영상 분석은 자막과 영상의 시간이 맞아야
+                  합니다. 화면 근거가 있는 사건은 표시된 시각을 영상에서 직접
+                  확인한 뒤 승인해 주세요.
                 </p>
               </div>
             </section>
@@ -781,12 +907,15 @@ function AdminSubtitlesContent({ dramaId }) {
                           <span
                             className={
                               "admin-subtitles__status " +
-                              (item.verified
-                                ? "admin-subtitles__status--success"
-                                : "admin-subtitles__status--pending")
+                              (REVIEW_STATUS_CLASS[item.verificationStatus] ??
+                                "admin-subtitles__status--pending")
                             }
                           >
-                            {item.verified ? "검수 완료" : "검수 대기"}
+                            {REVIEW_LABELS[item.verificationStatus] ??
+                              "검수 대기"}
+                            {item.verificationStatus === "VERIFIED" &&
+                              item.firstRevealEpisode &&
+                              ` · ${item.firstRevealEpisode}화부터`}
                           </span>
                         </div>
 
@@ -795,7 +924,16 @@ function AdminSubtitlesContent({ dramaId }) {
                         </p>
 
                         <div className="admin-subtitles__event-meta">
-                          <span>출처: {item.sourceType}</span>
+                          <span>
+                            출처: {SOURCE_LABELS[item.sourceType] ?? item.sourceType}
+                          </span>
+
+                          {item.evidenceType && (
+                            <span>
+                              {EVIDENCE_LABELS[item.evidenceType] ??
+                                item.evidenceType}
+                            </span>
+                          )}
 
                           <span>
                             색인:{" "}
@@ -803,19 +941,80 @@ function AdminSubtitlesContent({ dramaId }) {
                           </span>
                         </div>
 
-                        <button
-                          type="button"
-                          className={
-                            "admin-subtitles__button " +
-                            (item.verified
-                              ? "admin-subtitles__button--outline"
-                              : "admin-subtitles__button--primary")
-                          }
-                          disabled={busy || loadingDetails}
-                          onClick={() => reviewEvent(item.id, !item.verified)}
-                        >
-                          {item.verified ? "승인 취소" : "검수 승인"}
-                        </button>
+                        {item.visualEvidence?.length > 0 && (
+                          <ul className="admin-subtitles__evidence">
+                            {item.visualEvidence.map((v, index) => (
+                              <li key={`v-${index}`}>
+                                <strong>🎬 {v.timestamp}</strong>{" "}
+                                {v.description}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {item.evidence?.length > 0 && (
+                          <ul className="admin-subtitles__evidence">
+                            {item.evidence.map((e, index) => (
+                              <li key={`d-${index}`}>“{e.quote}”</li>
+                            ))}
+                          </ul>
+                        )}
+
+                        <div className="admin-subtitles__review">
+                          {item.verificationStatus !== "VERIFIED" && (
+                            <label className="admin-subtitles__reveal">
+                              최초 공개
+                              <input
+                                type="number"
+                                min={1}
+                                max={item.sourceEpisode ?? undefined}
+                                value={revealValue(item)}
+                                disabled={busy || loadingDetails}
+                                onChange={(event) =>
+                                  setRevealDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: event.target.value,
+                                  }))
+                                }
+                              />
+                              화
+                            </label>
+                          )}
+
+                          {item.verificationStatus !== "VERIFIED" && (
+                            <button
+                              type="button"
+                              className="admin-subtitles__button admin-subtitles__button--primary"
+                              disabled={busy || loadingDetails}
+                              onClick={() => reviewEvent(item, "VERIFIED")}
+                            >
+                              승인
+                            </button>
+                          )}
+
+                          {item.verificationStatus !== "REJECTED" && (
+                            <button
+                              type="button"
+                              className="admin-subtitles__button admin-subtitles__button--outline"
+                              disabled={busy || loadingDetails}
+                              onClick={() => reviewEvent(item, "REJECTED")}
+                            >
+                              반려
+                            </button>
+                          )}
+
+                          {item.verificationStatus &&
+                            item.verificationStatus !== "PENDING" && (
+                              <button
+                                type="button"
+                                className="admin-subtitles__button admin-subtitles__button--outline"
+                                disabled={busy || loadingDetails}
+                                onClick={() => reviewEvent(item, "PENDING")}
+                              >
+                                대기로
+                              </button>
+                            )}
+                        </div>
                       </article>
                     ))}
                   </div>

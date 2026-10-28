@@ -184,6 +184,26 @@
   cursor: not-allowed;
 }
 
+/* 영상 분석 요청 */
+
+.admin-video__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-video__replace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #c9d3ea;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 /* 등록 완료 */
 
 .admin-video__registered {
@@ -302,7 +322,8 @@
     flex: 1 1 calc(100% - 64px);
   }
 
-  .admin-video__delete {
+  .admin-video__delete,
+  .admin-video__actions {
     width: 100%;
   }
 }

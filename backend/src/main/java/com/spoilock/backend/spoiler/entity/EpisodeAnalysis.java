@@ -3,6 +3,7 @@ package com.spoilock.backend.spoiler.entity;
 import com.spoilock.backend.common.entity.AuditedEntity;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.entity.Episode;
+import com.spoilock.backend.spoiler.enums.AnalysisSource;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -71,6 +72,11 @@ public class EpisodeAnalysis extends AuditedEntity {
     @Column(name = "analysis_progress")
     private Integer analysisProgress;
 
+    // 분석 원본 (자막 / 영상). 진행 상태 조회 시 Python 작업 종류 구분
+    @Enumerated(EnumType.STRING)
+    @Column(name = "analysis_source", length = 20)
+    private AnalysisSource analysisSource;
+
     public static EpisodeAnalysis create(
             Episode episode,
             String filename
@@ -80,6 +86,17 @@ public class EpisodeAnalysis extends AuditedEntity {
 
         analysis.episode = episode;
         analysis.subtitleFilename = filename;
+        analysis.analysisStatus = AnalysisStatus.PENDING;
+
+        return analysis;
+    }
+
+    /** 자막 없이 영상으로 분석하는 회차 */
+    public static EpisodeAnalysis createForVideo(Episode episode)
+    {
+        EpisodeAnalysis analysis = new EpisodeAnalysis();
+
+        analysis.episode = episode;
         analysis.analysisStatus = AnalysisStatus.PENDING;
 
         return analysis;
@@ -108,8 +125,9 @@ public class EpisodeAnalysis extends AuditedEntity {
     }
 
     /** Python 분석 작업 시작(또는 재시도) 기록 */
-    public void startJob(String jobId)
+    public void startJob(String jobId, AnalysisSource source)
     {
+        this.analysisSource = source;
         this.analysisJobId = jobId;
         this.analysisRequestedAt = LocalDateTime.now();
         this.analysisStatus = AnalysisStatus.PENDING;
@@ -160,6 +178,7 @@ public class EpisodeAnalysis extends AuditedEntity {
         }
         this.subtitleFilename = null;
         this.analysisJobId = null;
+        this.analysisSource = null;
         this.analysisProgress = null;
         this.analysisRequestedAt = null;
         this.analysisStatus = AnalysisStatus.PENDING;

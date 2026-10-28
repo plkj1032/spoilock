@@ -20,7 +20,7 @@ public interface EpisodeAnalysisRepository
     // 대기·진행 중인 Python 분석 작업 (주기적 상태 조회 대상)
     @Query("""
             select new com.spoilock.backend.spoiler.repository.ActiveAnalysisJob(
-                a.episode.id, a.analysisJobId)
+                a.episode.id, a.analysisJobId, a.analysisSource)
             from EpisodeAnalysis a
             where a.analysisJobId is not null
               and a.analysisRequestedAt is not null
