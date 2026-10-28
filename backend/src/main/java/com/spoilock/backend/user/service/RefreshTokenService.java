@@ -4,6 +4,7 @@ import com.spoilock.backend.user.entity.RefreshSession;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.enums.AccountStatus;
 import com.spoilock.backend.user.repository.RefreshSessionRepository;
+import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -26,10 +27,39 @@ import java.util.HexFormat;
 public class RefreshTokenService {
 
     private final RefreshSessionRepository repository;
+    private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${app.jwt.refresh-days:7}")
     private long refreshDays;
+
+    // ==========================================
+    // 단일 기기 로그인
+    // 기존 로그인 무효화 + 버전 증가
+    // ==========================================
+    @Transactional
+    public User beginNewLogin(User user)
+    {
+        User lockedUser = userRepository
+                .findByIdForUpdate(user.getId())
+                .orElseThrow(this::unauthorized);
+
+        if(lockedUser.getAccountStatus() != AccountStatus.ACTIVE)
+        {
+            throw unauthorized();
+        }
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+
+        // 기존 Refresh Token 모두 폐기
+        repository.revokeAll(lockedUser.getId(), now);
+
+        // 기존 Access Token 무효화
+        lockedUser.incrementTokenVersion();;
+
+        return lockedUser;
+    }
+
 
     // 1. Refresh Token 생성 + DB 저장
     @Transactional
@@ -97,19 +127,34 @@ public class RefreshTokenService {
     }
 
     // 4. Refresh Token 유효성 검증
-    private RefreshSession requireActive(String rawToken)
-    {
-        if(rawToken == null || rawToken.isBlank())
-        {
+    private RefreshSession requireActive(String rawToken) {
+
+        if (rawToken == null || rawToken.isBlank()) {
             throw unauthorized();
         }
 
-        RefreshSession session = repository
-                .findByHashForUpdate(hash(rawToken))
+        String tokenHash = hash(rawToken);
+
+        // QueryDSL: 토큰 소유 사용자 조회
+        Long userId = repository
+                .findUserIdByTokenHash(tokenHash)
                 .orElseThrow(this::unauthorized);
 
-        if(!session.isUsable(LocalDateTime.now(ZoneOffset.UTC)))
-        {
+        // QueryDSL: 사용자 행 잠금
+        User lockedUser = userRepository
+                .findByIdForUpdate(userId)
+                .orElseThrow(this::unauthorized);
+
+        if (lockedUser.getAccountStatus() != AccountStatus.ACTIVE) {
+            throw unauthorized();
+        }
+
+        // QueryDSL: Refresh Session 잠금
+        RefreshSession session = repository
+                .findByHashForUpdate(tokenHash)
+                .orElseThrow(this::unauthorized);
+
+        if (!session.isUsable(LocalDateTime.now(ZoneOffset.UTC))) {
             throw unauthorized();
         }
 

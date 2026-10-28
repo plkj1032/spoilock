@@ -147,15 +147,40 @@ function refreshOnce() {
 // =====================================================
 export const authApi = {
   // 회원가입
-  signup: (email, password, nickname) =>
+  signup: (email, password, nickname, signupProof, acceptedTermsIds) =>
     request("/api/auth/signup", {
       method: "POST",
       body: {
         email,
         password,
         nickname,
+        signupProof,
+        acceptedTermsIds,
       },
     }),
+
+  // ====================================
+  // 2. 이메일 인증번호 발송 (신규)
+  // ====================================
+  sendEmailCode: (email) =>
+    request("/api/auth/email/send", {
+      method: "POST",
+      body: { email },
+    }),
+
+  // ====================================
+  // 3. 이메일 인증번호 검증 (신규)
+  // ====================================
+  verifyEmailCode: (email, code) =>
+    request("/api/auth/email/verify", {
+      method: "POST",
+      body: { email, code },
+    }),
+
+  checkNickname: (nickname) =>
+    request(
+      `/api/auth/nickname/check?nickname=${encodeURIComponent(nickname)}`,
+    ),
 
   // 로그인
   login: (email, password) =>
@@ -211,15 +236,34 @@ export async function apiRequest(path, options = {}) {
   try {
     return await request(path, requestOptions);
   } catch (error) {
-    // 자동 갱신을 사용하지 않거나 401이 아니면 예외 발생
     if (!retryOn401 || !(error instanceof ApiError) || error.status !== 401) {
       throw error;
     }
 
-    // Access Token 만료 시 Refresh Token 갱신
-    await refreshOnce();
+    // Access Token 인증 실패 → Refresh Token으로 복구
+    try {
+      await refreshOnce();
+    } catch (refreshError) {
+      if (refreshError instanceof ApiError && refreshError.status === 401) {
+        notifySessionExpired();
+      }
 
-    // 원래 요청 다시 실행
-    return request(path, requestOptions);
+      throw refreshError;
+    }
+
+    // Refresh 성공 후 원래 요청 재시도
+    try {
+      return await request(path, requestOptions);
+    } catch (retryError) {
+      if (retryError instanceof ApiError && retryError.status === 401) {
+        notifySessionExpired();
+      }
+
+      throw retryError;
+    }
   }
+}
+
+function notifySessionExpired() {
+  window.dispatchEvent(new Event("spoilock:session-expired"));
 }

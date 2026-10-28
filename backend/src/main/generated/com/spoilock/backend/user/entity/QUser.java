@@ -28,9 +28,13 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath email = createString("email");
 
+    public final DateTimePath<java.time.LocalDateTime> emailVerifiedAt = createDateTime("emailVerifiedAt", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     public final StringPath nickname = createString("nickname");
+
+    public final StringPath nicknameKey = createString("nicknameKey");
 
     public final StringPath passwordHash = createString("passwordHash");
 
