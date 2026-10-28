@@ -81,9 +81,6 @@ public final class SpoilerVerdictPolicy {
     }
 
     private AnalysisDecision decideUncertain(SpoilerJudgeResponse response) {
-        if (publishOffTopic && Boolean.FALSE.equals(response.aboutStory())) {
-            return AnalysisDecision.publishAll("UNCERTAIN: 작품과 무관한 대화");
-        }
         return AnalysisDecision.hold("UNCERTAIN: 검토 대기");
     }
 
