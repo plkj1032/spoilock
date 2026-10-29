@@ -12,6 +12,7 @@ import UserFeedPage from "../pages/UserFeedPage";
 import AdminTermsPage from "../pages/AdminTermsPage";
 import AdminPage from "../pages/AdminPage";
 import AdminChatPage from "../pages/AdminChatPage";
+import ChatInvitePage from "../pages/ChatInvitePage";
 
 export default function AppRouter({
   user,
@@ -37,6 +38,18 @@ export default function AppRouter({
       <Route
         path="/chat"
         element={<ChatPage user={user} onLogin={onLogin} onNotice={onNotice} />}
+      />
+
+      <Route
+        path="/chat/invite/:code"
+        element={
+          <ChatInvitePage
+            key={user?.id ?? "guest"}
+            user={user}
+            pending={pending}
+            onLogin={onLogin}
+          />
+        }
       />
 
       <Route

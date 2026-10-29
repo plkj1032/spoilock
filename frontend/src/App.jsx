@@ -6,6 +6,7 @@ import AuthModal from "./components/auth/AuthModal";
 import AppRouter from "./router/AppRouter";
 import Toast from "./components/common/Toast";
 import LoginSessionWatcher from "./components/auth/LoginSessionWatcher";
+import InviteLoginReturn from "./components/auth/InviteLoginReturn";
 
 import "./App.css";
 
@@ -187,6 +188,7 @@ function App() {
         userId={signedInUserId}
         onSessionExpired={handleSessionExpired}
       />
+      <InviteLoginReturn userId={signedInUserId} />
       <Header
         user={user}
         pending={pending}

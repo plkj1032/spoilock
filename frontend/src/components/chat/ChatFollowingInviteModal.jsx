@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { chatInvitationApi } from "../../api/chatInvitationApi";
 import "../../styles/ChatFollowingInviteModal.css";
+import ChatInviteLinkPanel from "./ChatInviteLinkPanel";
 
 const STATUS_LABELS = {
   AVAILABLE: "초대 보내기",
@@ -22,7 +23,7 @@ export default function ChatFollowingInviteModal({
   const busyRef = useRef(false);
   const titleId = useId();
   const codeId = useId();
-
+  const [linkBusy, setLinkBusy] = useState(false);
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(0);
   const [hasNext, setHasNext] = useState(false);
@@ -146,8 +147,7 @@ export default function ChatFollowingInviteModal({
     setPage(nextPage);
   }
 
-  const busy = sendingId !== null;
-
+  const busy = sendingId !== null || linkBusy;
   return createPortal(
     <dialog
       ref={dialogRef}
@@ -156,7 +156,10 @@ export default function ChatFollowingInviteModal({
       onCancel={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (!busyRef.current) onClose();
+
+        if (!busyRef.current && !linkBusy) {
+          onClose();
+        }
       }}
     >
       <header className="following-invite-header">
@@ -179,6 +182,12 @@ export default function ChatFollowingInviteModal({
       </header>
 
       <div className="following-invite-body">
+        <ChatInviteLinkPanel
+          key={roomId}
+          roomId={roomId}
+          disabled={sendingId !== null}
+          onBusyChange={setLinkBusy}
+        />
         {onEnter && (
           <p className="following-invite-help">
             방이 만들어졌어요. 친구를 초대하거나 바로 입장할 수 있어요.
@@ -258,7 +267,7 @@ export default function ChatFollowingInviteModal({
               {sent.nickname}님에게 초대 알림을 보냈어요.
             </strong>
 
-            <label htmlFor={codeId}>최근 발급한 초대코드</label>
+            <label htmlFor={codeId}>개인 초대코드 · 수신자 전용</label>
             <input
               id={codeId}
               value={sent.code}
