@@ -24,7 +24,13 @@ public class QEpisodeAnalysis extends EntityPathBase<EpisodeAnalysis> {
 
     public final com.spoilock.backend.common.entity.QAuditedEntity _super = new com.spoilock.backend.common.entity.QAuditedEntity(this);
 
+    public final StringPath analysisJobId = createString("analysisJobId");
+
+    public final NumberPath<Integer> analysisProgress = createNumber("analysisProgress", Integer.class);
+
     public final DateTimePath<java.time.LocalDateTime> analysisRequestedAt = createDateTime("analysisRequestedAt", java.time.LocalDateTime.class);
+
+    public final EnumPath<com.spoilock.backend.spoiler.enums.AnalysisSource> analysisSource = createEnum("analysisSource", com.spoilock.backend.spoiler.enums.AnalysisSource.class);
 
     public final EnumPath<com.spoilock.backend.common.enums.AnalysisStatus> analysisStatus = createEnum("analysisStatus", com.spoilock.backend.common.enums.AnalysisStatus.class);
 
