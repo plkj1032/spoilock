@@ -26,6 +26,16 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_WS_TARGET,
           ws: true,
         },
+
+        "/oauth2": {
+          target: env.VITE_API_TARGET,
+          changeOrigin: false,
+        },
+
+        "/login/oauth2": {
+          target: env.VITE_API_TARGET,
+          changeOrigin: false,
+        },
       },
     },
   };

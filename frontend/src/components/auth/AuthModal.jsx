@@ -902,9 +902,7 @@ export default function AuthModal({
           className="submit-button kakao-login-button"
           disabled={actionBusy}
           onClick={() => {
-            window.location.assign(
-              "http://localhost:8080/oauth2/authorization/kakao",
-            );
+            window.location.assign("/oauth2/authorization/kakao");
           }}
         >
           카카오로 로그인
