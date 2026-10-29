@@ -28,7 +28,7 @@ public class QDrama extends EntityPathBase<Drama> {
 
     public final StringPath posterUrl = createString("posterUrl");
 
-    public final EnumPath<com.spoilock.backend.drama.domain.enums.DramaStatus> status = createEnum("status", com.spoilock.backend.drama.enums.DramaStatus.class);
+    public final EnumPath<com.spoilock.backend.drama.domain.enums.DramaStatus> status = createEnum("status", com.spoilock.backend.drama.domain.enums.DramaStatus.class);
 
     public final StringPath synopsis = createString("synopsis");
 
