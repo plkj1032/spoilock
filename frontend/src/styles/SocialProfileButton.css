@@ -1,0 +1,29 @@
+.my-social-person .social-profile-button {
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #edf3ff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.my-social-person .social-profile-button:hover {
+  background: transparent;
+  color: #a9c4ff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.my-social-person .social-profile-button:focus-visible {
+  outline: 2px solid #a4c1ff;
+  outline-offset: 4px;
+}

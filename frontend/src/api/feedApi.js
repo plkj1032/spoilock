@@ -30,8 +30,11 @@ export const feedApi = {
   },
 
   // 좋아요 / 댓글
-  getSocial(postId) {
-    return feedRequest(`/api/feed/posts/${postId}/social`);
+  getSocial(postId, signal) {
+    return feedRequest(`/api/feed/posts/${postId}/social`, {
+      signal,
+      cache: "no-store",
+    });
   },
 
   like(postId) {
@@ -46,8 +49,11 @@ export const feedApi = {
     });
   },
 
-  getComments(postId, page = 0) {
-    return feedRequest(`/api/feed/posts/${postId}/comments?page=${page}`);
+  getComments(postId, page = 0, signal) {
+    return feedRequest(`/api/feed/posts/${postId}/comments?page=${page}`, {
+      signal,
+      cache: "no-store",
+    });
   },
 
   createComment(postId, content) {

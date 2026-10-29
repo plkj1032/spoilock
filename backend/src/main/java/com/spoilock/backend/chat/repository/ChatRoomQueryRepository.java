@@ -45,7 +45,8 @@ public class ChatRoomQueryRepository {
                 .on(chatRoomMember.id.roomId.eq(chatRoom.id))
                 .where(
                         chatRoom.active.isTrue(),
-                        chatRoom.drama.status.eq(DramaStatus.PUBLISHED)
+                        chatRoom.drama.status.eq(DramaStatus.PUBLISHED),
+                        chatRoom.roomType.ne(ChatRoomType.PRIVATE)
                 )
                 .groupBy(
                         chatRoom.id,

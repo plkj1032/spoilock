@@ -1,6 +1,8 @@
 package com.spoilock.backend.post.service;
 
 import com.spoilock.backend.common.enums.ModerationStatus;
+import com.spoilock.backend.notification.domain.entity.Notification;
+import com.spoilock.backend.notification.repository.NotificationRepository;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.post.entity.PostLike;
 import com.spoilock.backend.post.entity.id.PostLikeId;
@@ -30,6 +32,7 @@ public class FeedSocialService {
     private final PostLikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostVisibilityService visibilityService;
+    private final NotificationRepository notificationRepository;
 
     private static final List<ModerationStatus> ALLOWED =
             List.of(
@@ -98,6 +101,7 @@ public class FeedSocialService {
     }
 
     // 좋아요
+    // 좋아요: 실제로 새 좋아요가 저장될 때만 알림 생성
     @Transactional
     public SocialSummary like(Long postId, Long userId) {
         Post post = findRootPost(postId);
@@ -116,6 +120,18 @@ public class FeedSocialService {
             likeRepository.saveAndFlush(
                     PostLike.create(user, post)
             );
+
+            Long authorId = post.getUser().getId();
+
+            if (!authorId.equals(userId)) {
+                notificationRepository.save(
+                        Notification.createPostLike(
+                                authorId,
+                                user.getId(),
+                                user.getNickname()
+                        )
+                );
+            }
         }
 
         return summary(postId, userId);
@@ -137,6 +153,7 @@ public class FeedSocialService {
     }
 
     // 댓글 작성
+    // 댓글 작성 및 게시글 작성자 알림
     @Transactional
     public CommentResponse comment(
             Long postId,
@@ -165,6 +182,18 @@ public class FeedSocialService {
         Post saved = postRepository.saveAndFlush(
                 Post.createComment(user, parent, value)
         );
+
+        Long authorId = parent.getUser().getId();
+
+        if (!authorId.equals(userId)) {
+            notificationRepository.save(
+                    Notification.createPostComment(
+                            authorId,
+                            user.getId(),
+                            user.getNickname()
+                    )
+            );
+        }
 
         return toResponse(saved, userId);
     }

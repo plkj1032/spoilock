@@ -1,0 +1,60 @@
+.room-card.is-default-room,
+.chat-directory-card.is-default-room,
+.mypage-room.is-default-room {
+  border: 1px solid #8c7545;
+  background: linear-gradient(115deg, #2a2b2c 0%, #202a3a 55%, #1b293f 100%);
+  box-shadow: inset 3px 0 0 #c5a05b;
+}
+
+.room-card.is-default-room:hover:not(:disabled),
+.chat-directory-card.is-default-room:hover:not(:disabled),
+.mypage-room.is-default-room:hover {
+  border-color: #d4b572;
+  background: linear-gradient(115deg, #35322b 0%, #273246 55%, #21324b 100%);
+  box-shadow:
+    inset 3px 0 0 #e2bf78,
+    0 5px 18px #0002;
+}
+
+.default-room-crown {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  box-sizing: border-box;
+  border: 1px solid #b995504d;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #c4a15b24, #c4a15b0d);
+  color: #f0ca79;
+}
+
+.default-room-crown svg {
+  display: block;
+}
+
+.mypage-room.is-default-room .mypage-default-room-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mypage-default-room-heading > div {
+  min-width: 0;
+}
+
+.room-card.is-default-room:focus-visible,
+.chat-directory-card.is-default-room:focus-visible,
+.mypage-room.is-default-room:focus-visible {
+  outline: 2px solid #f0ca79;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .default-room-crown {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+  }
+}

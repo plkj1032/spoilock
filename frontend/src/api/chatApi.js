@@ -37,13 +37,14 @@ export const chatApi = {
       ...options,
       cache: "no-store",
     }),
-  createRoom: (dramaId, roomName, description) =>
+  createRoom: (dramaId, roomName, description, roomType = "CUSTOM") =>
     chatRequest("/api/chat/rooms", {
       method: "POST",
       body: {
         dramaId,
         roomName,
         description,
+        roomType,
       },
     }),
 

@@ -29,7 +29,9 @@ public class MyRoomPageQueryRepository {
     public PageResponse<MyPageResponse.JoinedRoom> findPage(
             Long userId,
             int page,
-            int size
+            int size,
+            Long dramaId,
+            ChatRoomType roomType
     ) {
         BooleanBuilder condition = new BooleanBuilder()
                 .and(chatRoomMember.user.id.eq(userId))
@@ -48,6 +50,14 @@ public class MyRoomPageQueryRepository {
                                 )
                                 .notExists()
                 );
+
+        if (dramaId != null) {
+            condition.and(drama.id.eq(dramaId));
+        }
+
+        if (roomType != null) {
+            condition.and(chatRoom.roomType.eq(roomType));
+        }
 
         Long count = queryFactory
                 .select(chatRoomMember.user.id.count())
