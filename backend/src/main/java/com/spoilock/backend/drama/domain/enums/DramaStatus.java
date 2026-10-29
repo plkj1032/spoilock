@@ -1,4 +1,4 @@
-package com.spoilock.backend.drama.enums;
+package com.spoilock.backend.drama.domain.enums;
 
 public enum DramaStatus {
     DRAFT,

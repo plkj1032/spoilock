@@ -1,0 +1,75 @@
+/* 채팅방 필터·정렬, 커뮤니티 작품 선택 */
+.chat-directory select,
+.feed-composer select {
+  color-scheme: dark;
+  color: #e5edff;
+  background-color: #142239;
+  border: 1px solid #3a5074;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.chat-directory select option,
+.feed-composer select option {
+  color: #e5edff;
+  background-color: #142239;
+}
+
+.chat-directory select optgroup,
+.feed-composer select optgroup {
+  color: #a8bfe8;
+  background-color: #142239;
+}
+
+.chat-directory select:focus-visible,
+.feed-composer select:focus-visible {
+  outline: 2px solid #87a8ff;
+  outline-offset: 2px;
+}
+
+/* 커뮤니티 사진 첨부 */
+.feed-composer input[type="file"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  color: #aebfda;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.feed-composer input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 9px 14px;
+  border: 1px solid #49699b;
+  border-radius: 9px;
+  background: #263f65;
+  color: #e7efff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.feed-composer input[type="file"]:not(:disabled)::file-selector-button:hover {
+  border-color: #91afff;
+  background: #345483;
+}
+
+.feed-composer input[type="file"]:focus-visible {
+  outline: 2px solid #87a8ff;
+  outline-offset: 4px;
+  border-radius: 9px;
+}
+
+.feed-composer input[type="file"]:disabled {
+  opacity: 0.55;
+}
+
+.feed-composer input[type="file"]:disabled::file-selector-button {
+  cursor: not-allowed;
+}

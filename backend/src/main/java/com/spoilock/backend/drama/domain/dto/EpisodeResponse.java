@@ -1,6 +1,6 @@
-package com.spoilock.backend.drama.dto;
+package com.spoilock.backend.drama.domain.dto;
 
-import com.spoilock.backend.drama.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.Episode;
 
 import java.time.LocalDateTime;
 

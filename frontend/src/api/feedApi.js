@@ -8,13 +8,25 @@ function feedRequest(path, options = {}) {
 }
 
 export const feedApi = {
-  getFeed({ type = "ALL", cursor = null, size = 10, signal } = {}) {
+  getFeed({
+    type = "ALL",
+    cursor = null,
+    size = 10,
+    dramaId = null,
+    signal,
+  } = {}) {
     const params = new URLSearchParams({
       type,
       size: String(size),
     });
 
-    if (cursor) params.set("cursor", cursor);
+    if (cursor) {
+      params.set("cursor", cursor);
+    }
+
+    if (dramaId != null && dramaId !== "") {
+      params.set("dramaId", String(dramaId));
+    }
 
     return feedRequest(`/api/feed?${params}`, {
       signal,

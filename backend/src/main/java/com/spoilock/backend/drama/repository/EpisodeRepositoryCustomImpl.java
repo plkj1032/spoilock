@@ -2,7 +2,7 @@
 package com.spoilock.backend.drama.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.spoilock.backend.drama.entity.QEpisode;
+import com.spoilock.backend.drama.domain.entity.QEpisode;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

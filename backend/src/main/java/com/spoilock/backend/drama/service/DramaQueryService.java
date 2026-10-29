@@ -1,6 +1,6 @@
 package com.spoilock.backend.drama.service;
 
-import com.spoilock.backend.drama.dto.DramaOptionResponse;
+import com.spoilock.backend.drama.domain.dto.DramaOptionResponse;
 import com.spoilock.backend.drama.repository.DramaQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

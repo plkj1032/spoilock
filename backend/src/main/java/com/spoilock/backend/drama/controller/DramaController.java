@@ -1,7 +1,8 @@
 package com.spoilock.backend.drama.controller;
 
-import com.spoilock.backend.drama.dto.DramaResponse;
-import com.spoilock.backend.drama.dto.EpisodeResponse;
+import com.spoilock.backend.drama.domain.dto.DramaDetailResponse;
+import com.spoilock.backend.drama.domain.dto.DramaResponse;
+import com.spoilock.backend.drama.domain.dto.EpisodeResponse;
 import com.spoilock.backend.drama.service.DramaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +26,9 @@ public class DramaController {
     }
 
     @GetMapping("/{dramaId}")
-    public DramaResponse getDrama(
+    public DramaDetailResponse getDrama(
             @PathVariable Long dramaId
-    )
-    {
+    ) {
         return dramaService.getDrama(dramaId);
     }
 

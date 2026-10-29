@@ -2,7 +2,7 @@ package com.spoilock.backend.spoiler.entity;
 
 import com.spoilock.backend.common.entity.AuditedEntity;
 import com.spoilock.backend.common.enums.AnalysisStatus;
-import com.spoilock.backend.drama.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.spoiler.enums.AnalysisSource;
 
 import jakarta.persistence.*;

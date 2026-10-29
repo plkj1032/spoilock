@@ -1,4 +1,4 @@
-package com.spoilock.backend.drama.entity;
+package com.spoilock.backend.drama.domain.entity;
 
 import com.spoilock.backend.user.entity.User;
 

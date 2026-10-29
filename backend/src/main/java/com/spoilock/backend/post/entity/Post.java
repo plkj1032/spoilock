@@ -3,7 +3,7 @@ package com.spoilock.backend.post.entity;
 import com.spoilock.backend.common.entity.AuditedEntity;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.common.enums.ModerationStatus;
-import com.spoilock.backend.drama.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.Drama;
 import com.spoilock.backend.user.entity.User;
 
 import jakarta.persistence.*;

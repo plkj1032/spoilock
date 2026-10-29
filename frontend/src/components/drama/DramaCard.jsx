@@ -24,7 +24,21 @@ export default function DramaCard({
           : `${watched}화 시청`;
 
   return (
-    <article className="drama-card" onClick={onSelect}>
+    <article
+      className="drama-card"
+      onClick={onSelect}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? `${drama.title} 선택` : undefined}
+      style={onSelect ? { cursor: "pointer" } : undefined}
+      onKeyDown={(event) => {
+        if (!onSelect || event.target !== event.currentTarget) return;
+
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+    >
       <div className="drama-cover cover-night">
         {drama.posterUrl && (
           <img

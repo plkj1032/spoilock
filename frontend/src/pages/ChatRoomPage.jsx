@@ -728,6 +728,8 @@ export default function ChatRoomPage({ user }) {
         {showMemberPanel && (
           <ChatMemberPanel
             key={roomId}
+            roomType={room?.roomType}
+            ownerUserId={room?.createdById}
             members={members}
             loading={membersLoading}
             error={membersError}

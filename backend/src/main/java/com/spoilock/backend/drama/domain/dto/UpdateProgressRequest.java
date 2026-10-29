@@ -1,4 +1,4 @@
-package com.spoilock.backend.drama.dto;
+package com.spoilock.backend.drama.domain.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

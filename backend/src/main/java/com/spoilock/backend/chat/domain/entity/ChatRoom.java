@@ -2,7 +2,7 @@ package com.spoilock.backend.chat.domain.entity;
 
 import com.spoilock.backend.chat.domain.type.ChatRoomType;
 import com.spoilock.backend.common.entity.CreatedAtEntity;
-import com.spoilock.backend.drama.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.Drama;
 import com.spoilock.backend.user.entity.User;
 
 import jakarta.persistence.*;

@@ -1,0 +1,106 @@
+.admin-drama-metadata {
+  min-width: 0;
+  margin: 8px 0 28px;
+  padding: 20px;
+  border: 1px solid #34496f;
+  border-radius: 12px;
+  background: #16243b;
+}
+
+.admin-drama-metadata > legend {
+  padding: 0 8px;
+  color: #eef3ff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-drama-genres {
+  min-width: 0;
+  margin: 0 0 22px;
+  padding: 0;
+  border: 0;
+}
+
+.admin-drama-genres > legend {
+  margin-bottom: 12px;
+  padding: 0;
+  color: #b7c8e8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-drama-genre-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-drama-genre-chip {
+  padding: 8px 13px;
+  border: 1px solid #3b5073;
+  border-radius: 999px;
+  background: #101c2f;
+  color: #b9c9e6;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.admin-drama-genre-chip:hover:not(:disabled) {
+  border-color: #819dff;
+  color: #fff;
+}
+
+.admin-drama-genre-chip[aria-pressed="true"] {
+  border-color: #819dff;
+  background: #304a7c;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #819dff;
+}
+
+.admin-drama-genre-chip:focus-visible {
+  outline: 2px solid #a5b8ff;
+  outline-offset: 3px;
+}
+
+.admin-drama-metadata:disabled {
+  opacity: 0.65;
+}
+
+.admin-drama-metadata:disabled .admin-drama-genre-chip {
+  cursor: not-allowed;
+}
+
+.admin-drama-metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-drama-metadata-grid .admin-field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.admin-drama-metadata-grid input {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-drama-metadata input[type="date"] {
+  color-scheme: dark;
+}
+
+@media (max-width: 570px) {
+  .admin-drama-metadata {
+    padding: 16px;
+  }
+
+  .admin-drama-metadata-grid {
+    grid-template-columns: 1fr;
+  }
+}

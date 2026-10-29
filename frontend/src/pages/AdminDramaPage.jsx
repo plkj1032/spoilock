@@ -3,11 +3,23 @@ import { adminDramaApi } from "../api/adminDramaApi";
 import { Link } from "react-router-dom";
 import "../styles/AdminDramaPage.css";
 import "../styles/AdminCenter.css";
+import AdminDramaMetadataFields from "../components/admin/AdminDramaMetadataFields";
 
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
   title: `${i + 1}화`,
 }));
+
+function createEmptyDramaMetadata() {
+  return {
+    genres: [],
+    premiereDate: "",
+    directors: "",
+    writers: "",
+    castNames: "",
+    officialHomepageUrl: "",
+  };
+}
 
 export default function AdminDramaPage() {
   const [editingId, setEditingId] = useState(null);
@@ -16,7 +28,7 @@ export default function AdminDramaPage() {
   const [synopsis, setSynopsis] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
   const [episodes, setEpisodes] = useState(pioneerEpisodes);
-
+  const [metadata, setMetadata] = useState(createEmptyDramaMetadata);
   const [dramas, setDramas] = useState([]);
   const [busy, setBusy] = useState(false);
   const [processingId, setProcessingId] = useState(null);
@@ -51,6 +63,7 @@ export default function AdminDramaPage() {
     setSynopsis("");
     setPosterUrl("");
     setEpisodes([{ episodeNumber: 1, title: "1화" }]);
+    setMetadata(createEmptyDramaMetadata());
   }
 
   function changeEpisode(index, value) {
@@ -96,15 +109,19 @@ export default function AdminDramaPage() {
     try {
       const detail = await adminDramaApi.getDetail(id);
 
-      if (detail.status !== "DRAFT") {
-        throw new Error("초안 상태의 작품만 수정할 수 있습니다.");
-      }
-
       setEditingId(detail.id);
       setActiveTab("create");
       setTitle(detail.title);
       setSynopsis(detail.synopsis ?? "");
       setPosterUrl(detail.posterUrl ?? "");
+      setMetadata({
+        genres: detail.genres ?? [],
+        premiereDate: detail.premiereDate ?? "",
+        directors: detail.directors ?? "",
+        writers: detail.writers ?? "",
+        castNames: detail.castNames ?? "",
+        officialHomepageUrl: detail.officialHomepageUrl ?? "",
+      });
 
       setEpisodes(
         detail.episodes
@@ -135,10 +152,18 @@ export default function AdminDramaPage() {
       synopsis: synopsis.trim(),
       posterUrl: posterUrl.trim() || null,
       totalEpisodeCount: episodes.length,
+
       episodes: episodes.map((episode, index) => ({
         episodeNumber: index + 1,
         title: episode.title.trim() || `${index + 1}화`,
       })),
+
+      genres: metadata.genres,
+      premiereDate: metadata.premiereDate || null,
+      directors: metadata.directors.trim() || null,
+      writers: metadata.writers.trim() || null,
+      castNames: metadata.castNames.trim() || null,
+      officialHomepageUrl: metadata.officialHomepageUrl.trim() || null,
     };
 
     if (!payload.title) {
@@ -339,6 +364,12 @@ export default function AdminDramaPage() {
             </small>
           </div>
 
+          <AdminDramaMetadataFields
+            value={metadata}
+            onChange={setMetadata}
+            disabled={busy}
+          />
+
           <div className="admin-heading">
             <h3>회차 정보 · 총 {episodes.length}화</h3>
           </div>
@@ -441,16 +472,15 @@ export default function AdminDramaPage() {
                     >
                       자막 · AI 관리
                     </Link>
-                    {drama.status === "DRAFT" && (
-                      <button
-                        type="button"
-                        className="button button-outline"
-                        onClick={() => startEditing(drama.id)}
-                        disabled={busy || processingId !== null}
-                      >
-                        수정
-                      </button>
-                    )}
+
+                    <button
+                      type="button"
+                      className="button button-outline"
+                      onClick={() => startEditing(drama.id)}
+                      disabled={busy || processingId !== null}
+                    >
+                      수정
+                    </button>
 
                     {drama.status !== "PUBLISHED" ? (
                       <button

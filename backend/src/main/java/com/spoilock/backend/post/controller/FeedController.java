@@ -24,9 +24,18 @@ public class FeedController {
     @GetMapping
     public FeedPageResponse getFeed(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(defaultValue = "ALL") String type,
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int size
+
+            @RequestParam(defaultValue = "ALL")
+            String type,
+
+            @RequestParam(required = false)
+            String cursor,
+
+            @RequestParam(defaultValue = "10")
+            int size,
+
+            @RequestParam(name = "dramaId", required = false)
+            Long dramaId
     ) {
         Long userId = Long.parseLong(jwt.getSubject());
 
@@ -34,7 +43,8 @@ public class FeedController {
                 userId,
                 type,
                 cursor,
-                size
+                size,
+                dramaId
         );
     }
 

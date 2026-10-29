@@ -1,6 +1,6 @@
 package com.spoilock.backend.drama.controller;
 
-import com.spoilock.backend.drama.dto.DramaOptionResponse;
+import com.spoilock.backend.drama.domain.dto.DramaOptionResponse;
 import com.spoilock.backend.drama.service.DramaQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
