@@ -1,0 +1,153 @@
+.admin-terms-page {
+  max-width: 850px;
+  padding-bottom: 70px;
+}
+
+.admin-terms-page__header {
+  margin-bottom: 24px;
+}
+
+.admin-terms-page__header a {
+  color: #91afff;
+  font-size: 13px;
+}
+
+.admin-terms-page__header h1 {
+  margin: 16px 0 8px;
+}
+
+.admin-terms-page__header p {
+  color: #9daecc;
+  line-height: 1.7;
+}
+
+.admin-terms-card {
+  background: #121f34;
+  border: 1px solid #2b3d5c;
+  border-radius: 16px;
+  padding: 23px;
+  margin-bottom: 22px;
+}
+
+.admin-terms-card h2 {
+  font-size: 19px;
+  margin: 0 0 20px;
+}
+
+.admin-terms-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-terms-form label {
+  color: #c2d0e8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-terms-form input,
+.admin-terms-form select,
+.admin-terms-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  background: #0b1729;
+  color: #edf2ff;
+  border: 1px solid #3a4e70;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+}
+
+.admin-terms-form textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.admin-terms-form input:disabled,
+.admin-terms-form select:disabled {
+  opacity: 0.65;
+}
+
+.admin-terms-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-terms-actions button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 18px;
+  background: #416ee6;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-terms-actions button.secondary {
+  background: #31425f;
+}
+
+.admin-terms-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-terms-success {
+  color: #78d4a0;
+}
+
+.admin-terms-error {
+  color: #ffaaaa;
+}
+
+.admin-terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-terms-item {
+  border: 1px solid #304566;
+  border-radius: 12px;
+  padding: 17px;
+}
+
+.admin-terms-item__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-terms-item__top p {
+  color: #9daecc;
+  font-size: 12px;
+  margin: 7px 0 0;
+}
+
+.admin-terms-status {
+  flex-shrink: 0;
+  color: #aac3ff;
+  font-size: 12px;
+}
+
+.admin-terms-item details {
+  margin-top: 15px;
+}
+
+.admin-terms-item summary {
+  cursor: pointer;
+  color: #9bb8ff;
+}
+
+.admin-terms-item pre {
+  font-family: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #dce5f6;
+  line-height: 1.8;
+  font-size: 13px;
+  margin-top: 12px;
+}

@@ -62,17 +62,18 @@ public class KakaoLoginService {
         }
 
         // 4. SPOILOCK 자체 토큰 발급
-        String accessToken = jwtService.createAccessToken(user);
-        String refreshToken = refreshTokenService.issue(user);
+        User currentUser = refreshTokenService.beginNewLogin(user);
+        String accessToken = jwtService.createAccessToken(currentUser);
+        String refreshToken = refreshTokenService.issue(currentUser);
 
         return new AuthService.LoginResult(
                 accessToken,
                 refreshToken,
                 new com.spoilock.backend.user.dto.MeResponse(
-                        user.getId(),
-                        user.getEmail(),
-                        user.getNickname(),
-                        user.getRole().name()
+                        currentUser.getId(),
+                        currentUser.getEmail(),
+                        currentUser.getNickname(),
+                        currentUser.getRole().name()
                 )
         );
     }

@@ -4,7 +4,7 @@ import { adminVideoApi } from "../../api/adminVideoApi";
 
 import "../../styles/AdminEpisodeVideoPanel.css";
 
-const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 400 * 1024 * 1024;
 
 function formatSize(bytes) {
   if (bytes == null) return "-";
@@ -18,7 +18,11 @@ function formatDate(value) {
   return String(value).slice(0, 19).replace("T", " ");
 }
 
-export default function AdminEpisodeVideoPanel({ episodeId }) {
+export default function AdminEpisodeVideoPanel({
+  episodeId,
+  onAnalysisRequested,
+  onVideoChange,
+}) {
   const fileInputRef = useRef(null);
 
   const [video, setVideo] = useState(null);
@@ -29,6 +33,9 @@ export default function AdminEpisodeVideoPanel({ episodeId }) {
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  // 이미 사건이 있는 회차를 다시 분석할지
+  const [replace, setReplace] = useState(false);
 
   // =========================================
   // 등록 영상 정보 조회
@@ -63,6 +70,14 @@ export default function AdminEpisodeVideoPanel({ episodeId }) {
   }, [episodeId]);
 
   // =========================================
+  // 영상 등록 여부를 상위(자막·분석 화면)에 알림
+  // → '영상 화면도 함께 분석' 옵션 표시
+  // =========================================
+  useEffect(() => {
+    onVideoChange?.(Boolean(video?.registered));
+  }, [video, onVideoChange]);
+
+  // =========================================
   // 파일 입력 초기화
   // =========================================
   function resetFile() {
@@ -94,7 +109,7 @@ export default function AdminEpisodeVideoPanel({ episodeId }) {
     }
 
     if (selected.size === 0 || selected.size > MAX_VIDEO_SIZE) {
-      setError("100MB 이하의 MP4 파일을 선택해 주세요.");
+      setError("400MB 이하의 MP4 파일을 선택해 주세요.");
       resetFile();
       return;
     }
@@ -123,6 +138,36 @@ export default function AdminEpisodeVideoPanel({ episodeId }) {
       setMessage("MP4 영상이 등록되었습니다.");
     } catch (err) {
       setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // =========================================
+  // 등록된 영상으로 사건 분석 요청
+  // =========================================
+  async function requestAnalysis() {
+    if (busy || !video?.registered) return;
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await adminVideoApi.requestAnalysis(episodeId, replace);
+
+      setMessage(
+        "영상 분석을 시작했습니다. 음성 인식에 시간이 걸리니 " +
+          "아래 AI 분석 상태에서 새로고침으로 진행 상황을 확인해 주세요.",
+      );
+      onAnalysisRequested?.();
+    } catch (err) {
+      setError(
+        err.status === 409
+          ? "이미 분석 중이거나 사건이 등록된 회차입니다. " +
+              "다시 분석하려면 '기존 사건 교체'를 선택해 주세요."
+          : err.message,
+      );
     } finally {
       setBusy(false);
     }
@@ -231,14 +276,35 @@ export default function AdminEpisodeVideoPanel({ episodeId }) {
             </span>
           </div>
 
-          <button
-            type="button"
-            className="admin-video__delete"
-            disabled={busy}
-            onClick={deleteVideo}
-          >
-            {busy ? "처리 중..." : "영상 삭제"}
-          </button>
+          <div className="admin-video__actions">
+            <button
+              type="button"
+              className="admin-video__submit"
+              disabled={busy}
+              onClick={requestAnalysis}
+            >
+              {busy ? "처리 중..." : "영상만으로 분석 (음성 인식)"}
+            </button>
+
+            <label className="admin-video__replace">
+              <input
+                type="checkbox"
+                checked={replace}
+                disabled={busy}
+                onChange={(event) => setReplace(event.target.checked)}
+              />
+              기존 사건 교체
+            </label>
+
+            <button
+              type="button"
+              className="admin-video__delete"
+              disabled={busy}
+              onClick={deleteVideo}
+            >
+              {busy ? "처리 중..." : "영상 삭제"}
+            </button>
+          </div>
         </div>
       ) : (
         <form className="admin-video__upload-form" onSubmit={uploadVideo}>

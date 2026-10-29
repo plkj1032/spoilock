@@ -1,0 +1,200 @@
+
+name: SPOILOCK CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spoilock-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Spring Boot and React
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Test backend spoiler policy
+        working-directory: backend
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon test \
+            --tests 'com.spoilock.backend.ai.service.SpoilerVerdictPolicyTest'
+
+      - name: Build Spring Boot JAR
+        working-directory: backend
+        run: ./gradlew --no-daemon bootJar
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build React
+        working-directory: frontend
+        env:
+          VITE_API_TARGET: http://localhost:8080
+          VITE_WS_TARGET: ws://localhost:8080
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package deployment files
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p release
+
+          cp backend/build/libs/backend-0.0.1-SNAPSHOT.jar \
+            release/app.jar
+
+          tar -czf release/frontend.tar.gz \
+            -C frontend/dist .
+
+      - name: Upload build artifact
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: spoilock-release
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to AWS Boot 1 and Boot 2
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout deployment script
+        uses: actions/checkout@v7
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: spoilock-release
+          path: release
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: '837153590776'
+
+      - name: Upload release to S3
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          S3_PATH="s3://${S3_BUCKET}/deploy/${GITHUB_SHA}"
+
+          aws s3 cp release/app.jar \
+            "${S3_PATH}/app.jar"
+
+          aws s3 cp release/frontend.tar.gz \
+            "${S3_PATH}/frontend.tar.gz"
+
+          aws s3 cp deploy/remote-deploy.sh \
+            "${S3_PATH}/remote-deploy.sh"
+
+          echo "S3 업로드 성공"
+
+      - name: Deploy sequentially using SSM
+        env:
+          S3_BUCKET: ${{ vars.S3_BUCKET }}
+          BOOT1_ID: ${{ vars.BOOT1_INSTANCE_ID }}
+          BOOT2_ID: ${{ vars.BOOT2_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+
+          export S3_PATH="s3://${S3_BUCKET}/deploy/${GITHUB_SHA}"
+
+          python3 - <<'PY'
+          import json
+          import os
+
+          path = os.environ["S3_PATH"]
+          region = os.environ["AWS_REGION"]
+
+          parameters = {
+              "commands": [
+                  "set -e",
+                  f"export AWS_DEFAULT_REGION='{region}'",
+                  f"aws s3 cp '{path}/remote-deploy.sh' /tmp/spoilock-remote-deploy.sh",
+                  f"bash /tmp/spoilock-remote-deploy.sh '{path}'"
+              ],
+              "executionTimeout": ["600"]
+          }
+
+          with open("ssm-params.json", "w") as f:
+              json.dump(parameters, f)
+          PY
+
+          for ID in "$BOOT1_ID" "$BOOT2_ID"; do
+            echo "================================"
+            echo "배포 시작: $ID"
+            echo "================================"
+
+            COMMAND_ID=$(aws ssm send-command \
+              --instance-ids "$ID" \
+              --document-name AWS-RunShellScript \
+              --parameters file://ssm-params.json \
+              --query 'Command.CommandId' \
+              --output text)
+
+            STATUS="Pending"
+
+            for i in $(seq 1 90); do
+              STATUS=$(aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "$ID" \
+                --query 'Status' \
+                --output text 2>/dev/null || echo "Pending")
+
+              case "$STATUS" in
+                Success|Failed|Cancelled|TimedOut|Cancelling)
+                  break
+                  ;;
+              esac
+
+              sleep 5
+            done
+
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$ID" \
+              --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
+              --output json || true
+
+            if [ "$STATUS" != "Success" ]; then
+              echo "배포 실패: $ID ($STATUS)"
+              exit 1
+            fi
+
+            echo "배포 성공: $ID"
+          done
+
+          echo "SPOILOCK Boot 1·2 배포 완료!"
+

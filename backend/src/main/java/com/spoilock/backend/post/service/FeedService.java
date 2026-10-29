@@ -1,6 +1,7 @@
 
 package com.spoilock.backend.post.service;
 
+import com.spoilock.backend.ai.service.PostAnalysisRequested;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.drama.entity.Drama;
@@ -22,6 +23,7 @@ import com.spoilock.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +47,7 @@ public class FeedService {
     private final DramaRepository dramaRepository;
     private final UserProgressRepository progressRepository;
     private final PostVisibilityService visibilityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 커서 정보
     private record FeedCursor(
@@ -88,7 +91,19 @@ public class FeedService {
         );
 
         // 생성 시 PENDING 상태 유지
-        return postRepository.saveAndFlush(post).getId();
+        Post saved = postRepository.saveAndFlush(post);
+
+        // 커밋 후 스포일러 분석 시작 (PostAnalysisListener, AFTER_COMMIT)
+        // 여기서 직접 호출하면 Gemini 응답을 기다리는 동안 DB 트랜잭션이 열려 있게 된다.
+        eventPublisher.publishEvent(
+                new PostAnalysisRequested(
+                        saved.getId(),
+                        drama.getId(),
+                        saved.getContent()
+                )
+        );
+
+        return saved.getId();
     }
 
     // ============================================
@@ -208,10 +223,14 @@ public class FeedService {
 
         if (!visible) {
             if (!approved) {
+                // 분석 대기·진행 중 → ANALYZING
+                // 분석 실패 또는 분석은 끝났지만 공개 보류(검토 대기) → REVIEW
+                AnalysisStatus status = post.getAnalysisStatus();
                 blockReason =
-                        post.getAnalysisStatus() == AnalysisStatus.FAILED
-                                ? "REVIEW"
-                                : "ANALYZING";
+                        status == AnalysisStatus.PENDING
+                                || status == AnalysisStatus.PROCESSING
+                                ? "ANALYZING"
+                                : "REVIEW";
             } else {
                 blockReason = "NOT_WATCHED";
             }

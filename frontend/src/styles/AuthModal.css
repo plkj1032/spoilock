@@ -76,3 +76,259 @@
 .kakao-login-button {
   width: 100%;
 }
+
+/* 이메일 인증 / 닉네임 중복 확인 */
+
+.auth-inline-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.auth-inline-row > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-inline-button {
+  flex-shrink: 0;
+  padding: 11px 13px;
+  border: 1px solid #4968a9;
+  border-radius: 8px;
+  background: #243b69;
+  color: #eef3ff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.auth-inline-button:hover:not(:disabled) {
+  background: #31518c;
+}
+
+.auth-inline-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-inline-button:focus-visible {
+  outline: 2px solid #87aaff;
+  outline-offset: 2px;
+}
+
+.auth-helper-text {
+  margin: 3px 0 8px;
+  color: #92a7c8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.auth-verified-message {
+  margin: 5px 0 10px;
+  color: #79d4a0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 420px) {
+  .auth-inline-button {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+}
+
+/* 회원가입 약관 */
+
+.auth-terms {
+  margin-top: 15px;
+  padding: 16px;
+  border: 1px solid #2b3e5d;
+  border-radius: 12px;
+  background: #101b2d;
+}
+
+.auth-terms h3 {
+  margin: 0 0 15px;
+  color: #e8effc;
+  font-size: 14px;
+}
+
+.auth-terms__item {
+  margin-bottom: 14px;
+}
+
+.auth-terms__item:last-child {
+  margin-bottom: 0;
+}
+
+.auth-terms__label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #d8e4f8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.auth-form .auth-terms__label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-height: auto;
+  flex-shrink: 0;
+  accent-color: #557ff0;
+}
+
+.auth-terms__details {
+  margin: 7px 0 0 25px;
+  color: #96afe0;
+  font-size: 11px;
+}
+
+.auth-terms__details summary {
+  cursor: pointer;
+}
+
+.auth-terms__content {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 9px;
+  padding: 12px;
+  background: #0a1425;
+  border-radius: 8px;
+  color: #b9c8e4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+
+/* 회원가입 모달 내부 스크롤 */
+.auth-dialog {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* 약관 동의 영역 */
+.auth-terms-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #34445e;
+}
+
+.auth-terms-section h3 {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #e9f0ff;
+}
+
+.auth-terms-all {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #1b2b45;
+  cursor: pointer;
+}
+
+.auth-terms-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #2d3c54;
+}
+
+.auth-terms-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #e3ebf8;
+  font-size: 12px;
+}
+
+.auth-terms-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.auth-terms-section input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: #648eff;
+  cursor: pointer;
+}
+
+.auth-terms-row small {
+  color: #8295b6;
+  font-size: 11px;
+}
+
+.auth-term-required {
+  color: #ff9c9c;
+  font-weight: 700;
+}
+
+.auth-term-optional {
+  color: #91a9d2;
+  font-weight: 700;
+}
+
+.auth-terms-view {
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  color: #9cbaff;
+  cursor: pointer;
+}
+
+.auth-terms-view:hover {
+  text-decoration: underline;
+}
+
+.auth-terms-content {
+  margin-top: 10px;
+  padding: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #334665;
+  border-radius: 8px;
+  background: #101c2f;
+}
+
+.auth-terms-content pre {
+  margin: 0;
+  color: #c4d3ed;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.auth-terms-error {
+  padding: 12px;
+  border: 1px solid #94545c;
+  border-radius: 8px;
+  background: #311e2a;
+  color: #ffb5bd;
+  font-size: 12px;
+}
+
+.auth-terms-error p {
+  margin: 0 0 9px;
+}
+
+.auth-terms-error button {
+  padding: 6px 10px;
+  border: 1px solid #bd7584;
+  border-radius: 7px;
+  background: transparent;
+  color: #ffe3e8;
+  cursor: pointer;
+}

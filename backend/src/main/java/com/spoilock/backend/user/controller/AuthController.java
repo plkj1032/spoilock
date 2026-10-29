@@ -166,4 +166,18 @@ public class AuthController {
                 .build();
     }
 
+    // 닉네임 중복 확인
+    @GetMapping("/nickname/check")
+    public NicknameCheckResponse checkNickname(
+            @RequestParam String nickname
+    )
+    {
+        return new NicknameCheckResponse(
+                authService.isNicknameAvailable(nickname)
+        );
+    }
+
+    public record NicknameCheckResponse(boolean available) {}
+
+
 }

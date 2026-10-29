@@ -26,13 +26,19 @@ public class QNotification extends EntityPathBase<Notification> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final DateTimePath<java.time.LocalDateTime> dismissedAt = createDateTime("dismissedAt", java.time.LocalDateTime.class);
+
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final NumberPath<Long> invitationId = createNumber("invitationId", Long.class);
 
     public final DateTimePath<java.time.LocalDateTime> readAt = createDateTime("readAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> receiverId = createNumber("receiverId", Long.class);
 
     public final NumberPath<Long> roomId = createNumber("roomId", Long.class);
+
+    public final NumberPath<Long> senderUserId = createNumber("senderUserId", Long.class);
 
     public final NumberPath<Long> sourceReportId = createNumber("sourceReportId", Long.class);
 

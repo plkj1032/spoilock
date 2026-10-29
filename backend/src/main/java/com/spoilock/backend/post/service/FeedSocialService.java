@@ -1,5 +1,6 @@
 package com.spoilock.backend.post.service;
 
+import com.spoilock.backend.ai.service.PostAnalysisRequested;
 import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.notification.domain.entity.Notification;
 import com.spoilock.backend.notification.repository.NotificationRepository;
@@ -13,6 +14,7 @@ import com.spoilock.backend.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,6 +35,7 @@ public class FeedSocialService {
     private final UserRepository userRepository;
     private final PostVisibilityService visibilityService;
     private final NotificationRepository notificationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final List<ModerationStatus> ALLOWED =
             List.of(
@@ -101,7 +104,6 @@ public class FeedSocialService {
     }
 
     // 좋아요
-    // 좋아요: 실제로 새 좋아요가 저장될 때만 알림 생성
     @Transactional
     public SocialSummary like(Long postId, Long userId) {
         Post post = findRootPost(postId);
@@ -153,7 +155,6 @@ public class FeedSocialService {
     }
 
     // 댓글 작성
-    // 댓글 작성 및 게시글 작성자 알림
     @Transactional
     public CommentResponse comment(
             Long postId,
@@ -181,6 +182,16 @@ public class FeedSocialService {
 
         Post saved = postRepository.saveAndFlush(
                 Post.createComment(user, parent, value)
+        );
+
+        // 커밋 후 스포일러 분석 시작 (PostAnalysisListener, AFTER_COMMIT)
+        // 댓글은 원글과 같은 드라마 기준으로 판정
+        eventPublisher.publishEvent(
+                new PostAnalysisRequested(
+                        saved.getId(),
+                        parent.getDrama().getId(),
+                        saved.getContent()
+                )
         );
 
         Long authorId = parent.getUser().getId();

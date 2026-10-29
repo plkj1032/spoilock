@@ -9,6 +9,7 @@ import AdminDramaPage from "../pages/AdminDramaPage";
 import AdminSubtitlesPage from "../pages/AdminSubtitlesPage";
 import MyPage from "../pages/MyPage";
 import UserFeedPage from "../pages/UserFeedPage";
+import AdminTermsPage from "../pages/AdminTermsPage";
 
 export default function AppRouter({
   user,
@@ -117,6 +118,18 @@ export default function AppRouter({
                 로그인
               </button>
             </main>
+          )
+        }
+      />
+      <Route
+        path="/admin/terms"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminTermsPage />
+          ) : (
+            <Navigate to="/" replace />
           )
         }
       />
