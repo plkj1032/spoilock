@@ -31,7 +31,7 @@ export default function useRoomPage({
       params.set("keyword", keyword.trim());
     }
 
-    if (includeJoinedPrivate) {
+    if (includeJoinedPrivate && userId != null) {
       params.set("includeJoinedPrivate", "true");
     }
   }

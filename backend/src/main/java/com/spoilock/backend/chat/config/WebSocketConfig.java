@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.config;
 
+import com.spoilock.backend.user.session.LoginWebSocketSessions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -7,6 +8,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -15,6 +17,7 @@ public class WebSocketConfig
         implements WebSocketMessageBrokerConfigurer {
 
     private final ChatStompInterceptor chatStompInterceptor;
+    private final LoginWebSocketSessions loginWebSocketSessions;
 
     @Override
     public void configureClientInboundChannel(
@@ -51,5 +54,12 @@ public class WebSocketConfig
                         "http://localhost:8080",
                         "http://localhost:5173"
                 );
+    }
+
+    @Override
+    public void configureWebSocketTransport(
+            WebSocketTransportRegistration registration
+    ){
+        registration.addDecoratorFactory(loginWebSocketSessions);
     }
 }

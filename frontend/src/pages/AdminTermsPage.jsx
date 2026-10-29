@@ -164,7 +164,7 @@ export default function AdminTermsPage() {
   return (
     <main className="container main-content admin-terms-page">
       <header className="admin-terms-page__header">
-        <Link to="/admin/dramas">← 관리자 작품 관리</Link>
+        <Link to="/admin">← 관리자 센터</Link>
 
         <h1>약관 관리</h1>
 

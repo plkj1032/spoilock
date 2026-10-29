@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import com.spoilock.backend.user.session.LoginSessionNotifier;
 
 @Configuration
 public class RedisConfig {
@@ -26,7 +27,8 @@ public class RedisConfig {
             ChatRedisSubscriber subscriber,
             ChannelTopic chatTopic,
             ChatPresenceNotifier presenceNotifier,
-            ChatRoomListNotifier roomListNotifier
+            ChatRoomListNotifier roomListNotifier,
+            LoginSessionNotifier loginSessionNotifier
     ) {
         RedisMessageListenerContainer container =
                 new RedisMessageListenerContainer();
@@ -49,6 +51,12 @@ public class RedisConfig {
         container.addMessageListener(
                 roomListNotifier,
                 new ChannelTopic(ChatRoomListNotifier.CHANNEL)
+        );
+
+        // 다른 서버에서 발생한 로그인·로그아웃 변경
+        container.addMessageListener(
+                loginSessionNotifier,
+                new ChannelTopic(LoginSessionNotifier.CHANNEL)
         );
 
         return container;
