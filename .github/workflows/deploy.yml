@@ -59,7 +59,7 @@ jobs:
           npm run build
 
       - name: Package deployment files
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         run: |
           mkdir -p release
 
@@ -70,7 +70,7 @@ jobs:
             -C frontend/dist .
 
       - name: Upload build artifact
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@v7
         with:
           name: spoilock-release
@@ -81,7 +81,7 @@ jobs:
   deploy:
     name: Deploy to AWS Boot 1 and Boot 2
     needs: build
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
 
     steps:
