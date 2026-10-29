@@ -61,6 +61,11 @@ public record SpoilerApiProperties(
         @DefaultValue("true")
         boolean publishOffTopic,
 
+        // 사건이 하나도 등록되지 않은 작품(분석 서버가 확인)의 채팅·게시글은 판정할 내용이 없으므로 공개
+        // false 면 예전처럼 보류(검토 대기). 분석 서버에 연결할 수 없을 때는 이 값과 무관하게 실패 → 재시도
+        @DefaultValue("true")
+        boolean publishUnindexedDrama,
+
         // Spring 작품 ID → Python 사건 DB 정보. 등록되지 않은 작품은 분석 보류
         Map<Long, DramaKb> dramas,
 

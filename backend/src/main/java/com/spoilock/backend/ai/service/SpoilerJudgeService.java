@@ -21,6 +21,7 @@ public class SpoilerJudgeService {
     private final SpoilerApiClient spoilerApiClient;
     private final SpoilerKbService kbService;
     private final SpoilerVerdictPolicy policy;
+    private final boolean publishUnindexedDrama;
 
     public SpoilerJudgeService(
             SpoilerApiClient spoilerApiClient,
@@ -29,6 +30,7 @@ public class SpoilerJudgeService {
     ) {
         this.spoilerApiClient = spoilerApiClient;
         this.kbService = kbService;
+        this.publishUnindexedDrama = properties.publishUnindexedDrama();
         this.policy = new SpoilerVerdictPolicy(
                 properties.allowUnverifiedDemo(),
                 properties.publishSkippedGeneral(),
@@ -45,12 +47,20 @@ public class SpoilerJudgeService {
     public AnalysisDecision judge(Long logId, Long dramaId, String content) {
 
         // 작품별 판정 범위: Python 에 사건이 등록된 회차 (관리자 페이지에서 적재·검수)
-        SpoilerApiProperties.DramaKb kb = kbService.findDrama(dramaId);
+        SpoilerKbService.KbLookup lookup = kbService.lookup(dramaId);
+        SpoilerApiProperties.DramaKb kb = lookup.kb();
+
+        if (lookup.noEvents()) {
+            // 분석 서버가 확인한 '사건이 하나도 없는 작품' → 비교할 스포일러가 없음
+            return publishUnindexedDrama
+                    ? AnalysisDecision.publishAll("사건 미등록 작품: 판정 대상 없음 dramaId=" + dramaId)
+                    : AnalysisDecision.hold("사건 미등록 작품 dramaId=" + dramaId);
+        }
 
         if (kb == null || kb.kbDramaId() == null
                 || kb.episodes() == null || kb.episodes().isEmpty()) {
-            // 사건 DB 가 없는 작품: 다른 작품 데이터로 판정하지 않고 보류
-            return AnalysisDecision.hold("사건 DB 미등록 작품 dramaId=" + dramaId);
+            // 분석 서버에 물어볼 수 없음 → 원문은 가린 채 실패 처리, 복구 작업이 재시도
+            return AnalysisDecision.failed("사건 DB 조회 실패 dramaId=" + dramaId);
         }
 
         try {
