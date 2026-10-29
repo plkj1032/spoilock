@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { adminDramaApi } from "../api/adminDramaApi";
 import { Link } from "react-router-dom";
 import "../styles/AdminDramaPage.css";
+import "../styles/AdminCenter.css";
+
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
   title: `${i + 1}화`,
@@ -9,7 +11,7 @@ const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
 
 export default function AdminDramaPage() {
   const [editingId, setEditingId] = useState(null);
-
+  const [activeTab, setActiveTab] = useState("create");
   const [title, setTitle] = useState("Pioneer One");
   const [synopsis, setSynopsis] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
@@ -99,6 +101,7 @@ export default function AdminDramaPage() {
       }
 
       setEditingId(detail.id);
+      setActiveTab("create");
       setTitle(detail.title);
       setSynopsis(detail.synopsis ?? "");
       setPosterUrl(detail.posterUrl ?? "");
@@ -160,6 +163,7 @@ export default function AdminDramaPage() {
       const wasEditing = editingId !== null;
 
       resetForm();
+      setActiveTab("list");
 
       setMessage(
         wasEditing
@@ -232,6 +236,9 @@ export default function AdminDramaPage() {
 
   return (
     <main className="container main-content admin-page">
+      <Link to="/admin" className="admin-center-back">
+        ← 관리자 센터
+      </Link>
       <div className="section-top">
         <div>
           <span className="section-overline">SPOILOCK ADMIN</span>
@@ -239,203 +246,238 @@ export default function AdminDramaPage() {
           <p className="page-subtitle">드라마와 회차 정보를 관리합니다.</p>
         </div>
       </div>
-
-      <form className="admin-panel" onSubmit={handleSubmit}>
-        <div className="admin-heading">
-          <h2>
-            {editingId === null ? "새 작품 등록" : `작품 #${editingId} 수정`}
-          </h2>
-
-          {editingId !== null && (
-            <button
-              type="button"
-              className="button button-outline"
-              onClick={() => {
-                resetForm();
-                clearMessages();
-              }}
-              disabled={busy}
-            >
-              수정 취소
-            </button>
-          )}
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="drama-title">작품명</label>
-          <input
-            id="drama-title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
-            required
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="drama-synopsis">공개용 짧은 줄거리</label>
-          <textarea
-            id="drama-synopsis"
-            rows={4}
-            maxLength={5000}
-            value={synopsis}
-            onChange={(e) => setSynopsis(e.target.value)}
-            placeholder="중요한 반전 없이 작품의 기본 설정만 소개하세요."
-          />
-        </div>
-
-        <div className="admin-field">
-          <label htmlFor="drama-poster">포스터 URL (선택)</label>
-          <input
-            id="drama-poster"
-            type="url"
-            maxLength={1000}
-            value={posterUrl}
-            onChange={(e) => setPosterUrl(e.target.value)}
-            placeholder="https://..."
-          />
-          <small>
-            이미지 사용권한을 확인한 경우에만 입력하세요. 비워두면 기본 카드
-            이미지가 표시됩니다.
-          </small>
-        </div>
-
-        <div className="admin-heading">
-          <h3>회차 정보 · 총 {episodes.length}화</h3>
-        </div>
-
-        <div className="admin-episode-grid">
-          {episodes.map((episode, index) => (
-            <div className="admin-field" key={episode.episodeNumber}>
-              <label htmlFor={`episode-${index}`}>{index + 1}화 제목</label>
-
-              <div className="admin-episode-row">
-                <input
-                  id={`episode-${index}`}
-                  value={episode.title}
-                  onChange={(e) => changeEpisode(index, e.target.value)}
-                  maxLength={200}
-                  placeholder={`${index + 1}화`}
-                />
-
-                <button
-                  type="button"
-                  className="button button-outline episode-delete"
-                  onClick={() => removeEpisode(index)}
-                  disabled={episodes.length === 1 || busy}
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="admin-content-switch" aria-label="콘텐츠 관리 화면 선택">
+        <button
+          type="button"
+          aria-pressed={activeTab === "create"}
+          disabled={busy || processingId !== null}
+          onClick={() => setActiveTab("create")}
+        >
+          {editingId === null ? "새 작품 등록" : "작품 수정"}
+        </button>
 
         <button
           type="button"
-          className="button button-outline episode-add"
-          onClick={addEpisode}
-          disabled={busy}
+          aria-pressed={activeTab === "list"}
+          disabled={busy || processingId !== null}
+          onClick={() => setActiveTab("list")}
         >
-          + 회차 추가
+          등록된 작품 관리
         </button>
+      </div>
 
-        <p className="admin-rights-note">
-          작품 소개와 이미지의 이용 권한을 확인해 주세요. 자막 파일 등록 및 AI
-          분석은 별도 관리자 기능으로 연결할 예정입니다.
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
         </p>
+      )}
 
-        {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-        )}
+      {message && (
+        <p className="form-success" role="status">
+          {message}
+        </p>
+      )}
 
-        {message && (
-          <p className="form-success" role="status">
-            {message}
-          </p>
-        )}
+      {activeTab === "create" && (
+        <form className="admin-panel" onSubmit={handleSubmit}>
+          <div className="admin-heading">
+            <h2>
+              {editingId === null ? "새 작품 등록" : `작품 #${editingId} 수정`}
+            </h2>
 
-        <button
-          type="submit"
-          className="button button-primary admin-submit"
-          disabled={busy}
-        >
-          {busy
-            ? "저장 중..."
-            : editingId === null
-              ? `작품 및 ${episodes.length}개 회차 등록`
-              : "작품 수정사항 저장"}
-        </button>
-      </form>
+            {editingId !== null && (
+              <button
+                type="button"
+                className="button button-outline"
+                onClick={() => {
+                  resetForm();
+                  clearMessages();
+                }}
+                disabled={busy}
+              >
+                수정 취소
+              </button>
+            )}
+          </div>
 
-      <section className="admin-panel">
-        <h2>등록된 작품</h2>
+          <div className="admin-field">
+            <label htmlFor="drama-title">작품명</label>
+            <input
+              id="drama-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+              required
+            />
+          </div>
 
-        {dramas.length === 0 ? (
-          <p className="page-subtitle">등록된 작품이 없습니다.</p>
-        ) : (
-          <div className="admin-drama-list">
-            {dramas.map((drama) => (
-              <div className="admin-drama-item" key={drama.id}>
-                <div>
-                  <strong>{drama.title}</strong>
-                  <p className="page-subtitle">
-                    #{drama.id} · 총 {drama.totalEpisodeCount}화
-                  </p>
-                  <span className="admin-status">
-                    {drama.status === "DRAFT"
-                      ? "초안"
-                      : drama.status === "PUBLISHED"
-                        ? "공개"
-                        : "숨김"}
-                  </span>
-                </div>
+          <div className="admin-field">
+            <label htmlFor="drama-synopsis">공개용 짧은 줄거리</label>
+            <textarea
+              id="drama-synopsis"
+              rows={4}
+              maxLength={5000}
+              value={synopsis}
+              onChange={(e) => setSynopsis(e.target.value)}
+              placeholder="중요한 반전 없이 작품의 기본 설정만 소개하세요."
+            />
+          </div>
 
-                <div className="admin-item-actions">
-                  <Link
-                    to={`/admin/dramas/${drama.id}/subtitles`}
-                    className="button button-outline"
+          <div className="admin-field">
+            <label htmlFor="drama-poster">포스터 URL (선택)</label>
+            <input
+              id="drama-poster"
+              type="url"
+              maxLength={1000}
+              value={posterUrl}
+              onChange={(e) => setPosterUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <small>
+              이미지 사용권한을 확인한 경우에만 입력하세요. 비워두면 기본 카드
+              이미지가 표시됩니다.
+            </small>
+          </div>
+
+          <div className="admin-heading">
+            <h3>회차 정보 · 총 {episodes.length}화</h3>
+          </div>
+
+          <div className="admin-episode-grid">
+            {episodes.map((episode, index) => (
+              <div className="admin-field" key={episode.episodeNumber}>
+                <label htmlFor={`episode-${index}`}>{index + 1}화 제목</label>
+
+                <div className="admin-episode-row">
+                  <input
+                    id={`episode-${index}`}
+                    value={episode.title}
+                    onChange={(e) => changeEpisode(index, e.target.value)}
+                    maxLength={200}
+                    placeholder={`${index + 1}화`}
+                  />
+
+                  <button
+                    type="button"
+                    className="button button-outline episode-delete"
+                    onClick={() => removeEpisode(index)}
+                    disabled={episodes.length === 1 || busy}
                   >
-                    자막 · AI 관리
-                  </Link>
-                  {drama.status === "DRAFT" && (
-                    <button
-                      type="button"
-                      className="button button-outline"
-                      onClick={() => startEditing(drama.id)}
-                      disabled={busy || processingId !== null}
-                    >
-                      수정
-                    </button>
-                  )}
-
-                  {drama.status !== "PUBLISHED" ? (
-                    <button
-                      type="button"
-                      className="button button-primary"
-                      onClick={() => publishDrama(drama.id)}
-                      disabled={busy || processingId !== null}
-                    >
-                      {processingId === drama.id ? "처리 중..." : "공개"}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="button button-outline"
-                      onClick={() => hideDrama(drama.id)}
-                      disabled={busy || processingId !== null}
-                    >
-                      숨기기
-                    </button>
-                  )}
+                    삭제
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </section>
+
+          <button
+            type="button"
+            className="button button-outline episode-add"
+            onClick={addEpisode}
+            disabled={busy}
+          >
+            + 회차 추가
+          </button>
+
+          <p className="admin-rights-note">
+            작품 소개와 이미지의 이용 권한을 확인해 주세요. 자막 파일 등록 및 AI
+            분석은 별도 관리자 기능으로 연결할 예정입니다.
+          </p>
+
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {message && (
+            <p className="form-success" role="status">
+              {message}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="button button-primary admin-submit"
+            disabled={busy}
+          >
+            {busy
+              ? "저장 중..."
+              : editingId === null
+                ? `작품 및 ${episodes.length}개 회차 등록`
+                : "작품 수정사항 저장"}
+          </button>
+        </form>
+      )}
+
+      {activeTab === "list" && (
+        <section className="admin-panel">
+          <h2>등록된 작품</h2>
+
+          {dramas.length === 0 ? (
+            <p className="page-subtitle">등록된 작품이 없습니다.</p>
+          ) : (
+            <div className="admin-drama-list">
+              {dramas.map((drama) => (
+                <div className="admin-drama-item" key={drama.id}>
+                  <div>
+                    <strong>{drama.title}</strong>
+                    <p className="page-subtitle">
+                      #{drama.id} · 총 {drama.totalEpisodeCount}화
+                    </p>
+                    <span className="admin-status">
+                      {drama.status === "DRAFT"
+                        ? "초안"
+                        : drama.status === "PUBLISHED"
+                          ? "공개"
+                          : "숨김"}
+                    </span>
+                  </div>
+
+                  <div className="admin-item-actions">
+                    <Link
+                      to={`/admin/dramas/${drama.id}/subtitles`}
+                      className="button button-outline"
+                    >
+                      자막 · AI 관리
+                    </Link>
+                    {drama.status === "DRAFT" && (
+                      <button
+                        type="button"
+                        className="button button-outline"
+                        onClick={() => startEditing(drama.id)}
+                        disabled={busy || processingId !== null}
+                      >
+                        수정
+                      </button>
+                    )}
+
+                    {drama.status !== "PUBLISHED" ? (
+                      <button
+                        type="button"
+                        className="button button-primary"
+                        onClick={() => publishDrama(drama.id)}
+                        disabled={busy || processingId !== null}
+                      >
+                        {processingId === drama.id ? "처리 중..." : "공개"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button button-outline"
+                        onClick={() => hideDrama(drama.id)}
+                        disabled={busy || processingId !== null}
+                      >
+                        숨기기
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

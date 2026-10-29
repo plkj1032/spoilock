@@ -20,6 +20,7 @@ public class ChatRoomQueryService {
 
     private final ChatRoomQueryRepository chatRoomQueryRepository;
     private final ChatRoomPageQueryRepository chatRoomPageQueryRepository;
+    private final ChatRoomAccessService chatRoomAccessService;
 
     public List<ChatRoomListResponse> getActiveRooms() {
         return chatRoomQueryRepository.findActiveRooms();
@@ -31,7 +32,9 @@ public class ChatRoomQueryService {
             String keyword,
             Long dramaId,
             ChatRoomType roomType,
-            String sort
+            String sort,
+            boolean includeJoinedPrivate,
+            Long userId
     ) {
         return chatRoomPageQueryRepository.findPage(
                 page,
@@ -39,15 +42,27 @@ public class ChatRoomQueryService {
                 keyword,
                 dramaId,
                 roomType,
-                sort
+                sort,
+                includeJoinedPrivate,
+                userId
         );
     }
 
-    public ChatRoomListResponse getActiveRoom(Long roomId) {
-        return chatRoomQueryRepository.findActiveRoomById(roomId)
+    public ChatRoomListResponse getActiveRoom(
+            Long roomId,
+            Long userId
+    ) {
+        ChatRoomListResponse room = chatRoomQueryRepository
+                .findActiveRoomById(roomId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "채팅방을 찾을 수 없습니다."
                 ));
+
+        if (room.roomType() == ChatRoomType.PRIVATE) {
+            chatRoomAccessService.checkReadAccess(roomId, userId);
+        }
+
+        return room;
     }
 }

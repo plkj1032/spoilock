@@ -9,6 +9,7 @@ import useRoomPage from "../hooks/useRoomPage";
 
 import "../styles/HomePage.css";
 import "../styles/ChatRoomList.css";
+import DefaultRoomCrown from "../components/common/DefaultRoomCrown";
 
 export default function HomePage({ user, onLogin, onNotice }) {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function HomePage({ user, onLogin, onNotice }) {
     page: requestedPage,
     size: 5,
     dramaId: selectedDrama?.id ?? "",
-    sort: "members",
+    sort: selectedDrama ? "defaultFirst" : "members",
   });
 
   function selectDrama(drama) {
@@ -117,6 +118,9 @@ export default function HomePage({ user, onLogin, onNotice }) {
               전체 채팅방 보기
             </button>
           )}
+          <p className="demo-disclaimer" role="status">
+            전체 {totalElements}개
+          </p>
         </div>
 
         <button
@@ -155,14 +159,20 @@ export default function HomePage({ user, onLogin, onNotice }) {
               rooms.map((room) => (
                 <button
                   type="button"
-                  className="room-card"
+                  className={`room-card ${
+                    room.roomType === "DEFAULT" ? "is-default-room" : ""
+                  }`}
                   key={room.roomId}
                   onClick={() => enterRoom(room.roomId)}
                   disabled={enteringRoomId !== null}
                 >
-                  <span className="room-icon" aria-hidden="true">
-                    ▢
-                  </span>
+                  {room.roomType === "DEFAULT" ? (
+                    <DefaultRoomCrown />
+                  ) : (
+                    <span className="room-icon" aria-hidden="true">
+                      ▢
+                    </span>
+                  )}
 
                   <span className="room-copy">
                     <strong>{room.roomName}</strong>
@@ -171,7 +181,7 @@ export default function HomePage({ user, onLogin, onNotice }) {
                   </span>
 
                   <span className="room-members">
-                    가입 {room.memberCount ?? 0}명
+                    {room.memberCount ?? 0}명
                   </span>
 
                   <span className="room-enter">
@@ -190,10 +200,6 @@ export default function HomePage({ user, onLogin, onNotice }) {
                 disabled={enteringRoomId !== null}
                 label="메인 채팅방 페이지"
               />
-
-              <p className="demo-disclaimer" role="status">
-                전체 {totalElements}개 · {page + 1} / {totalPages}페이지
-              </p>
             </>
           )}
         </div>

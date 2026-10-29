@@ -73,6 +73,24 @@ public class ChatRoom extends CreatedAtEntity {
         return room;
     }
 
+    public static ChatRoom createPrivate(
+            Drama drama,
+            User creator,
+            String roomName,
+            String description
+    ) {
+        ChatRoom room = create(
+                drama,
+                creator,
+                roomName,
+                description
+        );
+
+        room.roomType = ChatRoomType.PRIVATE;
+
+        return room;
+    }
+
     //드라마 등록시 자동 생성할 기본토론방
     public static ChatRoom createDefault(
             Drama drama,
@@ -88,5 +106,14 @@ public class ChatRoom extends CreatedAtEntity {
         room.roomType = ChatRoomType.DEFAULT;
 
         return room;
+    }
+    public void deactivateEmptyRoom() {
+        if (roomType == ChatRoomType.DEFAULT) {
+            throw new IllegalStateException(
+                    "기본 토론방은 자동 삭제할 수 없습니다."
+            );
+        }
+
+        active = false;
     }
 }

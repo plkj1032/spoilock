@@ -6,7 +6,10 @@ import MyDramaActions from "../components/drama/MyDramaActions";
 import "../styles/MyPage.css";
 import Pagination from "../components/common/Pagination";
 import useRoomPage from "../hooks/useRoomPage";
-import MySocialStats from "../components/common/MySocialStats";
+import MySocialStats from "../components/user/MySocialStats";
+import ProfileEditModal from "../components/user/ProfileEditModal";
+import DefaultRoomCrown from "../components/common/DefaultRoomCrown";
+import MyRoomFilters from "../components/common/MyRoomFilters";
 
 function getWatchStatus(drama) {
   const watched = Number(drama.watchedEpisodeNumber ?? 0);
@@ -48,7 +51,9 @@ export default function MyPage({ onProfileUpdated }) {
   const [saveMessage, setSaveMessage] = useState("");
   const [watchFilter, setWatchFilter] = useState("전체");
   const [requestedRoomPage, setRequestedRoomPage] = useState(0);
-
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [roomDramaId, setRoomDramaId] = useState("");
+  const [roomTypeFilter, setRoomTypeFilter] = useState("ALL");
   const {
     rooms,
     page: roomPage,
@@ -62,6 +67,8 @@ export default function MyPage({ onProfileUpdated }) {
     scope: "mine",
     page: requestedRoomPage,
     size: 5,
+    dramaId: roomDramaId,
+    roomType: roomTypeFilter,
   });
   const savingRef = useRef(false);
   const mountedRef = useRef(false);
@@ -228,7 +235,38 @@ export default function MyPage({ onProfileUpdated }) {
             {Array.from(profile.nickname || "?")[0]}
           </div>
           <div>
-            <h2>{profile.nickname}님</h2>
+            <div className="mypage-profile-name-row">
+              <h2>{profile.nickname}님</h2>
+
+              <button
+                type="button"
+                className="mypage-profile-edit-button"
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setNickname(profile.nickname);
+                  setSaveError("");
+                  setSaveMessage("");
+                  setProfileEditOpen(true);
+                }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" />
+                  <path d="m13 6 5 5" />
+                </svg>
+                수정
+              </button>
+            </div>
+
             <p>{profile.email || "등록된 이메일 없음"}</p>
           </div>
         </div>
@@ -326,19 +364,31 @@ export default function MyPage({ onProfileUpdated }) {
 
             <div className="mypage-section-counts">
               <span>
-                전체
+                {roomDramaId !== "" || roomTypeFilter !== "ALL"
+                  ? "필터 결과"
+                  : "전체"}
                 <strong>
                   {roomsLoading ? "…" : roomsError ? "—" : roomTotalElements}
                 </strong>
               </span>
             </div>
           </div>
-
           <Link className="mypage-link" to="/chat">
             채팅방 둘러보기 →
           </Link>
         </div>
-
+        <MyRoomFilters
+          dramaId={roomDramaId}
+          roomType={roomTypeFilter}
+          onDramaChange={(value) => {
+            setRoomDramaId(value);
+            setRequestedRoomPage(0);
+          }}
+          onTypeChange={(value) => {
+            setRoomTypeFilter(value);
+            setRequestedRoomPage(0);
+          }}
+        />
         {roomsError && (
           <div role="alert">
             <p className="mypage-error">{roomsError}</p>
@@ -359,7 +409,11 @@ export default function MyPage({ onProfileUpdated }) {
             </p>
           ) : rooms.length === 0 ? (
             !roomsError && (
-              <p className="mypage-empty">아직 참여 중인 채팅방이 없습니다.</p>
+              <p className="mypage-empty">
+                {roomDramaId !== "" || roomTypeFilter !== "ALL"
+                  ? "선택한 조건에 해당하는 참여 채팅방이 없습니다."
+                  : "아직 참여 중인 채팅방이 없습니다."}
+              </p>
             )
           ) : (
             <div className="mypage-room-list">
@@ -367,20 +421,28 @@ export default function MyPage({ onProfileUpdated }) {
                 <Link
                   key={room.roomId}
                   to={`/chat/${room.roomId}`}
-                  className="mypage-room"
+                  className={`mypage-room ${
+                    room.roomType === "DEFAULT" ? "is-default-room" : ""
+                  }`}
                 >
-                  <div>
-                    <span className="mypage-room-drama">{room.dramaTitle}</span>
+                  <div className="mypage-default-room-heading">
+                    {room.roomType === "DEFAULT" && <DefaultRoomCrown />}
 
-                    <h3>{room.roomName}</h3>
+                    <div>
+                      <span className="mypage-room-drama">
+                        {room.dramaTitle}
+                      </span>
 
-                    <span className="mypage-badge">
-                      {room.roomType === "DEFAULT"
-                        ? "기본 토론방"
-                        : room.roomType === "PRIVATE"
-                          ? "비공개방"
-                          : "자유 채팅방"}
-                    </span>
+                      <h3>{room.roomName}</h3>
+
+                      <span className="mypage-badge">
+                        {room.roomType === "DEFAULT"
+                          ? "토론방"
+                          : room.roomType === "PRIVATE"
+                            ? "비공개방"
+                            : "자유 채팅방"}
+                      </span>
+                    </div>
                   </div>
 
                   <span className="mypage-room-enter">입장 →</span>
@@ -398,69 +460,29 @@ export default function MyPage({ onProfileUpdated }) {
               onPageChange={setRequestedRoomPage}
               label="내 참여 채팅방 페이지"
             />
-
-            <p className="mypage-help" role="status">
-              전체 {roomTotalElements}개 · {roomPage + 1} / {roomTotalPages}
-              페이지
-            </p>
           </>
         )}
       </section>
 
-      <section className="mypage-panel" aria-labelledby="mypage-settings">
-        <div className="mypage-section-heading">
-          <h2 id="mypage-settings">내 정보 수정</h2>
-        </div>
-
-        <form className="mypage-form" onSubmit={saveProfile}>
-          <label htmlFor="mypage-email">이메일</label>
-          <input
-            id="mypage-email"
-            type="text"
-            value={profile.email || "등록된 이메일 없음"}
-            readOnly
-          />
-          <p className="mypage-help">
-            이메일은 이 화면에서 변경할 수 없습니다.
-          </p>
-
-          <label htmlFor="mypage-nickname">닉네임</label>
-          <input
-            id="mypage-nickname"
-            name="nickname"
-            autoComplete="nickname"
-            value={nickname}
-            maxLength={20}
-            required
-            disabled={saving}
-            aria-describedby="mypage-nickname-help"
-            onChange={(event) => {
-              setNickname(event.target.value);
-              setSaveError("");
-              setSaveMessage("");
-            }}
-          />
-          <p className="mypage-help" id="mypage-nickname-help">
-            앞뒤 공백을 제외하고 2~20자로 입력해 주세요.
-          </p>
-
-          {saveError && (
-            <p className="mypage-error" role="alert">
-              {saveError}
-            </p>
-          )}
-
-          {saveMessage && (
-            <p className="mypage-success" role="status">
-              {saveMessage}
-            </p>
-          )}
-
-          <button className="mypage-button" type="submit" disabled={saving}>
-            {saving ? "저장 중…" : "변경사항 저장"}
-          </button>
-        </form>
-      </section>
+      {profileEditOpen && (
+        <ProfileEditModal
+          email={profile.email}
+          nickname={nickname}
+          saving={saving}
+          error={saveError}
+          message={saveMessage}
+          onNicknameChange={(value) => {
+            setNickname(value);
+            setSaveError("");
+            setSaveMessage("");
+          }}
+          onSubmit={saveProfile}
+          onClose={() => {
+            if (savingRef.current) return;
+            setProfileEditOpen(false);
+          }}
+        />
+      )}
     </main>
   );
 }

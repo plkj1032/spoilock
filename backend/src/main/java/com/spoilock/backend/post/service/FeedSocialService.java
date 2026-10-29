@@ -2,6 +2,8 @@ package com.spoilock.backend.post.service;
 
 import com.spoilock.backend.ai.service.PostAnalysisRequested;
 import com.spoilock.backend.common.enums.ModerationStatus;
+import com.spoilock.backend.notification.domain.entity.Notification;
+import com.spoilock.backend.notification.repository.NotificationRepository;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.post.entity.PostLike;
 import com.spoilock.backend.post.entity.id.PostLikeId;
@@ -32,6 +34,7 @@ public class FeedSocialService {
     private final PostLikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostVisibilityService visibilityService;
+    private final NotificationRepository notificationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     private static final List<ModerationStatus> ALLOWED =
@@ -119,6 +122,18 @@ public class FeedSocialService {
             likeRepository.saveAndFlush(
                     PostLike.create(user, post)
             );
+
+            Long authorId = post.getUser().getId();
+
+            if (!authorId.equals(userId)) {
+                notificationRepository.save(
+                        Notification.createPostLike(
+                                authorId,
+                                user.getId(),
+                                user.getNickname()
+                        )
+                );
+            }
         }
 
         return summary(postId, userId);
@@ -178,6 +193,18 @@ public class FeedSocialService {
                         saved.getContent()
                 )
         );
+
+        Long authorId = parent.getUser().getId();
+
+        if (!authorId.equals(userId)) {
+            notificationRepository.save(
+                    Notification.createPostComment(
+                            authorId,
+                            user.getId(),
+                            user.getNickname()
+                    )
+            );
+        }
 
         return toResponse(saved, userId);
     }

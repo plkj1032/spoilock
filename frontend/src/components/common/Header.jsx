@@ -45,23 +45,12 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
 
               {/* 관리자 전용 메뉴 */}
               {user.role === "ADMIN" && (
-                <>
-                  {/* 기존 드라마 관리 */}
-                  <NavLink
-                    to="/admin/dramas"
-                    className="button button-outline admin-link"
-                  >
-                    관리자
-                  </NavLink>
-
-                  {/* 신규 약관 관리 */}
-                  <NavLink
-                    to="/admin/terms"
-                    className="button button-outline admin-link"
-                  >
-                    약관 관리
-                  </NavLink>
-                </>
+                <NavLink
+                  to="/admin"
+                  className="button button-outline admin-link"
+                >
+                  관리자
+                </NavLink>
               )}
 
               {/* 로그아웃 */}

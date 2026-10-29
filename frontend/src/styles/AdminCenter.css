@@ -1,0 +1,280 @@
+.admin-center {
+  padding-top: 42px;
+  padding-bottom: 64px;
+}
+
+.admin-center-back {
+  display: inline-flex;
+  margin-bottom: 24px;
+  color: #a9bce0;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.admin-center-back:hover {
+  color: #ffffff;
+}
+
+.admin-center-heading {
+  margin-bottom: 30px;
+}
+
+.admin-center-heading h1 {
+  margin: 10px 0;
+  color: #f5f8ff;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.04em;
+}
+
+.admin-center-heading p {
+  margin: 0;
+  color: #9eafca;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.admin-center-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-center-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid #2c3e5b;
+  border-radius: 20px;
+  background: #142136;
+  color: #edf3ff;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-center-card:hover {
+  transform: translateY(-3px);
+  border-color: #7295ec;
+  background: #1a2b46;
+}
+
+.admin-center-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 26px;
+  border: 1px solid #3d5682;
+  border-radius: 14px;
+  background: #223a60;
+  color: #b9ceff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.admin-center-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  letter-spacing: -0.04em;
+}
+
+.admin-center-card p {
+  flex: 1;
+  margin: 0 0 30px;
+  color: #a6b7d0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.admin-center-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  border-top: 1px solid #2c3e5b;
+  color: #bbcdff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-center-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.admin-center-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 16px;
+  border: 1px solid #344b6c;
+  border-radius: 10px;
+  background: #0e192b;
+  color: #f1f5ff;
+  font: inherit;
+}
+
+.admin-center-search input::placeholder {
+  color: #91a5c5;
+}
+
+.admin-center-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #aebfd9;
+  font-size: 13px;
+}
+
+.admin-center-room-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-center-room {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid #665a3c;
+  border-radius: 16px;
+  background: #192538;
+}
+
+.admin-center-room-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #75633a;
+  border-radius: 14px;
+  background: #38372f;
+  color: #e7c16f;
+}
+
+.admin-center-room-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.admin-center-room-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-center-room-label {
+  color: #e7c16f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-center-room-info h2 {
+  margin: 6px 0;
+  color: #f0f5ff;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.admin-center-room-info p {
+  margin: 0;
+  color: #a5b6cf;
+  font-size: 12px;
+}
+
+.admin-center-empty {
+  padding: 48px 20px;
+  border: 1px dashed #344b6c;
+  border-radius: 16px;
+  color: #a5b6cf;
+  text-align: center;
+}
+
+.admin-content-switch {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 6px;
+  border: 1px solid #2c3e5b;
+  border-radius: 14px;
+  background: #101b2d;
+}
+
+.admin-content-switch button {
+  flex: 1;
+  padding: 14px 18px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #9eafca;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-content-switch button[aria-pressed="true"] {
+  border-color: #4f6da3;
+  background: #263e65;
+  color: #ffffff;
+}
+
+.admin-content-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.admin-center-card:focus-visible,
+.admin-center-back:focus-visible,
+.admin-center-search input:focus-visible,
+.admin-content-switch button:focus-visible {
+  outline: 2px solid #8aabff;
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  .admin-center-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-center-card {
+    padding: 24px;
+  }
+
+  .admin-center-number {
+    margin-bottom: 18px;
+  }
+
+  .admin-center-room {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .admin-center-room > button {
+    width: 100%;
+  }
+
+  .admin-content-switch button {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-center-card {
+    transition: none;
+  }
+
+  .admin-center-card:hover {
+    transform: none;
+  }
+}

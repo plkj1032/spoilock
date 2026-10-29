@@ -5,6 +5,8 @@ import com.spoilock.backend.follow.dto.FollowUserResponse;
 import com.spoilock.backend.follow.entity.UserFollow;
 import com.spoilock.backend.follow.entity.id.UserFollowId;
 import com.spoilock.backend.follow.repository.UserFollowRepository;
+import com.spoilock.backend.notification.domain.entity.Notification;
+import com.spoilock.backend.notification.repository.NotificationRepository;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.enums.AccountStatus;
 import com.spoilock.backend.user.repository.UserRepository;
@@ -25,6 +27,7 @@ public class FollowService {
 
     private final UserFollowRepository followRepository;
     private final UserRepository userRepository;
+    private final NotificationRepository  notificationRepository;
 
     // =========================================
     // 1. 사용자 존재 및 계정 상태 확인
@@ -104,6 +107,13 @@ public class FollowService {
                     ex
             );
         }
+        notificationRepository.save(
+                Notification.createFollow(
+                        following.getId(),
+                        follower.getId(),
+                        follower.getNickname()
+                )
+        );
 
         return getStats(followingId, followerId);
     }

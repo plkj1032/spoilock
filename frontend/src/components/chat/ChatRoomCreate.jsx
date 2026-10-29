@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/ChatRoomCreate.css";
-
+import ChatFollowingInviteModal from "./ChatFollowingInviteModal";
 import { chatApi } from "../../api/chatApi";
 import { dramaApi } from "../../api/dramaApi";
 import Button from "../common/Button";
@@ -10,11 +10,11 @@ export default function ChatRoomCreate({ onClose }) {
   const navigate = useNavigate();
 
   const [dramas, setDramas] = useState([]);
-
+  const [createdPrivateRoom, setCreatedPrivateRoom] = useState(null);
   const [dramaId, setDramaId] = useState("");
   const [roomName, setRoomName] = useState("");
   const [description, setDescription] = useState("");
-
+  const [roomType, setRoomType] = useState("CUSTOM");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -72,12 +72,15 @@ export default function ChatRoomCreate({ onClose }) {
         Number(dramaId),
         trimmedRoomName,
         description.trim() || null,
+        roomType,
       );
 
-      await chatApi.enterRoom(createdRoom.roomId);
+      if (roomType === "PRIVATE") {
+        setCreatedPrivateRoom(createdRoom);
+        return;
+      }
 
       onClose();
-
       navigate(`/chat/${createdRoom.roomId}`);
     } catch (error) {
       setError(error.message);
@@ -90,6 +93,20 @@ export default function ChatRoomCreate({ onClose }) {
     if (event.target === event.currentTarget && !submitting) {
       onClose();
     }
+  }
+  if (createdPrivateRoom) {
+    return (
+      <ChatFollowingInviteModal
+        key={createdPrivateRoom.roomId}
+        roomId={createdPrivateRoom.roomId}
+        roomName={createdPrivateRoom.roomName}
+        onClose={onClose}
+        onEnter={() => {
+          onClose();
+          navigate(`/chat/${createdPrivateRoom.roomId}`);
+        }}
+      />
+    );
   }
 
   return (
@@ -128,6 +145,22 @@ export default function ChatRoomCreate({ onClose }) {
           </div>
         ) : (
           <form className="chat-create-form" onSubmit={handleSubmit}>
+            <div className="chat-create-field">
+              <label htmlFor="chat-room-type">공개 설정</label>
+
+              <select
+                id="chat-room-type"
+                value={roomType}
+                onChange={(event) => setRoomType(event.target.value)}
+                disabled={submitting}
+                aria-describedby="chat-room-type-help"
+              >
+                <option value="CUSTOM">공개 채팅방</option>
+                <option value="PRIVATE">비공개 채팅방</option>
+              </select>
+
+              <small id="chat-room-type-help"></small>
+            </div>
             <div className="chat-create-field">
               <label htmlFor="chat-drama">작품</label>
 

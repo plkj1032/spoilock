@@ -12,6 +12,7 @@ export default function useRoomPage({
   dramaId = "",
   roomType = "ALL",
   sort = "members",
+  includeJoinedPrivate = false,
 }) {
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState(null);
@@ -30,15 +31,18 @@ export default function useRoomPage({
       params.set("keyword", keyword.trim());
     }
 
-    if (dramaId !== "" && dramaId != null) {
-      params.set("dramaId", String(dramaId));
-    }
-
-    if (roomType && roomType !== "ALL") {
-      params.set("roomType", roomType);
+    if (includeJoinedPrivate && userId != null) {
+      params.set("includeJoinedPrivate", "true");
     }
   }
+  // 드라마·방 종류 필터는 마이페이지에서도 사용
+  if (dramaId !== "" && dramaId != null) {
+    params.set("dramaId", String(dramaId));
+  }
 
+  if (roomType && roomType !== "ALL") {
+    params.set("roomType", roomType);
+  }
   const path =
     scope === "mine"
       ? `/api/me/chat/rooms?${params}`
