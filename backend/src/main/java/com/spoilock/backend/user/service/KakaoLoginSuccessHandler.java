@@ -84,6 +84,7 @@ public class KakaoLoginSuccessHandler
         }
 
         // React 페이지로 이동
-        response.sendRedirect("http://localhost:5173/");
+        response.setStatus(HttpServletResponse.SC_FOUND);
+        response.setHeader(HttpHeaders.LOCATION,"/");
     }
 }
