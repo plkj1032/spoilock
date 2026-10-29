@@ -154,6 +154,7 @@ public class SpoilerAdminClient {
         form.add("drama_id", String.valueOf(dramaId));
         form.add("episode_id", String.valueOf(episodeId));
         form.add("episode", String.valueOf(episodeNumber));
+        form.add("kb_version", properties.kbVersion());
         form.add("language", properties.admin().language());
         form.add("replace", String.valueOf(replace));
 

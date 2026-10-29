@@ -18,6 +18,9 @@ repositories {
 }
 
 dependencies {
+	// AWS S3
+	implementation platform('software.amazon.awssdk:bom:2.57.6')
+	implementation 'software.amazon.awssdk:s3'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'

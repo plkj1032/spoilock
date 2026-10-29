@@ -2,6 +2,8 @@
 package com.spoilock.backend.spoiler.service;
 
 import com.spoilock.backend.drama.domain.entity.Episode;
+import com.spoilock.backend.common.storage.S3StorageService;
+import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.spoiler.dto.*;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
@@ -31,6 +33,8 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class AdminEpisodeAiService {
+
+    private final S3StorageService s3StorageService;
 
     private static final long MAX_SUBTITLE_SIZE =
             2L * 1024 * 1024;
@@ -75,50 +79,41 @@ public class AdminEpisodeAiService {
     // ============================================
     // 2. 회차별 SRT 자막 업로드
     // ============================================
+
     @Transactional
     public AdminEpisodeAiResponse uploadSubtitle(
             Long episodeId,
             MultipartFile file
     ) {
-
-        // 1) 회차 존재 여부 확인
         Episode episode = findEpisode(episodeId);
 
-        // 2) 파일 존재 여부 및 용량 검사
         if (file == null
                 || file.isEmpty()
                 || file.getSize() > MAX_SUBTITLE_SIZE) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "자막 파일은 2MB 이하로 등록해 주세요."
             );
         }
 
-        // 3) 원본 파일명 조회
         String filename = file.getOriginalFilename();
 
         if (filename == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "파일명이 존재하지 않습니다."
+                    "파일명이 없습니다."
             );
         }
 
-        // 업로드 파일명에 경로가 들어오는 경우 제거
         filename = filename.replace('\\', '/');
-
         filename = filename.substring(
                 filename.lastIndexOf('/') + 1
         );
 
-        // 4) 확장자 및 파일명 검증
         if (filename.isBlank()
                 || filename.length() > 255
                 || !filename.toLowerCase(Locale.ROOT).endsWith(".srt")
-                || filename.chars().anyMatch(
-                Character::isISOControl
-        )) {
+                || filename.chars().anyMatch(Character::isISOControl)) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -126,159 +121,99 @@ public class AdminEpisodeAiService {
             );
         }
 
-        // 5) 기존 자막 등록 여부 검사
         EpisodeAnalysis existing = analysisRepository
                 .findByEpisode_Id(episodeId)
                 .orElse(null);
 
         if (existing != null
                 && existing.getSubtitleFilename() != null) {
-
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "이미 자막이 등록된 회차입니다."
             );
         }
 
-        // 6) 파일을 byte[]로 읽기
         byte[] bytes;
 
         try {
             bytes = file.getBytes();
-
         } catch (IOException ex) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "파일을 읽을 수 없습니다.",
+                    "자막 파일을 읽을 수 없습니다.",
                     ex
             );
         }
 
-        // 7) UTF-8 및 SRT 기본 형식 검사
+        // UTF-8 검사
         try {
-
             String content = StandardCharsets.UTF_8
                     .newDecoder()
-                    .onMalformedInput(
-                            CodingErrorAction.REPORT
-                    )
-                    .onUnmappableCharacter(
-                            CodingErrorAction.REPORT
-                    )
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
                     .decode(ByteBuffer.wrap(bytes))
                     .toString();
 
             if (!content.contains("-->")) {
-
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "SRT 시간 구간 정보가 없습니다."
+                        "SRT 시간 구간이 없습니다."
                 );
             }
 
         } catch (CharacterCodingException ex) {
-
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "현재는 UTF-8 자막만 지원합니다.",
+                    "UTF-8 자막만 지원합니다.",
                     ex
             );
         }
 
-        // 8) 자막 저장 디렉터리 생성
-        Path directory = Path.of(subtitleStorageDir)
-                .toAbsolutePath()
-                .normalize();
+        // 두 EC2가 동일한 S3 객체를 사용
+        String key = "subtitles/" + episodeId + ".srt";
 
-        // 사용자가 보낸 파일명이 아닌 회차 ID로 저장
-        Path target = directory.resolve(
-                episodeId + ".srt"
+        s3StorageService.uploadBytes(
+                key,
+                bytes,
+                "application/x-subrip"
         );
 
-        boolean fileCreated = false;
-
-        try {
-
-            Files.createDirectories(directory);
-
-            // 9) 파일을 독점 생성
-            // 이미 존재하면 FileAlreadyExistsException 발생
-            Files.createFile(target);
-
-            fileCreated = true;
-
-            // 10) 파일 내용 저장
-            Files.write(
-                    target,
-                    bytes,
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.TRUNCATE_EXISTING
-            );
-
-            // 11) DB에 분석 정보 생성 또는 갱신
-            EpisodeAnalysis analysis;
-
-            if (existing == null) {
-
-                analysis = EpisodeAnalysis.create(
-                        episode,
-                        filename
+        // DB 트랜잭션이 롤백되면 S3 객체 정리
+        TransactionSynchronizationManager
+                .registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCompletion(int status) {
+                                if (status != STATUS_COMMITTED) {
+                                    s3StorageService.deleteQuietly(key);
+                                }
+                            }
+                        }
                 );
 
-            } else {
+        EpisodeAnalysis analysis;
 
-                existing.attachSubtitle(filename);
-
-                analysis = existing;
-            }
-
-            // 12) DB에 INSERT 또는 UPDATE 실행
-            analysisRepository.saveAndFlush(analysis);
-
-            // 13) 트랜잭션 롤백 시 파일 정리
-            registerRollbackCleanup(target);
-
-            log.info(
-                    "SRT 업로드 완료: episodeId={}, filename={}",
-                    episodeId,
+        if (existing == null) {
+            analysis = EpisodeAnalysis.create(
+                    episode,
                     filename
             );
-
-            return AdminEpisodeAiResponse.from(analysis);
-
-        } catch (FileAlreadyExistsException ex) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "서버에 해당 회차의 자막 파일이 이미 존재합니다.",
-                    ex
-            );
-
-        } catch (IOException ex) {
-
-            // 파일이 생성되었다면 삭제 시도
-            if (fileCreated) {
-                deleteFileQuietly(target);
-            }
-
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "자막 파일 저장 중 오류가 발생했습니다.",
-                    ex
-            );
-
-        } catch (RuntimeException ex) {
-
-            // DB 예외 등이 발생한 경우 파일 삭제 시도
-            if (fileCreated) {
-                deleteFileQuietly(target);
-            }
-
-            // 원래 예외를 유지
-            throw ex;
+        } else {
+            existing.attachSubtitle(filename);
+            analysis = existing;
         }
+
+        analysisRepository.saveAndFlush(analysis);
+
+        log.info(
+                "S3 자막 등록 완료: episodeId={}, key={}",
+                episodeId,
+                key
+        );
+
+        return AdminEpisodeAiResponse.from(analysis);
     }
+
 
 
     // ============================================
@@ -334,6 +269,7 @@ public class AdminEpisodeAiService {
     //    Python 에 등록된 사건은 그대로 남음 → 새 자막은 재분석(replace)으로 요청
     //    분석 요청은 SubtitleAnalysisService, 사건 관리는 SpoilerEventAdminService
     // ============================================
+
     @Transactional
     public AdminEpisodeAiResponse deleteSubtitle(Long episodeId) {
 
@@ -350,30 +286,26 @@ public class AdminEpisodeAiService {
         if (analysis.isJobActive()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "분석이 진행 중인 자막은 삭제할 수 없습니다."
+                    "분석 중인 자막은 삭제할 수 없습니다."
             );
         }
 
         analysis.detachSubtitle();
 
-        Path target = Path.of(subtitleStorageDir)
-                .toAbsolutePath()
-                .normalize()
-                .resolve(episodeId + ".srt");
+        String key = "subtitles/" + episodeId + ".srt";
 
-        // DB 커밋 이후 파일 삭제
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-
-                    @Override
-                    public void afterCommit() {
-                        deleteFileQuietly(target);
-                    }
-                }
-        );
-
-        log.info("자막 삭제: episodeId={}", episodeId);
+        // DB 커밋 이후 S3 파일 삭제
+        TransactionSynchronizationManager
+                .registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                s3StorageService.deleteQuietly(key);
+                            }
+                        }
+                );
 
         return AdminEpisodeAiResponse.from(analysis);
     }
+
 }
