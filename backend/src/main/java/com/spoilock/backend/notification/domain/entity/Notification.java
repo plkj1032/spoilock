@@ -151,6 +151,44 @@ public class Notification extends CreatedAtEntity {
         return notification;
     }
 
+    public static Notification createPostComment(
+            Long receiverId,
+            Long senderUserId,
+            String senderNickname
+    ) {
+        validateSender(receiverId, senderUserId);
+        requireText(senderNickname, "발신자 닉네임");
+
+        Notification notification = base(
+                receiverId,
+                NotificationType.POST_COMMENT_RECEIVED,
+                senderNickname + "님이 회원님의 게시글에 댓글을 남겼습니다."
+        );
+
+        notification.senderUserId = senderUserId;
+
+        return notification;
+    }
+
+    public static Notification createPostLike(
+            Long receiverId,
+            Long senderUserId,
+            String senderNickname
+    ) {
+        validateSender(receiverId, senderUserId);
+        requireText(senderNickname, "발신자 닉네임");
+
+        Notification notification = base(
+                receiverId,
+                NotificationType.POST_LIKE_RECEIVED,
+                senderNickname + "님이 회원님의 게시글을 좋아합니다."
+        );
+
+        notification.senderUserId = senderUserId;
+
+        return notification;
+    }
+
     public void markAsRead() {
         if (readAt == null) {
             readAt = LocalDateTime.now();

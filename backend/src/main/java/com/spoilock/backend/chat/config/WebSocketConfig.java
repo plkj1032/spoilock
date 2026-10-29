@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.config;
 
+import com.spoilock.backend.user.session.LoginWebSocketSessions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +9,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 import java.util.Arrays;
 
@@ -18,6 +20,7 @@ public class WebSocketConfig
         implements WebSocketMessageBrokerConfigurer {
 
     private final ChatStompInterceptor chatStompInterceptor;
+    private final LoginWebSocketSessions loginWebSocketSessions;
 
     @Value("${app.websocket.allowed-origins:http://localhost:5173,http://localhost:8080}")
     private String allowedOrigins;
@@ -58,5 +61,12 @@ public class WebSocketConfig
 
         registry.addEndpoint("/ws")
                 .setAllowedOrigins(origins);
+    }
+
+    @Override
+    public void configureWebSocketTransport(
+            WebSocketTransportRegistration registration
+    ){
+        registration.addDecoratorFactory(loginWebSocketSessions);
     }
 }

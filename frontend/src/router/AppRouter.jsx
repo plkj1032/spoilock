@@ -10,6 +10,9 @@ import AdminSubtitlesPage from "../pages/AdminSubtitlesPage";
 import MyPage from "../pages/MyPage";
 import UserFeedPage from "../pages/UserFeedPage";
 import AdminTermsPage from "../pages/AdminTermsPage";
+import AdminPage from "../pages/AdminPage";
+import AdminChatPage from "../pages/AdminChatPage";
+import ChatInvitePage from "../pages/ChatInvitePage";
 
 export default function AppRouter({
   user,
@@ -35,6 +38,18 @@ export default function AppRouter({
       <Route
         path="/chat"
         element={<ChatPage user={user} onLogin={onLogin} onNotice={onNotice} />}
+      />
+
+      <Route
+        path="/chat/invite/:code"
+        element={
+          <ChatInvitePage
+            key={user?.id ?? "guest"}
+            user={user}
+            pending={pending}
+            onLogin={onLogin}
+          />
+        }
       />
 
       <Route
@@ -72,6 +87,31 @@ export default function AppRouter({
       <Route
         path="/community/users/:userId"
         element={<UserFeedPage user={user} onLogin={onLogin} />}
+      />
+      <Route
+        path="/admin"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminPage />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/admin/chats"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminChatPage key={user.id} user={user} />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
       />
 
       {/* 관리자 드라마 관리 */}

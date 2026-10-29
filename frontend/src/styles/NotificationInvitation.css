@@ -1,0 +1,60 @@
+.notification-invitation {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.notification-invitation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notification-invitation-accept,
+.notification-invitation-reject {
+  min-height: 35px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notification-invitation-accept {
+  justify-self: start;
+  background: #456de0;
+  color: #fff;
+}
+
+.notification-invitation-accept:hover:not(:disabled) {
+  background: #597ff0;
+}
+
+.notification-invitation-reject {
+  border-color: #455b7b;
+  background: #1b2a42;
+  color: #bccce4;
+}
+
+.notification-invitation-reject:hover:not(:disabled) {
+  background: #293d5c;
+}
+
+.notification-invitation-status {
+  margin: 0;
+  color: #a8bddb;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.notification-invitation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notification-invitation button:focus-visible {
+  outline: 2px solid #a4c1ff;
+  outline-offset: 3px;
+}

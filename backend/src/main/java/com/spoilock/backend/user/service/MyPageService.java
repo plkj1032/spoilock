@@ -1,5 +1,6 @@
 package com.spoilock.backend.user.service;
 
+import com.spoilock.backend.chat.domain.type.ChatRoomType;
 import com.spoilock.backend.common.dto.PageResponse;
 import com.spoilock.backend.user.dto.MeResponse;
 import com.spoilock.backend.user.dto.MyPageResponse;
@@ -44,14 +45,18 @@ public class MyPageService {
     public PageResponse<MyPageResponse.JoinedRoom> getMyRoomPage(
             Long userId,
             int page,
-            int size
+            int size,
+            Long dramaId,
+            ChatRoomType roomType
     ) {
         findActiveUser(userId);
 
         return myRoomPageQueryRepository.findPage(
                 userId,
                 page,
-                size
+                size,
+                dramaId,
+                roomType
         );
     }
 

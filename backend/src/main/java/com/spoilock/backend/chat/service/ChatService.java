@@ -7,6 +7,7 @@ import com.spoilock.backend.chat.domain.entity.ChatRoom;
 import com.spoilock.backend.chat.domain.entity.ChatRoomBan;
 import com.spoilock.backend.chat.domain.entity.ChatRoomMember;
 import com.spoilock.backend.chat.domain.entity.id.ChatRoomMemberId;
+import com.spoilock.backend.chat.domain.type.ChatRoomType;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.chat.repository.ChatMessageRepository;
 import com.spoilock.backend.chat.repository.ChatRoomBanRepository;
@@ -123,8 +124,17 @@ public class ChatService {
                         userId
                 );
 
+        // 이미 가입한 회원은 기존처럼 입장 가능
         if (chatRoomMemberRepository.existsById(memberId)) {
             return Optional.empty();
+        }
+
+        // 비공개방 신규 가입은 초대 수락 기능에서만 처리
+        if (room.getRoomType() == ChatRoomType.PRIVATE) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "비공개 채팅방은 유효한 초대를 수락해야 입장할 수 있습니다."
+            );
         }
 
         ChatRoomMember member =
@@ -159,7 +169,7 @@ public class ChatService {
             Long userId
     ) {
 
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findOneById(roomId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "존재하지 않는 채팅방입니다."

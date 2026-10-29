@@ -13,9 +13,13 @@ public record NotificationResponse(
         Long invitationId,
         String content,
         boolean read,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String invitationStatus
 ) {
-    public static NotificationResponse from(Notification notification) {
+    public static NotificationResponse from(
+            Notification notification,
+            String invitationStatus
+    ) {
         return new NotificationResponse(
                 notification.getId(),
                 notification.getType(),
@@ -24,7 +28,8 @@ public record NotificationResponse(
                 notification.getInvitationId(),
                 notification.getContent(),
                 notification.getReadAt() != null,
-                notification.getCreatedAt()
+                notification.getCreatedAt(),
+                invitationStatus
         );
     }
 }

@@ -1,0 +1,106 @@
+.my-room-filters {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #304462;
+  border-radius: 13px;
+  background: #111d30;
+}
+
+.my-room-filters-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.my-room-filters select {
+  box-sizing: border-box;
+  width: 190px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #3b5274;
+  border-radius: 8px;
+  background: #1a293f;
+  color: #dce7fa;
+  font: inherit;
+  font-size: 12px;
+  color-scheme: dark;
+}
+
+.my-room-type-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.my-room-type-buttons button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #aebfdc;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.my-room-type-buttons button:hover {
+  background: #20334e;
+  color: #fff;
+}
+
+.my-room-type-buttons button[aria-pressed="true"] {
+  border-color: #557bb9;
+  background: #29436b;
+  color: #fff;
+}
+
+.my-room-filter-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: #ffb8c0;
+  font-size: 12px;
+}
+
+.my-room-filter-error button {
+  padding: 5px 8px;
+  border: 1px solid #455d80;
+  border-radius: 6px;
+  background: #1a293f;
+  color: #dce7fa;
+  font: inherit;
+  cursor: pointer;
+}
+
+.my-room-filters button:focus-visible,
+.my-room-filters select:focus-visible {
+  outline: 2px solid #8baeff;
+  outline-offset: 3px;
+}
+
+.my-room-filters :disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 540px) {
+  .my-room-filters select {
+    width: 100%;
+  }
+
+  .my-room-type-buttons {
+    width: 100%;
+  }
+
+  .my-room-type-buttons button {
+    flex: 1;
+    padding-inline: 8px;
+    white-space: nowrap;
+  }
+}

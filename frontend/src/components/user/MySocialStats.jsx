@@ -4,9 +4,11 @@ import { Link } from "react-router-dom";
 
 import { followApi } from "../../api/followApi";
 import { feedApi } from "../../api/feedApi";
-import FollowButton from "./FollowButton";
+import FollowButton from "../common/FollowButton";
 
 import "../../styles/MySocialStats.css";
+import UserFollowDialog from "./UserFollowDialog";
+import "../../styles/SocialProfileButton.css";
 
 const TITLES = {
   posts: "내 게시글",
@@ -24,6 +26,7 @@ function ListPage({
   onChanged,
   onRetry,
   onClose,
+  onOpenProfile,
 }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -128,7 +131,20 @@ function ListPage({
               </span>
 
               <div className="my-social-person">
-                <strong>{person.nickname}</strong>
+                <button
+                  type="button"
+                  className="social-profile-button"
+                  aria-haspopup="dialog"
+                  aria-label={`${person.nickname}님의 프로필 보기`}
+                  onClick={() =>
+                    onOpenProfile({
+                      userId: person.userId,
+                      nickname: person.nickname,
+                    })
+                  }
+                >
+                  {person.nickname}
+                </button>
                 <Link
                   to={`/community/users/${person.userId}`}
                   onClick={onClose}
@@ -183,6 +199,7 @@ function SocialPanel({ type, currentUser, onClose, onChanged }) {
   const [page, setPage] = useState(0);
   const [cursors, setCursors] = useState([null]);
   const [revision, setRevision] = useState(0);
+  const [profileTarget, setProfileTarget] = useState(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -252,8 +269,27 @@ function SocialPanel({ type, currentUser, onClose, onChanged }) {
           }}
           onRetry={reload}
           onClose={onClose}
+          onOpenProfile={setProfileTarget}
         />
       </div>
+      {profileTarget && (
+        <UserFollowDialog
+          key={profileTarget.userId}
+          target={profileTarget}
+          currentUser={currentUser}
+          onClose={() => {
+            setProfileTarget(null);
+
+            // 프로필에서 팔로우·취소했을 수 있으므로 목록과 숫자 갱신
+            reload();
+            onChanged();
+          }}
+          onNavigate={() => {
+            setProfileTarget(null);
+            onClose();
+          }}
+        />
+      )}
     </dialog>,
     document.body,
   );

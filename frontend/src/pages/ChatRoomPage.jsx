@@ -16,7 +16,8 @@ import useChatPresence from "../hooks/useChatPresence";
 import "../styles/ChatPresence.css";
 import ChatMemberPanel from "../components/chat/ChatMemberPanel";
 import ChatReportModal from "../components/chat/ChatReportModal";
-import UserFollowDialog from "../components/common/UserFollowDialog";
+import UserFollowDialog from "../components/user/UserFollowDialog";
+import ChatFollowingInviteModal from "../components/chat/ChatFollowingInviteModal";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -81,6 +82,7 @@ export default function ChatRoomPage({ user }) {
   const seenMessageIdsRef = useRef(new Set());
   const [reportTarget, setReportTarget] = useState(null);
   const [profileTarget, setProfileTarget] = useState(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const {
     members,
     membersLoading,
@@ -130,6 +132,11 @@ export default function ChatRoomPage({ user }) {
       ? user.role === "ADMIN"
       : ["CUSTOM", "PRIVATE"].includes(room.roomType) &&
         String(room.createdById) === String(user.id)),
+  );
+  const canInvite = Boolean(
+    room?.roomType === "PRIVATE" &&
+    user?.id != null &&
+    String(room.createdById) === String(user.id),
   );
   useEffect(() => {
     if (!canKick) return;
@@ -645,6 +652,16 @@ export default function ChatRoomPage({ user }) {
             </div>
 
             <div className="chat-room-actions">
+              {canInvite && (
+                <Button
+                  variant="outline"
+                  aria-haspopup="dialog"
+                  disabled={leaving}
+                  onClick={() => setShowInviteModal(true)}
+                >
+                  ✉️ 초대
+                </Button>
+              )}
               {canKick && (
                 <Button
                   variant="outline"
@@ -699,6 +716,14 @@ export default function ChatRoomPage({ user }) {
             </Button>
           )}
         </header>
+        {canInvite && showInviteModal && (
+          <ChatFollowingInviteModal
+            key={roomId}
+            roomId={Number(roomId)}
+            roomName={room.roomName}
+            onClose={() => setShowInviteModal(false)}
+          />
+        )}
 
         {showMemberPanel && (
           <ChatMemberPanel

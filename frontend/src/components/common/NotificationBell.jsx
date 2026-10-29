@@ -35,7 +35,7 @@ export default function NotificationBell() {
 
     void refreshCount();
 
-    const timer = window.setInterval(refreshCount, 15000);
+    const timer = window.setInterval(refreshCount, 5000);
 
     return () => {
       active = false;

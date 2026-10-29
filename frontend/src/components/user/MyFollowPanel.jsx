@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { followApi } from "../../api/followApi";
-import FollowButton from "./FollowButton";
-import Pagination from "./Pagination";
+import FollowButton from "../common/FollowButton";
+import Pagination from "../common/Pagination";
 
 import "../../styles/MyFollowPanel.css";
 

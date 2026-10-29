@@ -3,11 +3,13 @@ package com.spoilock.backend.user.service;
 import com.spoilock.backend.user.entity.RefreshSession;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.enums.AccountStatus;
+import com.spoilock.backend.user.event.LoginSessionChangedEvent;
 import com.spoilock.backend.user.repository.RefreshSessionRepository;
 import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class RefreshTokenService {
     private final RefreshSessionRepository repository;
     private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${app.jwt.refresh-days:7}")
     private long refreshDays;
@@ -38,24 +41,27 @@ public class RefreshTokenService {
     // 기존 로그인 무효화 + 버전 증가
     // ==========================================
     @Transactional
-    public User beginNewLogin(User user)
-    {
+    public User beginNewLogin(User user) {
         User lockedUser = userRepository
                 .findByIdForUpdate(user.getId())
                 .orElseThrow(this::unauthorized);
 
-        if(lockedUser.getAccountStatus() != AccountStatus.ACTIVE)
-        {
+        if (lockedUser.getAccountStatus() != AccountStatus.ACTIVE) {
             throw unauthorized();
         }
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
-        // 기존 Refresh Token 모두 폐기
         repository.revokeAll(lockedUser.getId(), now);
 
-        // 기존 Access Token 무효화
-        lockedUser.incrementTokenVersion();;
+        lockedUser.incrementTokenVersion();
+
+        eventPublisher.publishEvent(
+                new LoginSessionChangedEvent(
+                        lockedUser.getId(),
+                        lockedUser.getTokenVersion()
+                )
+        );
 
         return lockedUser;
     }
@@ -110,19 +116,23 @@ public class RefreshTokenService {
 
     // 3. 모든 Refresh Token 무효화
     @Transactional
-    public void logoutAll(String rawToken)
-    {
+    public void logoutAll(String rawToken) {
         RefreshSession session = requireActive(rawToken);
 
         User user = session.getUser();
 
-        // Access Token 전체 무효화
         user.incrementTokenVersion();
 
-        // Refresh Token 전체 무효화
         repository.revokeAll(
                 user.getId(),
                 LocalDateTime.now(ZoneOffset.UTC)
+        );
+
+        eventPublisher.publishEvent(
+                new LoginSessionChangedEvent(
+                        user.getId(),
+                        user.getTokenVersion()
+                )
         );
     }
 

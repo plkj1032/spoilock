@@ -44,35 +44,57 @@ public class SpoilerKbService {
         this.properties = properties;
     }
 
-    /** 판정에 쓸 사건 DB 정보. 사건이 없는 작품이면 null (분석 보류) */
+    /**
+     * 작품의 판정 범위 조회 결과.
+     *
+     * @param kb        판정에 쓸 사건 DB 정보 (판정 가능할 때만)
+     * @param noEvents  분석 서버가 "이 작품에 사건이 하나도 없다"고 확인함 → 판정할 내용 없음
+     *                  (kb == null 이고 noEvents == false 면 분석 서버에 물어볼 수 없었음)
+     */
+    public record KbLookup(SpoilerApiProperties.DramaKb kb, boolean noEvents) {
+
+        static KbLookup of(SpoilerApiProperties.DramaKb kb) {
+            return new KbLookup(kb, false);
+        }
+
+        static final KbLookup NO_EVENTS = new KbLookup(null, true);
+        static final KbLookup UNKNOWN = new KbLookup(null, false);
+    }
+
+    /** 판정에 쓸 사건 DB 정보. 사건이 없거나 확인할 수 없으면 null */
     public SpoilerApiProperties.DramaKb findDrama(Long dramaId) {
+        return lookup(dramaId).kb();
+    }
+
+    public KbLookup lookup(Long dramaId) {
 
         if (dramaId == null) {
-            return null;
+            return KbLookup.UNKNOWN;
         }
 
         Map<Long, SpoilerApiProperties.DramaKb> manual = properties.dramas();
         if (manual != null && manual.containsKey(dramaId)) {
-            return manual.get(dramaId);
+            return KbLookup.of(manual.get(dramaId));
         }
 
         List<Integer> indexed = indexedEpisodes(dramaId);
 
         if (indexed == null) {
-            // 분석 서버에 물어볼 수 없음 → 기존 demo 설정으로 대체
-            return properties.findDrama(dramaId);
+            // 분석 서버에 물어볼 수 없음 → 기존 demo 설정으로 대체 (없으면 UNKNOWN)
+            SpoilerApiProperties.DramaKb fallback = properties.findDrama(dramaId);
+            return fallback != null ? KbLookup.of(fallback) : KbLookup.UNKNOWN;
         }
 
         if (indexed.isEmpty()) {
-            return null;
+            return KbLookup.NO_EVENTS;
         }
 
         int last = Collections.max(indexed);
 
-        return new SpoilerApiProperties.DramaKb(
+        return KbLookup.of(new SpoilerApiProperties.DramaKb(
                 dramaId,
                 IntStream.rangeClosed(1, last).boxed().toList()
-        );
+        ));
     }
 
     /** 사건 등록·검수·분석 완료 후 호출 → 다음 판정에서 최신 회차 목록 사용 */
