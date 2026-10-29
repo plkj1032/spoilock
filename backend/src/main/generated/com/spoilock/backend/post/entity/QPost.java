@@ -31,7 +31,7 @@ public class QPost extends EntityPathBase<Post> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final com.spoilock.backend.drama.entity.QDrama drama;
+    public final com.spoilock.backend.drama.domain.entity.QDrama drama;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -66,7 +66,7 @@ public class QPost extends EntityPathBase<Post> {
 
     public QPost(Class<? extends Post> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.drama = inits.isInitialized("drama") ? new com.spoilock.backend.drama.entity.QDrama(forProperty("drama")) : null;
+        this.drama = inits.isInitialized("drama") ? new com.spoilock.backend.drama.domain.entity.QDrama(forProperty("drama")) : null;
         this.parentPost = inits.isInitialized("parentPost") ? new QPost(forProperty("parentPost"), inits.get("parentPost")) : null;
         this.user = inits.isInitialized("user") ? new com.spoilock.backend.user.entity.QUser(forProperty("user")) : null;
     }

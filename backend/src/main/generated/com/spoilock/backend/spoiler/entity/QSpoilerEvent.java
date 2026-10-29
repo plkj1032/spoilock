@@ -29,7 +29,7 @@ public class QSpoilerEvent extends EntityPathBase<SpoilerEvent> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
-    public final com.spoilock.backend.drama.entity.QEpisode episode;
+    public final com.spoilock.backend.drama.domain.entity.QEpisode episode;
 
     public final StringPath eventSummary = createString("eventSummary");
 
@@ -62,7 +62,7 @@ public class QSpoilerEvent extends EntityPathBase<SpoilerEvent> {
 
     public QSpoilerEvent(Class<? extends SpoilerEvent> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.episode = inits.isInitialized("episode") ? new com.spoilock.backend.drama.entity.QEpisode(forProperty("episode"), inits.get("episode")) : null;
+        this.episode = inits.isInitialized("episode") ? new com.spoilock.backend.drama.domain.entity.QEpisode(forProperty("episode"), inits.get("episode")) : null;
     }
 
 }
