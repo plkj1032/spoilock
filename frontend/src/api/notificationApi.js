@@ -1,17 +1,12 @@
 import { apiRequest } from "./authApi";
 
 export const notificationApi = {
-  getList: (cursor = null, signal) =>
-    apiRequest(
-      cursor === null
-        ? "/api/notifications"
-        : `/api/notifications?cursor=${cursor}`,
-      {
-        retryOn401: true,
-        cache: "no-store",
-        signal,
-      },
-    ),
+  getList: (signal) =>
+    apiRequest("/api/notifications", {
+      retryOn401: true,
+      cache: "no-store",
+      signal,
+    }),
 
   getUnreadCount: (signal) =>
     apiRequest("/api/notifications/unread-count", {
@@ -23,6 +18,12 @@ export const notificationApi = {
   markAsRead: (notificationId, signal) =>
     apiRequest(`/api/notifications/${notificationId}/read`, {
       method: "POST",
+      retryOn401: true,
+      signal,
+    }),
+  dismiss: (notificationId, signal) =>
+    apiRequest(`/api/notifications/${notificationId}`, {
+      method: "DELETE",
       retryOn401: true,
       signal,
     }),
@@ -43,5 +44,11 @@ export const notificationApi = {
         decision,
         reportIds,
       },
+    }),
+  dismissAll: (signal) =>
+    apiRequest("/api/notifications", {
+      method: "DELETE",
+      retryOn401: true,
+      signal,
     }),
 };

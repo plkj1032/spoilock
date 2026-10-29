@@ -1,0 +1,237 @@
+.invite-link-panel {
+  margin: 0 0 24px;
+  padding: 22px;
+  border: 1px solid #3a527a;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1b2d49, #142137);
+  color: #eff4ff;
+}
+
+.invite-link-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.invite-link-overline {
+  display: block;
+  margin-bottom: 7px;
+  color: #91b0ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.invite-link-heading h3 {
+  margin: 0;
+  color: #f4f7ff;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.invite-link-expiry {
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border: 1px solid #455f88;
+  border-radius: 999px;
+  background: #233858;
+  color: #c0d1ef;
+  font-size: 11px;
+}
+
+.invite-link-description,
+.invite-link-help {
+  margin: 12px 0;
+  color: #a9bad5;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.invite-link-status {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #344d70;
+  border-radius: 12px;
+  background: #101d31;
+}
+
+.invite-link-status > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.invite-link-status strong {
+  color: #dce8ff;
+  font-size: 13px;
+}
+
+.invite-link-status span,
+.invite-link-status small {
+  color: #a8bcd9;
+  font-size: 12px;
+}
+
+.invite-link-status small {
+  display: block;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.invite-link-limit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.invite-link-limit-row > label,
+.invite-link-copy > label {
+  color: #d9e5fa;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.invite-link-limit-row > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a9bad5;
+  font-size: 12px;
+}
+
+.invite-link-panel input {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #3d577d;
+  border-radius: 10px;
+  background: #0d192b;
+  color: #edf3ff;
+  font: inherit;
+  font-size: 12px;
+}
+
+.invite-link-panel input[type="number"] {
+  width: 82px;
+}
+
+.invite-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.invite-link-panel button {
+  padding: 10px 13px;
+  border: 1px solid #49699b;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+.invite-link-panel .invite-link-primary {
+  background: #426ce1;
+  border-color: #6189f5;
+  color: #ffffff;
+}
+
+.invite-link-panel .invite-link-primary:hover:not(:disabled) {
+  background: #527cf0;
+}
+
+.invite-link-panel .invite-link-secondary {
+  background: #1b2d47;
+  color: #c5d5f3;
+}
+
+.invite-link-panel .invite-link-secondary:hover:not(:disabled) {
+  background: #294263;
+  border-color: #7596cd;
+}
+
+.invite-link-panel button:disabled,
+.invite-link-panel input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.invite-link-copy {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #334c6e;
+}
+
+.invite-link-copy > label {
+  display: block;
+  margin-bottom: 9px;
+}
+
+.invite-link-copy > div {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.invite-link-copy input {
+  flex: 1;
+  width: 100%;
+}
+
+.invite-link-copy button {
+  flex-shrink: 0;
+}
+
+.invite-link-error,
+.invite-link-message {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.invite-link-panel .invite-link-error {
+  color: #ffabb2;
+}
+
+.invite-link-panel .invite-link-message {
+  color: #b9d0ff;
+}
+
+.invite-link-panel :is(button, input):focus-visible {
+  outline: 2px solid #a5c0ff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .invite-link-panel {
+    padding: 17px;
+  }
+
+  .invite-link-heading {
+    align-items: flex-start;
+  }
+
+  .invite-link-heading h3 {
+    font-size: 16px;
+  }
+
+  .invite-link-copy > div {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-link-panel button {
+    transition: none;
+  }
+}

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { feedApi } from "../../api/feedApi";
 import FollowButton from "../common/FollowButton";
-import UserFollowDialog from "../common/UserFollowDialog";
+import UserFollowDialog from "../user/UserFollowDialog";
 
 const BLOCK_MESSAGES = {
   ANALYZING: "AI가 스포일러 여부를 확인하고 있어요.",
@@ -65,6 +65,110 @@ export default function FeedCard({ post, user }) {
       active = false;
     };
   }, [post.postId, post.visible]);
+
+  // 댓글창을 닫아둬도 좋아요·댓글 숫자는 자동 갱신
+  useEffect(() => {
+    if (!post.visible || busy) return;
+
+    let active = true;
+    let refreshing = false;
+    const controller = new AbortController();
+
+    async function refreshSocial() {
+      if (!active || refreshing || document.visibilityState !== "visible") {
+        return;
+      }
+
+      refreshing = true;
+
+      try {
+        const stats = await feedApi.getSocial(post.postId, controller.signal);
+
+        if (active) {
+          setSocial(stats);
+        }
+      } catch {
+        // 자동 조회 실패 시 기존 숫자 유지
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    const timer = window.setInterval(refreshSocial, 5000);
+    document.addEventListener("visibilitychange", refreshSocial);
+    window.addEventListener("focus", refreshSocial);
+
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshSocial);
+      window.removeEventListener("focus", refreshSocial);
+    };
+  }, [post.postId, post.visible, busy]);
+
+  // 댓글 내용은 댓글창을 펼쳐둔 경우에만 자동 갱신
+  useEffect(() => {
+    if (!post.visible || !commentsOpen || busy || loadingComments) {
+      return;
+    }
+
+    let active = true;
+    let refreshing = false;
+    const controller = new AbortController();
+
+    async function refreshComments() {
+      if (!active || refreshing || document.visibilityState !== "visible") {
+        return;
+      }
+
+      refreshing = true;
+
+      try {
+        const pages = await Promise.all(
+          Array.from({ length: commentsPage + 1 }, (_, page) =>
+            feedApi.getComments(post.postId, page, controller.signal),
+          ),
+        );
+
+        if (!active) return;
+
+        const merged = new Map();
+
+        for (const page of pages) {
+          for (const comment of page.content ?? []) {
+            merged.set(comment.id, comment);
+          }
+        }
+
+        setComments([...merged.values()]);
+        setHasMoreComments(!pages[pages.length - 1].last);
+      } catch {
+        // 자동 조회 실패 시 기존 댓글 유지
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    const timer = window.setInterval(refreshComments, 5000);
+    document.addEventListener("visibilitychange", refreshComments);
+    window.addEventListener("focus", refreshComments);
+
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshComments);
+      window.removeEventListener("focus", refreshComments);
+    };
+  }, [
+    post.postId,
+    post.visible,
+    commentsOpen,
+    commentsPage,
+    busy,
+    loadingComments,
+  ]);
 
   function openProfile() {
     setProfileTarget({

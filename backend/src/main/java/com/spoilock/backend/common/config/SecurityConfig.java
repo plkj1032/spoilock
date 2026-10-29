@@ -108,6 +108,16 @@ public class SecurityConfig {
         return request -> {
             String path = request.getRequestURI();
 
+            // 공개 채팅방 목록은 만료되거나 무효화된 쿠키가 있어도 조회 가능
+            // 내가 참여한 비밀방까지 요청할 때만 기존 인증 처리를 진행
+            if ("GET".equals(request.getMethod())
+                    && path.equals("/api/chat/rooms")
+                    && !Boolean.parseBoolean(
+                    request.getParameter("includeJoinedPrivate")
+            )) {
+                return null;
+            }
+
             if("GET".equals(request.getMethod())
                 && (path.equals("/api/dramas")
                 || path.startsWith("/api/dramas/")

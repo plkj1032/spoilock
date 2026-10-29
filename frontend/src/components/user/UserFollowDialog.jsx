@@ -4,12 +4,17 @@ import { Link } from "react-router-dom";
 
 import { followApi } from "../../api/followApi";
 import { feedApi } from "../../api/feedApi";
-
-import FollowButton from "./FollowButton";
+import ChatInvitationSender from "../chat/ChatInvitationSender";
+import FollowButton from "../common/FollowButton";
 
 import "../../styles/UserFollowDialog.css";
 
-export default function UserFollowDialog({ target, currentUser, onClose }) {
+export default function UserFollowDialog({
+  target,
+  currentUser,
+  onClose,
+  onNavigate,
+}) {
   const dialogRef = useRef(null);
 
   // ============================================
@@ -147,6 +152,7 @@ export default function UserFollowDialog({ target, currentUser, onClose }) {
       aria-label={`${nickname}님의 프로필`}
       onCancel={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         onClose();
       }}
       onClick={(event) => {
@@ -228,6 +234,15 @@ export default function UserFollowDialog({ target, currentUser, onClose }) {
           />
         </div>
       )}
+      {!isMe && currentUser && (
+        <ChatInvitationSender
+          key={`${currentUser.id}:${userId}`}
+          target={{
+            userId,
+            nickname,
+          }}
+        />
+      )}
 
       {/* 본인 프로필인 경우 */}
       {isMe && <p className="user-follow-dialog__me">내 프로필입니다.</p>}
@@ -292,7 +307,7 @@ export default function UserFollowDialog({ target, currentUser, onClose }) {
         <Link
           className="user-follow-dialog__all-feeds"
           to={`/community/users/${userId}`}
-          onClick={onClose}
+          onClick={onNavigate ?? onClose}
         >
           모든 피드 보기 →
         </Link>

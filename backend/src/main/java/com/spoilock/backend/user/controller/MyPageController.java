@@ -1,5 +1,6 @@
 package com.spoilock.backend.user.controller;
 
+import com.spoilock.backend.chat.domain.type.ChatRoomType;
 import com.spoilock.backend.common.dto.PageResponse;
 import com.spoilock.backend.user.dto.MeResponse;
 import com.spoilock.backend.user.dto.MyPageResponse;
@@ -8,6 +9,7 @@ import com.spoilock.backend.user.service.MyPageService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +62,14 @@ public class MyPageController {
             @RequestParam(name = "size", defaultValue = "5")
             @Min(1)
             @Max(50)
-            int size
+            int size,
+
+            @RequestParam(name = "dramaId", required = false)
+            @Positive
+            Long dramaId,
+
+            @RequestParam(name = "roomType", required = false)
+            ChatRoomType roomType
     ) {
         Long userId = Long.valueOf(jwt.getSubject());
 
@@ -69,7 +78,9 @@ public class MyPageController {
                 .body(myPageService.getMyRoomPage(
                         userId,
                         page,
-                        size
+                        size,
+                        dramaId,
+                        roomType
                 ));
     }
 

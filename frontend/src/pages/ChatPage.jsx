@@ -9,16 +9,17 @@ import ChatRoomCreate from "../components/chat/ChatRoomCreate";
 import useRoomPage from "../hooks/useRoomPage";
 
 import "../styles/ChatPage.css";
+import DefaultRoomCrown from "../components/common/DefaultRoomCrown";
 
 const ROOM_TYPES = [
   { value: "ALL", label: "전체" },
-  { value: "DEFAULT", label: "기본 토론방" },
+  { value: "DEFAULT", label: "토론방" },
   { value: "CUSTOM", label: "자유 채팅방" },
   { value: "PRIVATE", label: "비공개방" },
 ];
 
 const TYPE_LABELS = {
-  DEFAULT: "기본 토론방",
+  DEFAULT: "토론방",
   CUSTOM: "자유 채팅방",
   PRIVATE: "비공개방",
 };
@@ -106,6 +107,7 @@ export default function ChatPage({ user, onLogin, onNotice }) {
     dramaId: filters.dramaId,
     roomType: filters.roomType,
     sort: filters.sort,
+    includeJoinedPrivate: true,
   });
 
   // 검색 입력이 잠시 멈추면 검색어와 페이지를 함께 변경
@@ -368,9 +370,7 @@ export default function ChatPage({ user, onLogin, onNotice }) {
             ? "목록을 불러오는 중"
             : loadError
               ? "목록 갱신에 실패했습니다."
-              : `검색 결과 ${totalElements}개${
-                  totalPages > 0 ? ` · ${page + 1} / ${totalPages}페이지` : ""
-                }`}
+              : `검색 결과 ${totalElements}개`}
         </p>
 
         <select
@@ -378,7 +378,7 @@ export default function ChatPage({ user, onLogin, onNotice }) {
           value={filters.sort}
           onChange={(event) => changeFilters({ sort: event.target.value })}
         >
-          <option value="members">가입 인원순</option>
+          <option value="members"> 인원순</option>
           <option value="name">이름순</option>
         </select>
       </div>
@@ -425,15 +425,21 @@ export default function ChatPage({ user, onLogin, onNotice }) {
               <button
                 key={room.roomId}
                 type="button"
-                className="chat-directory-card"
+                className={`chat-directory-card ${
+                  isDefault ? "is-default-room" : ""
+                }`}
                 onClick={() => enterRoom(room.roomId)}
                 disabled={enteringRoomId !== null}
               >
-                <RoomPoster
-                  key={`${room.dramaId}:${drama?.posterUrl ?? ""}`}
-                  src={drama?.posterUrl}
-                  title={drama?.title || room.roomName}
-                />
+                {isDefault ? (
+                  <DefaultRoomCrown />
+                ) : (
+                  <RoomPoster
+                    key={`${room.dramaId}:${drama?.posterUrl ?? ""}`}
+                    src={drama?.posterUrl}
+                    title={drama?.title || room.roomName}
+                  />
+                )}
 
                 <span className="chat-directory-copy">
                   <span className="chat-directory-meta">
@@ -458,7 +464,7 @@ export default function ChatPage({ user, onLogin, onNotice }) {
                 </span>
 
                 <span className="chat-directory-count">
-                  가입 {room.memberCount ?? 0}명
+                  {room.memberCount ?? 0}명
                 </span>
 
                 <span className="chat-directory-enter">

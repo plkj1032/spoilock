@@ -12,6 +12,8 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,9 +61,21 @@ public class ChatRoomQueryController {
             ChatRoomType roomType,
 
             @RequestParam(name = "sort", defaultValue = "members")
-            @Pattern(regexp = "members|name")
-            String sort
+            @Pattern(regexp = "members|name|defaultFirst")
+            String sort,
+
+            @RequestParam(
+                    name = "includeJoinedPrivate",
+                    defaultValue = "false"
+            )
+            boolean includeJoinedPrivate,
+
+            @AuthenticationPrincipal Jwt jwt
     ) {
+        Long userId = jwt == null
+                ? null
+                : Long.valueOf(jwt.getSubject());
+
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(chatRoomQueryService.getRoomPage(
@@ -70,14 +84,19 @@ public class ChatRoomQueryController {
                         keyword,
                         dramaId,
                         roomType,
-                        sort
+                        sort,
+                        includeJoinedPrivate,
+                        userId
                 ));
     }
 
     @GetMapping("/{roomId}")
     public ChatRoomListResponse getRoom(
-            @PathVariable("roomId") Long roomId
+            @PathVariable("roomId") Long roomId,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        return chatRoomQueryService.getActiveRoom(roomId);
+        Long userId = Long.valueOf(jwt.getSubject());
+
+        return chatRoomQueryService.getActiveRoom(roomId, userId);
     }
 }

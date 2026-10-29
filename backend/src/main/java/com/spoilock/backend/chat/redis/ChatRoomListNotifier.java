@@ -1,5 +1,6 @@
 package com.spoilock.backend.chat.redis;
 
+import com.spoilock.backend.chat.domain.dto.ChatRoomClosedEvent;
 import com.spoilock.backend.chat.domain.dto.ChatRoomCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,18 @@ public class ChatRoomListNotifier implements MessageListener {
             // 방은 이미 저장됐으므로 알림 실패를 방 생성 실패로 처리하지 않는다.
             log.warn(
                     "채팅방 목록 변경 알림 발행 실패: roomId={}",
+                    event.roomId(),
+                    e
+            );
+        }
+    }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onRoomClosed(ChatRoomClosedEvent event) {
+        try {
+            redisTemplate.convertAndSend(CHANNEL, "ROOMS_CHANGED");
+        } catch (RuntimeException e) {
+            log.warn(
+                    "채팅방 종료 알림 발행 실패: roomId={}",
                     event.roomId(),
                     e
             );

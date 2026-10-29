@@ -5,6 +5,8 @@ import Header from "./components/common/Header";
 import AuthModal from "./components/auth/AuthModal";
 import AppRouter from "./router/AppRouter";
 import Toast from "./components/common/Toast";
+import LoginSessionWatcher from "./components/auth/LoginSessionWatcher";
+import InviteLoginReturn from "./components/auth/InviteLoginReturn";
 
 import "./App.css";
 
@@ -75,66 +77,6 @@ function App() {
       active = false;
     };
   }, []);
-
-  // 단일 기기 로그인 감지 useEffect
-
-  useEffect(() => {
-    if (!signedInUserId) return;
-
-    let stopped = false;
-    let checking = false;
-
-    const checkSession = async () => {
-      if (stopped || checking || document.visibilityState === "hidden") {
-        return;
-      }
-
-      checking = true;
-
-      try {
-        const me = await authApi.restore();
-
-        if (!stopped && me === null) {
-          handleSessionExpired();
-        }
-      } catch {
-        // 일시적인 네트워크 오류는 로그아웃하지 않음
-      } finally {
-        checking = false;
-      }
-    };
-
-    // 다른 탭에서 복귀했을 때
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void checkSession();
-      }
-    };
-
-    // 브라우저 창에 포커스가 돌아왔을 때
-    const handleFocus = () => {
-      void checkSession();
-    };
-
-    // 네트워크 연결이 복구됐을 때
-    const handleOnline = () => {
-      void checkSession();
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("online", handleOnline);
-
-    return () => {
-      stopped = true;
-
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("online", handleOnline);
-    };
-  }, [signedInUserId, handleSessionExpired]);
 
   // 보호 API에서 세션 만료가 확정되면 로그아웃 처리
 
@@ -242,6 +184,11 @@ function App() {
 
   return (
     <>
+      <LoginSessionWatcher
+        userId={signedInUserId}
+        onSessionExpired={handleSessionExpired}
+      />
+      <InviteLoginReturn userId={signedInUserId} />
       <Header
         user={user}
         pending={pending}

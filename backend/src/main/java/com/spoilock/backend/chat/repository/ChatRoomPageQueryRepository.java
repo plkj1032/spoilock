@@ -13,7 +13,11 @@ import com.spoilock.backend.drama.enums.DramaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import com.querydsl.jpa.JPAExpressions;
 
+import com.spoilock.backend.chat.domain.entity.QChatRoomMember;
+import com.spoilock.backend.chat.domain.entity.QChatRoomBan;
+import com.spoilock.backend.chat.domain.type.ChatRoomBanStatus;
 import static com.spoilock.backend.chat.domain.entity.QChatRoom.chatRoom;
 import static com.spoilock.backend.chat.domain.entity.QChatRoomMember.chatRoomMember;
 
@@ -30,7 +34,9 @@ public class ChatRoomPageQueryRepository {
             String keyword,
             Long dramaId,
             ChatRoomType roomType,
-            String sort
+            String sort,
+            boolean includeJoinedPrivate,
+            Long userId
     ) {
         StringExpression displayName = new CaseBuilder()
                 .when(chatRoom.roomType.eq(ChatRoomType.DEFAULT))
@@ -40,6 +46,46 @@ public class ChatRoomPageQueryRepository {
         BooleanBuilder condition = new BooleanBuilder()
                 .and(chatRoom.active.isTrue())
                 .and(chatRoom.drama.status.eq(DramaStatus.PUBLISHED));
+
+        if (includeJoinedPrivate && userId != null) {
+            QChatRoomMember joinedMember =
+                    new QChatRoomMember("joinedPrivateMember");
+
+            QChatRoomBan activeBan =
+                    new QChatRoomBan("joinedPrivateBan");
+
+            var joined = JPAExpressions
+                    .selectOne()
+                    .from(joinedMember)
+                    .where(
+                            joinedMember.room.id.eq(chatRoom.id),
+                            joinedMember.user.id.eq(userId)
+                    )
+                    .exists();
+
+            var notBanned = JPAExpressions
+                    .selectOne()
+                    .from(activeBan)
+                    .where(
+                            activeBan.room.id.eq(chatRoom.id),
+                            activeBan.user.id.eq(userId),
+                            activeBan.status.eq(ChatRoomBanStatus.ACTIVE)
+                    )
+                    .notExists();
+
+            condition.and(
+                    chatRoom.roomType.ne(ChatRoomType.PRIVATE)
+                            .or(
+                                    chatRoom.roomType.eq(ChatRoomType.PRIVATE)
+                                            .and(joined)
+                                            .and(notBanned)
+                            )
+            );
+        } else {
+            condition.and(
+                    chatRoom.roomType.ne(ChatRoomType.PRIVATE)
+            );
+        }
 
         if (dramaId != null) {
             condition.and(chatRoom.drama.id.eq(dramaId));
@@ -77,7 +123,19 @@ public class ChatRoomPageQueryRepository {
 
         OrderSpecifier<?>[] orderBy;
 
-        if ("name".equals(sort)) {
+        if ("defaultFirst".equals(sort)) {
+            var defaultPriority = new CaseBuilder()
+                    .when(chatRoom.roomType.eq(ChatRoomType.DEFAULT))
+                    .then(0)
+                    .otherwise(1);
+
+            orderBy = new OrderSpecifier<?>[]{
+                    defaultPriority.asc(),
+                    chatRoomMember.id.userId.count().desc(),
+                    displayName.asc(),
+                    chatRoom.id.asc()
+            };
+        } else if ("name".equals(sort)) {
             orderBy = new OrderSpecifier<?>[]{
                     displayName.asc(),
                     chatRoom.id.asc()
