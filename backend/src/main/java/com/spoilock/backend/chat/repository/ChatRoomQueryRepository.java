@@ -5,7 +5,7 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoilock.backend.chat.domain.dto.ChatRoomListResponse;
 import com.spoilock.backend.chat.domain.type.ChatRoomType;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,8 +1,10 @@
 package com.spoilock.backend.drama.service;
 
-import com.spoilock.backend.drama.dto.DramaResponse;
-import com.spoilock.backend.drama.dto.EpisodeResponse;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.dto.DramaDetailResponse;
+import com.spoilock.backend.drama.domain.dto.DramaResponse;
+import com.spoilock.backend.drama.domain.dto.EpisodeResponse;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
+import com.spoilock.backend.drama.repository.DramaQueryRepository;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class DramaService {
 
     private final DramaRepository dramaRepository;
     private final EpisodeRepository episodeRepository;
+    private final DramaQueryRepository dramaQueryRepository;
 
     @Transactional(readOnly = true)
     public List<DramaResponse> getDramas()
@@ -33,20 +36,14 @@ public class DramaService {
     }
 
     @Transactional(readOnly = true)
-    public DramaResponse getDrama(Long dramaId)
-    {
-        return dramaRepository
-                .findByIdAndStatus(
-                        dramaId,
-                        DramaStatus.PUBLISHED
-                )
-                .map(DramaResponse::from)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "드라마를 찾을 수 없습니다."
-                        )
-                );
+    public DramaDetailResponse getDrama(Long dramaId) {
+        return dramaQueryRepository
+                .findPublishedDetail(dramaId)
+                .map(DramaDetailResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "드라마를 찾을 수 없습니다."
+                ));
     }
 
     // 해당 드라마의 회차 목록

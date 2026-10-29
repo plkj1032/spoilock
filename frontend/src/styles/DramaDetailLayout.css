@@ -1,0 +1,109 @@
+.drama-detail-overview {
+  align-items: stretch;
+}
+
+.drama-detail-poster {
+  align-self: start;
+}
+
+.drama-detail-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6px 0 0;
+}
+
+.drama-detail-info h2 {
+  margin: 12px 0 22px;
+}
+
+.drama-detail-facts {
+  gap: 18px;
+}
+
+.drama-detail-facts dd {
+  overflow-wrap: anywhere;
+}
+
+.drama-detail-makers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid #30435f;
+}
+
+.drama-detail-homepage {
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.drama-detail-homepage > span {
+  display: block;
+  margin-bottom: 9px;
+  color: #9eafca;
+  font-size: 12px;
+}
+
+.drama-detail-homepage > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #496390;
+  border-radius: 10px;
+  background: #203653;
+  color: #d6e4ff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.drama-detail-homepage > a:hover {
+  border-color: #91afff;
+  background: #2a456b;
+}
+
+.drama-detail-homepage > a > span {
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.drama-detail-homepage > p {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #30435f;
+  border-radius: 10px;
+  color: #93a5c2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .drama-detail-overview {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .drama-detail-poster {
+    width: min(100%, 280px);
+    justify-self: center;
+  }
+
+  .drama-detail-info {
+    padding-top: 0;
+  }
+
+  .drama-detail-info h2 {
+    margin-bottom: 20px;
+  }
+
+  .drama-detail-homepage {
+    padding-top: 20px;
+  }
+}

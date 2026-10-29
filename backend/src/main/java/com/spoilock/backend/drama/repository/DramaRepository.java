@@ -1,7 +1,7 @@
 package com.spoilock.backend.drama.repository;
 
-import com.spoilock.backend.drama.entity.Drama;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.entity.Drama;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

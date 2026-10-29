@@ -2,7 +2,7 @@ package com.spoilock.backend.spoiler.service;
 
 import com.spoilock.backend.ai.client.KbIngestJob;
 import com.spoilock.backend.common.enums.AnalysisStatus;
-import com.spoilock.backend.drama.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
 import com.spoilock.backend.drama.repository.EpisodeVideoRepository;

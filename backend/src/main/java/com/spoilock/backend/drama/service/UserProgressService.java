@@ -1,10 +1,10 @@
 
 package com.spoilock.backend.drama.service;
 
-import com.spoilock.backend.drama.dto.ProgressResponse;
-import com.spoilock.backend.drama.entity.Drama;
-import com.spoilock.backend.drama.entity.UserProgress;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.dto.ProgressResponse;
+import com.spoilock.backend.drama.domain.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.UserProgress;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.drama.repository.UserProgressRepository;

@@ -4,9 +4,9 @@ package com.spoilock.backend.post.service;
 import com.spoilock.backend.ai.service.PostAnalysisRequested;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.common.enums.ModerationStatus;
-import com.spoilock.backend.drama.entity.Drama;
-import com.spoilock.backend.drama.entity.UserProgress;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.UserProgress;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.UserProgressRepository;
 
@@ -114,7 +114,8 @@ public class FeedService {
             Long viewerId,
             String type,
             String cursor,
-            int size
+            int size,
+            Long dramaId
     ) {
         if (!"ALL".equals(type)
                 && !"FOLLOWING".equals(type)) {
@@ -130,6 +131,10 @@ public class FeedService {
                     "size는 1~30이어야 합니다."
             );
         }
+        if(dramaId != null && dramaId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,"올바른 드라마 ID가 필요합니다.");
+        }
 
         FeedCursor parsedCursor = parseCursor(cursor);
 
@@ -141,7 +146,8 @@ public class FeedService {
                         ? null : parsedCursor.createdAt(),
                 parsedCursor == null
                         ? null : parsedCursor.id(),
-                size + 1
+                size + 1,
+                dramaId
         );
 
         boolean hasNext = result.size() > size;
@@ -183,10 +189,17 @@ public class FeedService {
                         ? encodeCursor(posts.get(posts.size() - 1))
                         : null;
 
+        long totalElements = feedQueryRepository.countFeed(
+                viewerId,
+                type,
+                dramaId
+        );
+
         return new FeedPageResponse(
                 items,
                 nextCursor,
-                hasNext
+                hasNext,
+                totalElements
         );
     }
 

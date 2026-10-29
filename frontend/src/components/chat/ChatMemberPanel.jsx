@@ -5,8 +5,11 @@ import FollowButton from "../common/FollowButton";
 
 import "../../styles/ChatMemberPanel.css";
 import "../../styles/ChatMemberActions.css";
+import "../../styles/ChatMemberOwner.css";
 
 export default function ChatMemberPanel({
+  roomType,
+  ownerUserId,
   members,
   loading,
   error,
@@ -86,6 +89,10 @@ export default function ChatMemberPanel({
   // =============================================
   function renderMember(member) {
     const mine = String(member.userId) === String(currentUserId);
+    const isOwner =
+      (roomType === "CUSTOM" || roomType === "PRIVATE") &&
+      ownerUserId != null &&
+      String(member.userId) === String(ownerUserId);
     const nickname = member.nickname || "사용자";
     const initial = Array.from(nickname.trim() || "?")[0];
 
@@ -116,6 +123,26 @@ export default function ChatMemberPanel({
           <div className="chat-member-info">
             <div className="chat-member-name">
               <strong>{nickname}</strong>
+
+              {isOwner && (
+                <span className="chat-member-owner">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="13"
+                    height="13"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m3 6 4 4 5-6 5 6 4-4-3 12H6L3 6Z" />
+                    <path d="M7 21h10" />
+                  </svg>
+                  방장
+                </span>
+              )}
 
               {mine && <span className="chat-member-me">나</span>}
             </div>

@@ -1,5 +1,5 @@
 
-package com.spoilock.backend.drama.entity;
+package com.spoilock.backend.drama.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

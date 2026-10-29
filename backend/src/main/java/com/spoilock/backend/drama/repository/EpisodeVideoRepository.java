@@ -1,7 +1,7 @@
 
 package com.spoilock.backend.drama.repository;
 
-import com.spoilock.backend.drama.entity.EpisodeVideo;
+import com.spoilock.backend.drama.domain.entity.EpisodeVideo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

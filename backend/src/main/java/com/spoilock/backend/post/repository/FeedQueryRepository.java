@@ -6,7 +6,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import com.spoilock.backend.common.enums.ModerationStatus;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.user.enums.AccountStatus;
 
@@ -30,7 +30,8 @@ public class FeedQueryRepository {
             String type,
             LocalDateTime cursorTime,
             Long cursorId,
-            int limit
+            int limit,
+            Long dramaId
     ) {
         // 전체 피드인지 팔로잉 피드인지
         BooleanExpression followingCondition = null;
@@ -80,7 +81,8 @@ public class FeedQueryRepository {
                         ),
 
                         followingCondition,
-                        cursorCondition
+                        cursorCondition,
+                        dramaId == null ? null : post.drama.id.eq(dramaId)
                 )
                 .orderBy(
                         post.createdAt.desc(),
@@ -130,5 +132,50 @@ public class FeedQueryRepository {
                 )
                 .limit(limit)
                 .fetch();
+    }
+    public long countFeed(
+            Long viewerId,
+            String type,
+            Long dramaId
+    ) {
+        BooleanExpression followingCondition = null;
+
+        if ("FOLLOWING".equals(type)) {
+            followingCondition =
+                    post.user.id.eq(viewerId)
+                            .or(
+                                    JPAExpressions.selectOne()
+                                            .from(userFollow)
+                                            .where(
+                                                    userFollow.follower.id.eq(viewerId),
+                                                    userFollow.following.id.eq(post.user.id)
+                                            )
+                                            .exists()
+                            );
+        }
+
+        Long count = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(
+                        post.parentPost.isNull(),
+
+                        post.user.accountStatus.eq(AccountStatus.ACTIVE),
+                        post.drama.status.eq(DramaStatus.PUBLISHED),
+
+                        post.moderationStatus.in(
+                                ModerationStatus.PENDING,
+                                ModerationStatus.VISIBLE
+                        ),
+
+                        followingCondition,
+
+                        dramaId == null
+                                ? null
+                                : post.drama.id.eq(dramaId)
+                )
+                .fetchOne();
+
+        return count == null ? 0L : count;
     }
 }

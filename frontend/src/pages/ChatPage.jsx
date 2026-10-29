@@ -25,6 +25,18 @@ const TYPE_LABELS = {
 };
 
 function readFilters() {
+  const requestedDramaId = new URLSearchParams(window.location.search).get(
+    "dramaId",
+  );
+
+  if (requestedDramaId && /^[1-9]\d*$/.test(requestedDramaId)) {
+    return {
+      query: "",
+      dramaId: requestedDramaId,
+      roomType: "ALL",
+      sort: "members",
+    };
+  }
   try {
     const saved = JSON.parse(
       sessionStorage.getItem("spoilock.chatListFilters") || "{}",

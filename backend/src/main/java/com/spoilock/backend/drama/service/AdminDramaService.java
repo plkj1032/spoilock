@@ -3,12 +3,12 @@ package com.spoilock.backend.drama.service;
 
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
 import com.spoilock.backend.chat.repository.ChatRoomRepository;
-import com.spoilock.backend.drama.dto.AdminDramaDetailResponse;
-import com.spoilock.backend.drama.dto.AdminDramaResponse;
-import com.spoilock.backend.drama.dto.CreateDramaRequest;
-import com.spoilock.backend.drama.entity.Drama;
-import com.spoilock.backend.drama.entity.Episode;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.dto.AdminDramaDetailResponse;
+import com.spoilock.backend.drama.domain.dto.AdminDramaResponse;
+import com.spoilock.backend.drama.domain.dto.CreateDramaRequest;
+import com.spoilock.backend.drama.domain.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.Episode;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 
@@ -77,6 +77,15 @@ public class AdminDramaService {
                 blankToNull(request.posterUrl()),
                 request.totalEpisodeCount()
         );
+
+        drama.updateMetadata(
+                request.genres(),
+                request.premiereDate(),
+                request.directors(),
+                request.writers(),
+                request.castNames()
+        );
+        drama.updateOfficialHomepageUrl(request.officialHomepageUrl());
 
         Drama savedDrama = dramaRepository.save(drama);
 
@@ -177,14 +186,6 @@ public class AdminDramaService {
         // 1. 수정할 드라마 조회
         Drama drama = findDrama(dramaId);
 
-        // 2. DRAFT 상태에서만 수정 허용
-        if (drama.getStatus() != DramaStatus.DRAFT) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "초안 상태의 작품만 수정할 수 있습니다."
-            );
-        }
-
         String title = request.title().trim();
 
         // 3. 자신을 제외한 작품 중 제목 중복 확인
@@ -231,6 +232,14 @@ public class AdminDramaService {
                 blankToNull(request.posterUrl()),
                 request.totalEpisodeCount()
         );
+        drama.updateMetadata(
+                request.genres(),
+                request.premiereDate(),
+                request.directors(),
+                request.writers(),
+                request.castNames()
+        );
+        drama.updateOfficialHomepageUrl(request.officialHomepageUrl());
 
         // Lambda에서 사용할 영속 상태의 Drama
         Drama managedDrama = drama;

@@ -1,10 +1,13 @@
 
 package com.spoilock.backend.drama.service;
 
+import com.spoilock.backend.drama.domain.dto.AdminEpisodeVideoResponse;
+import com.spoilock.backend.drama.domain.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.EpisodeVideo;
 import com.spoilock.backend.common.storage.S3StorageService;
-import com.spoilock.backend.drama.dto.AdminEpisodeVideoResponse;
-import com.spoilock.backend.drama.entity.Episode;
-import com.spoilock.backend.drama.entity.EpisodeVideo;
+import com.spoilock.backend.drama.domain.dto.AdminEpisodeVideoResponse;
+import com.spoilock.backend.drama.domain.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.EpisodeVideo;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 

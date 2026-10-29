@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { dramaApi } from "../api/dramaApi";
 import { feedApi } from "../api/feedApi";
 import FeedCard from "../components/feed/FeedCard";
-
+import { useSearchParams } from "react-router-dom";
 import "../styles/CommunityPage.css";
 import "../styles/FeedPage.css";
 
@@ -14,7 +14,13 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 // ==================================================
 // 1. 피드 작성 컴포넌트
 // ==================================================
-function FeedComposer({ user, onLogin, onCreated, onNotice }) {
+export function FeedComposer({
+  user,
+  onLogin,
+  onCreated,
+  onNotice,
+  initialDramaId = null,
+}) {
   const [dramas, setDramas] = useState([]);
   const [dramaId, setDramaId] = useState("");
   const [content, setContent] = useState("");
@@ -39,8 +45,19 @@ function FeedComposer({ user, onLogin, onCreated, onNotice }) {
 
         setDramas(list);
 
-        if (list.length > 0) {
-          setDramaId(String(list[0].id));
+        if (initialDramaId != null) {
+          const selected = list.find(
+            (drama) => String(drama.id) === String(initialDramaId),
+          );
+
+          if (selected) {
+            setDramaId(String(selected.id));
+          } else {
+            setDramaId("");
+            setError("선택한 드라마에 현재 글을 작성할 수 없습니다.");
+          }
+        } else {
+          setDramaId(list.length > 0 ? String(list[0].id) : "");
         }
       })
       .catch((err) => {
@@ -57,7 +74,7 @@ function FeedComposer({ user, onLogin, onCreated, onNotice }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialDramaId]);
 
   // ================================================
   // 사진 선택 및 검증
@@ -290,7 +307,12 @@ function FeedComposer({ user, onLogin, onCreated, onNotice }) {
 // export 필수!
 // UserFeedPage.jsx에서 import하기 때문
 // ==================================================
-export function FeedList({ type = "ALL", user, authorId = null }) {
+export function FeedList({
+  type = "ALL",
+  user,
+  authorId = null,
+  dramaId = null,
+}) {
   const [items, setItems] = useState([]);
 
   // 현재 요청 커서
@@ -326,6 +348,7 @@ export function FeedList({ type = "ALL", user, authorId = null }) {
             type,
             cursor,
             size: PAGE_SIZE,
+            dramaId,
             signal: controller.signal,
           });
 
@@ -377,7 +400,7 @@ export function FeedList({ type = "ALL", user, authorId = null }) {
       active = false;
       controller.abort();
     };
-  }, [authorId, type, cursor, retryKey]);
+  }, [authorId, type, dramaId, cursor, retryKey]);
 
   // ================================================
   // IntersectionObserver 무한스크롤
@@ -509,7 +532,29 @@ export function FeedList({ type = "ALL", user, authorId = null }) {
 // 3. 커뮤니티 메인 화면
 // ==================================================
 export default function CommunityPage({ user, onLogin, onNotice }) {
-  const [tab, setTab] = useState("ALL");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedDramaId = searchParams.get("dramaId");
+
+  const selectedDramaId =
+    requestedDramaId && /^[1-9]\d*$/.test(requestedDramaId)
+      ? requestedDramaId
+      : null;
+
+  const tab = searchParams.get("tab") === "FOLLOWING" ? "FOLLOWING" : "ALL";
+
+  function setTab(nextTab) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+
+      if (nextTab === "FOLLOWING") {
+        next.set("tab", "FOLLOWING");
+      } else {
+        next.delete("tab");
+      }
+
+      return next;
+    });
+  }
   const [revision, setRevision] = useState(0);
 
   // 새 글 작성 후 전체 피드 처음부터 새로 조회
@@ -535,11 +580,29 @@ export default function CommunityPage({ user, onLogin, onNotice }) {
 
       {/* 게시글 작성 */}
       <FeedComposer
+        key={selectedDramaId ?? "all"}
         user={user}
         onLogin={onLogin}
         onCreated={handleCreated}
         onNotice={onNotice}
+        initialDramaId={selectedDramaId}
       />
+      {selectedDramaId && (
+        <div className="feed-page__tabs">
+          <button
+            type="button"
+            onClick={() => {
+              setSearchParams((current) => {
+                const next = new URLSearchParams(current);
+                next.delete("dramaId");
+                return next;
+              });
+            }}
+          >
+            드라마 필터 해제
+          </button>
+        </div>
+      )}
 
       {/* 전체 / 팔로잉 탭 */}
       <div className="feed-page__tabs" role="group" aria-label="피드 종류">
@@ -565,9 +628,10 @@ export default function CommunityPage({ user, onLogin, onNotice }) {
       {/* 로그인 상태에 따라 피드 표시 */}
       {user ? (
         <FeedList
-          key={`${user.id}:${tab}:${revision}`}
+          key={`${user.id}:${tab}:${selectedDramaId ?? "all"}:${revision}`}
           type={tab}
           user={user}
+          dramaId={selectedDramaId}
         />
       ) : (
         <div className="feed-empty">

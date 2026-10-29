@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-import static com.spoilock.backend.drama.entity.QUserProgress.userProgress;
+import static com.spoilock.backend.drama.domain.entity.QUserProgress.userProgress;
 
 @Repository
 @RequiredArgsConstructor

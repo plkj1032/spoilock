@@ -1,8 +1,8 @@
 package com.spoilock.backend.drama.controller;
 
-import com.spoilock.backend.drama.dto.AdminDramaDetailResponse;
-import com.spoilock.backend.drama.dto.AdminDramaResponse;
-import com.spoilock.backend.drama.dto.CreateDramaRequest;
+import com.spoilock.backend.drama.domain.dto.AdminDramaDetailResponse;
+import com.spoilock.backend.drama.domain.dto.AdminDramaResponse;
+import com.spoilock.backend.drama.domain.dto.CreateDramaRequest;
 import com.spoilock.backend.drama.service.AdminDramaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

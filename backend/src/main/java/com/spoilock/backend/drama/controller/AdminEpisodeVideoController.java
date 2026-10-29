@@ -1,7 +1,7 @@
 
 package com.spoilock.backend.drama.controller;
 
-import com.spoilock.backend.drama.dto.AdminEpisodeVideoResponse;
+import com.spoilock.backend.drama.domain.dto.AdminEpisodeVideoResponse;
 import com.spoilock.backend.drama.service.AdminEpisodeVideoService;
 
 import lombok.RequiredArgsConstructor;

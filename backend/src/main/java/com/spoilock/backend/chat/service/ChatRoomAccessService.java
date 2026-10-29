@@ -5,7 +5,7 @@ import com.spoilock.backend.chat.domain.entity.id.ChatRoomMemberId;
 import com.spoilock.backend.chat.repository.ChatRoomBanRepository;
 import com.spoilock.backend.chat.repository.ChatRoomMemberRepository;
 import com.spoilock.backend.chat.repository.ChatRoomRepository;
-import com.spoilock.backend.drama.enums.DramaStatus;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.user.entity.User;
 import com.spoilock.backend.user.enums.UserRole;
 import lombok.RequiredArgsConstructor;

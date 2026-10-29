@@ -33,7 +33,7 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
 
     public final StringPath description = createString("description");
 
-    public final com.spoilock.backend.drama.entity.QDrama drama;
+    public final com.spoilock.backend.drama.domain.entity.QDrama drama;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -60,7 +60,7 @@ public class QChatRoom extends EntityPathBase<ChatRoom> {
     public QChatRoom(Class<? extends ChatRoom> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.createdBy = inits.isInitialized("createdBy") ? new com.spoilock.backend.user.entity.QUser(forProperty("createdBy")) : null;
-        this.drama = inits.isInitialized("drama") ? new com.spoilock.backend.drama.entity.QDrama(forProperty("drama")) : null;
+        this.drama = inits.isInitialized("drama") ? new com.spoilock.backend.drama.domain.entity.QDrama(forProperty("drama")) : null;
     }
 
 }

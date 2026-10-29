@@ -1,8 +1,8 @@
 
 package com.spoilock.backend.drama.controller;
 
-import com.spoilock.backend.drama.dto.ProgressResponse;
-import com.spoilock.backend.drama.dto.UpdateProgressRequest;
+import com.spoilock.backend.drama.domain.dto.ProgressResponse;
+import com.spoilock.backend.drama.domain.dto.UpdateProgressRequest;
 import com.spoilock.backend.drama.service.UserProgressService;
 
 import jakarta.validation.Valid;

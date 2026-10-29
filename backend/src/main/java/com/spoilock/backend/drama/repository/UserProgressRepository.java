@@ -1,6 +1,6 @@
 package com.spoilock.backend.drama.repository;
 
-import com.spoilock.backend.drama.entity.UserProgress;
+import com.spoilock.backend.drama.domain.entity.UserProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;

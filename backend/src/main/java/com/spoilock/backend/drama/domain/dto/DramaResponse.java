@@ -1,6 +1,6 @@
-package com.spoilock.backend.drama.dto;
+package com.spoilock.backend.drama.domain.dto;
 
-import com.spoilock.backend.drama.entity.Drama;
+import com.spoilock.backend.drama.domain.entity.Drama;
 
 public record DramaResponse (
         Long id,

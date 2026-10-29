@@ -1,6 +1,10 @@
+import { useState } from "react";
 import DramaGallery from "../components/drama/DramaGallery";
+import DramaDetailModal from "../components/drama/DramaDetailModal";
 
 export default function DramaListPage({ user, onLogin, onNotice }) {
+  const [detailDramaId, setDetailDramaId] = useState(null);
+
   return (
     <main className="container main-content">
       <div className="section-top">
@@ -8,7 +12,7 @@ export default function DramaListPage({ user, onLogin, onNotice }) {
           <span className="section-overline">EXPLORE</span>
           <h1>드라마 둘러보기</h1>
           <p className="page-subtitle">
-            드라마를 선택하여 시청 진도를 관리하세요.
+            작품 정보를 살펴보고, 시청 진도와 이야기를 이어가세요.
           </p>
         </div>
       </div>
@@ -18,7 +22,16 @@ export default function DramaListPage({ user, onLogin, onNotice }) {
         user={user}
         onLogin={onLogin}
         onNotice={onNotice}
+        onSelectDrama={(drama) => setDetailDramaId(drama.id)}
       />
+
+      {detailDramaId !== null && (
+        <DramaDetailModal
+          key={detailDramaId}
+          dramaId={detailDramaId}
+          onClose={() => setDetailDramaId(null)}
+        />
+      )}
     </main>
   );
 }

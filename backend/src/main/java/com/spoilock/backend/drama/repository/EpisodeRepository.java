@@ -1,8 +1,7 @@
 package com.spoilock.backend.drama.repository;
 
-import com.spoilock.backend.drama.entity.Episode;
+import com.spoilock.backend.drama.domain.entity.Episode;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.List;
 
