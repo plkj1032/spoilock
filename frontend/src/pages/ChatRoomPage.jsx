@@ -18,6 +18,7 @@ import ChatMemberPanel from "../components/chat/ChatMemberPanel";
 import ChatReportModal from "../components/chat/ChatReportModal";
 import UserFollowDialog from "../components/user/UserFollowDialog";
 import ChatFollowingInviteModal from "../components/chat/ChatFollowingInviteModal";
+import ChatOwnershipModal from "../components/chat/ChatOwnershipModal";
 
 // 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
 const BLOCK_MESSAGES = {
@@ -42,10 +43,13 @@ function mergeMessages(current, incoming) {
   return [...merged.values()].sort((a, b) => a.messageId - b.messageId);
 }
 
-export default function ChatRoomPage({ user }) {
+export default function ChatRoomPage({ user, onNotice }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [showOwnershipModal, setShowOwnershipModal] = useState(false);
+  const leavingRef = useRef(false);
+  const previousOwnerRef = useRef(null);
 
   // 개발 환경에서만 두 번째 서버 연결 허용
   const useSecondServer =
@@ -125,7 +129,31 @@ export default function ChatRoomPage({ user }) {
     }
   }
   const bannedUserIds = new Set(bans.map((ban) => String(ban.userId)));
+  useEffect(() => {
+    if (!room || room.createdById == null) return;
 
+    const current = {
+      roomId: String(roomId),
+      ownerId: String(room.createdById),
+    };
+
+    const previous = previousOwnerRef.current;
+
+    // 먼저 기록해서 같은 정보가 다시 수신되어도 중복 알림 방지
+    previousOwnerRef.current = current;
+
+    // 최초 조회에서는 알림을 띄우지 않음
+    if (!previous || previous.roomId !== current.roomId) return;
+
+    const becameOwner =
+      ["CUSTOM", "PRIVATE"].includes(room.roomType) &&
+      previous.ownerId !== current.ownerId &&
+      current.ownerId === String(user.id);
+
+    if (becameOwner) {
+      onNotice("방장이 되었습니다.");
+    }
+  }, [room, roomId, user.id, onNotice]);
   const canKick = Boolean(
     room &&
     (room.roomType === "DEFAULT"
@@ -293,8 +321,14 @@ export default function ChatRoomPage({ user }) {
           `/api/chat/rooms/${roomId}/messages/${event.messageId}`,
         );
         if (active && message.messageType !== "CHAT") {
-          // 가입·탈퇴·강퇴 알림을 받으면 회원 목록도 갱신
           refreshMembers();
+
+          // 방장 위임 후 퇴장 메시지를 받으면 새 방장 정보도 반영
+          void getJson(`/api/chat/rooms/${roomId}`)
+            .then((latestRoom) => {
+              if (active) setRoom(latestRoom);
+            })
+            .catch(showError);
         }
 
         if (active) {
@@ -376,6 +410,11 @@ export default function ChatRoomPage({ user }) {
       },
       onConnect: () => {
         if (!active) return;
+        void getJson(`/api/chat/rooms/${roomId}`)
+          .then((latestRoom) => {
+            if (active) setRoom(latestRoom);
+          })
+          .catch(showError);
 
         client.subscribe("/user/queue/chat", receiveMessage);
 
@@ -573,20 +612,48 @@ export default function ChatRoomPage({ user }) {
     }
   }
   async function leaveRoom() {
-    if (leaving) {
-      return;
-    }
+    if (leavingRef.current) return;
 
+    leavingRef.current = true;
     setLeaving(true);
     setError("");
 
     try {
-      await chatApi.leaveRoom(Number(roomId));
+      // 화면에 남아 있는 예전 방장 정보 대신 최신 정보 확인
+      const latestRoom = await chatApi.getRoom(Number(roomId));
+      setRoom(latestRoom);
 
-      navigate("/");
+      const isOwner =
+        ["CUSTOM", "PRIVATE"].includes(latestRoom.roomType) &&
+        String(latestRoom.createdById) === String(user.id);
+
+      if (isOwner) {
+        const latestMembers = await chatApi.getMembers(Number(roomId));
+        const hasOthers = latestMembers.some(
+          (member) => String(member.userId) !== String(user.id),
+        );
+
+        if (hasOthers) {
+          setShowMemberPanel(false);
+          setShowBanPanel(false);
+          setShowInviteModal(false);
+          setProfileTarget(null);
+          setShowOwnershipModal(true);
+          return;
+        }
+      }
+
+      await chatApi.leaveRoom(Number(roomId));
+      navigate("/", { replace: true });
     } catch (error) {
-      setError(error.message);
+      if (error.status === 409) {
+        // 확인 직후 다른 사람이 가입했을 수도 있으므로 패널에서 재확인
+        setShowOwnershipModal(true);
+      } else {
+        setError(error.message);
+      }
     } finally {
+      leavingRef.current = false;
       setLeaving(false);
     }
   }
@@ -716,6 +783,19 @@ export default function ChatRoomPage({ user }) {
             </Button>
           )}
         </header>
+        {showOwnershipModal && (
+          <ChatOwnershipModal
+            key={roomId}
+            roomId={Number(roomId)}
+            currentUserId={user.id}
+            roomName={room?.roomName ?? "채팅방"}
+            onClose={() => setShowOwnershipModal(false)}
+            onLeft={() => {
+              setShowOwnershipModal(false);
+              navigate("/", { replace: true });
+            }}
+          />
+        )}
         {canInvite && showInviteModal && (
           <ChatFollowingInviteModal
             key={roomId}

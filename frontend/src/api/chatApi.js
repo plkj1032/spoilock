@@ -52,6 +52,12 @@ export const chatApi = {
 
   leaveRoom: (roomId) => changeMembership(roomId, "leave"),
 
+  transferOwnershipAndLeave: (roomId, nextOwnerId) =>
+    chatRequest(`/api/chat/rooms/${roomId}/transfer-and-leave`, {
+      method: "POST",
+      body: { nextOwnerId },
+    }),
+
   kickMember: (roomId, userId, reason) =>
     chatRequest(`/api/chat/rooms/${roomId}/kick`, {
       method: "POST",

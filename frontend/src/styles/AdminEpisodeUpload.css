@@ -1,0 +1,94 @@
+.episode-upload {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px dashed #46618a;
+  border-radius: 10px;
+  background: #142239;
+  color: #b8cbe8;
+}
+
+.episode-upload label {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.episode-upload p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.episode-upload input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #b8cbe8;
+  font-size: 11px;
+}
+
+.episode-upload input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 8px 10px;
+  border: 1px solid #486794;
+  border-radius: 7px;
+  background: #263f65;
+  color: #e6efff;
+  cursor: pointer;
+}
+
+.episode-upload button {
+  justify-self: start;
+  padding: 8px 13px;
+  border: 1px solid #597ac2;
+  border-radius: 8px;
+  background: #2b497e;
+  color: #edf3ff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.episode-upload button:disabled,
+.episode-upload input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.episode-upload :is(button, input):focus-visible {
+  outline: 2px solid #9bb6ff;
+  outline-offset: 3px;
+}
+
+.episode-upload-ready {
+  display: grid;
+  gap: 7px;
+}
+
+.episode-upload-ready > span {
+  color: #7ce0b6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.episode-upload-ready strong {
+  color: #d8e5fa;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.episode-upload-ready small {
+  color: #9bafcc;
+  font-size: 11px;
+}
+
+.episode-upload .episode-upload-error {
+  color: #ffb5bd;
+}

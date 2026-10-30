@@ -116,4 +116,13 @@ public class ChatRoom extends CreatedAtEntity {
 
         active = false;
     }
+    public void transferOwnership(User nextOwner) {
+        if (roomType == ChatRoomType.DEFAULT) {
+            throw new IllegalStateException(
+                    "기본 토론방은 방장을 위임할 수 없습니다."
+            );
+        }
+
+        this.createdBy = nextOwner;
+    }
 }

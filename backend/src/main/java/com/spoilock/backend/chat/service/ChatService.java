@@ -9,16 +9,15 @@ import com.spoilock.backend.chat.domain.entity.ChatRoomMember;
 import com.spoilock.backend.chat.domain.entity.id.ChatRoomMemberId;
 import com.spoilock.backend.chat.domain.type.ChatRoomType;
 import com.spoilock.backend.chat.domain.type.MessageType;
-import com.spoilock.backend.chat.repository.ChatMessageRepository;
-import com.spoilock.backend.chat.repository.ChatRoomBanRepository;
-import com.spoilock.backend.chat.repository.ChatRoomMemberRepository;
-import com.spoilock.backend.chat.repository.ChatRoomRepository;
+import com.spoilock.backend.chat.repository.*;
 import com.spoilock.backend.user.entity.User;
+import com.spoilock.backend.user.enums.AccountStatus;
 import com.spoilock.backend.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -35,6 +34,7 @@ public class ChatService {
     private final ChatRoomAccessService chatRoomAccessService;
     private final ChatRoomBanRepository chatRoomBanRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ChatOwnershipQueryRepository chatOwnershipQueryRepository;
 
 
     @Transactional
@@ -101,12 +101,12 @@ public class ChatService {
             Long userId
     ) {
 
-        ChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "존재하지 않는 채팅방입니다."
-                        )
-                );
+        ChatRoom room = chatOwnershipQueryRepository
+                .findLockedRoom(roomId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "존재하지 않는 채팅방입니다."
+                ));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -163,18 +163,18 @@ public class ChatService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Optional<ChatRedisEvent> leaveRoom(
             Long roomId,
             Long userId
     ) {
 
-        ChatRoom room = chatRoomRepository.findOneById(roomId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "존재하지 않는 채팅방입니다."
-                        )
-                );
+        ChatRoom room = chatOwnershipQueryRepository
+                .findLockedRoom(roomId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "존재하지 않는 채팅방입니다."
+                ));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -194,6 +194,16 @@ public class ChatService {
 
         if (member.isEmpty()) {
             return Optional.empty();
+        }
+        boolean isOwner = room.getRoomType() != ChatRoomType.DEFAULT
+                && room.getCreatedBy().getId().equals(userId);
+
+        if (isOwner
+                && chatOwnershipQueryRepository.hasOtherMembers(roomId, userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "다른 참여자에게 방장을 위임한 뒤 나가 주세요."
+            );
         }
 
         chatRoomMemberRepository.delete(
@@ -301,5 +311,78 @@ public class ChatService {
                 message.getRoom().getId(),
                 message.getId()
         );
+    }
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Optional<ChatRedisEvent> transferOwnershipAndLeave(
+            Long roomId,
+            Long actorId,
+            Long nextOwnerId
+    ) {
+        ChatRoom room = chatOwnershipQueryRepository
+                .findLockedRoom(roomId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "존재하지 않는 채팅방입니다."
+                ));
+
+        if (!room.isActive()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "종료된 채팅방입니다."
+            );
+        }
+
+        if (room.getRoomType() == ChatRoomType.DEFAULT) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "기본 토론방은 방장을 위임할 수 없습니다."
+            );
+        }
+
+        if (!room.getCreatedBy().getId().equals(actorId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "현재 방장만 방장을 위임할 수 있습니다."
+            );
+        }
+
+        if (actorId.equals(nextOwnerId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "다른 참여자를 선택해 주세요."
+            );
+        }
+
+        if (!chatRoomMemberRepository.existsById(
+                new ChatRoomMemberId(roomId, actorId)
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "채팅방에 참여 중인 방장만 위임할 수 있습니다."
+            );
+        }
+
+        ChatRoomMember nextMember = chatRoomMemberRepository
+                .findById(new ChatRoomMemberId(roomId, nextOwnerId))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "선택한 회원이 이미 채팅방을 나갔습니다. 다시 선택해 주세요."
+                ));
+
+        User nextOwner = nextMember.getUser();
+
+        if (nextOwner.getAccountStatus() != AccountStatus.ACTIVE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "현재 이용할 수 없는 계정입니다. 다른 참여자를 선택해 주세요."
+            );
+        }
+
+        chatRoomAccessService.checkNotBanned(roomId, nextOwnerId);
+
+        room.transferOwnership(nextOwner);
+
+        // 위임과 퇴장이 같은 트랜잭션에서 처리됨
+        return leaveRoom(roomId, actorId);
     }
 }

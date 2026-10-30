@@ -1,6 +1,7 @@
 package com.spoilock.backend.drama.domain.dto;
 
 import com.spoilock.backend.drama.domain.entity.Drama;
+import com.spoilock.backend.drama.domain.enums.DramaProvisionType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,7 +17,8 @@ public record DramaDetailResponse (
         String directors,
         String writers,
         String castNames,
-        String officialHomepageUrl
+        String officialHomepageUrl,
+        DramaProvisionType provisionType
 ){
     public record GenreItem(
             String code,
@@ -37,7 +39,8 @@ public record DramaDetailResponse (
                 drama.getDirectors(),
                 drama.getWriters(),
                 drama.getCastNames(),
-                drama.getOfficialHomepageUrl()
+                drama.getOfficialHomepageUrl(),
+                drama.getProvisionType()
         );
     }
 }

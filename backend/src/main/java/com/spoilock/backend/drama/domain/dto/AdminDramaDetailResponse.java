@@ -3,6 +3,7 @@ package com.spoilock.backend.drama.domain.dto;
 import com.spoilock.backend.drama.domain.entity.Drama;
 import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.domain.enums.DramaGenre;
+import com.spoilock.backend.drama.domain.enums.DramaProvisionType;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +21,8 @@ public record AdminDramaDetailResponse(
         String directors,
         String writers,
         String castNames,
-        String officialHomepageUrl
+        String officialHomepageUrl,
+        DramaProvisionType provisionType
 ) {
     public static AdminDramaDetailResponse from(
             Drama drama,
@@ -44,7 +46,8 @@ public record AdminDramaDetailResponse(
                 drama.getDirectors(),
                 drama.getWriters(),
                 drama.getCastNames(),
-                drama.getOfficialHomepageUrl()
+                drama.getOfficialHomepageUrl(),
+                drama.getProvisionType()
         );
     }
 }

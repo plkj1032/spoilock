@@ -1,0 +1,233 @@
+.chat-owner-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  box-sizing: border-box;
+  margin: auto;
+  padding: 24px;
+  overflow-y: auto;
+  border: 1px solid #354d70;
+  border-radius: 20px;
+  background: #121f33;
+  color: #edf3ff;
+  box-shadow: 0 24px 80px #0008;
+  scrollbar-width: thin;
+  scrollbar-color: #435b80 transparent;
+}
+
+.chat-owner-dialog::backdrop {
+  background: #030914b8;
+  backdrop-filter: blur(4px);
+}
+
+.chat-owner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.chat-owner-header > div {
+  min-width: 0;
+}
+
+.chat-owner-header > div > span {
+  color: #93afff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.chat-owner-header h2 {
+  margin: 10px 0;
+  font-size: 21px;
+}
+
+.chat-owner-header p {
+  margin: 0;
+  color: #a5b9d8;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.chat-owner-dialog button {
+  border: 1px solid #3b5277;
+  border-radius: 9px;
+  background: #20324d;
+  color: #dce8ff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-owner-dialog button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-owner-close {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 24px !important;
+}
+
+.chat-owner-description {
+  margin: 22px 0;
+  color: #b7c8e2;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.chat-owner-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #b7c8e2;
+  font-size: 12px;
+}
+
+.chat-owner-toolbar button {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.chat-owner-list {
+  display: grid;
+  gap: 9px;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #435b80 transparent;
+}
+
+.chat-owner-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #304664;
+  border-radius: 12px;
+  background: #1b2b43;
+  cursor: pointer;
+}
+
+.chat-owner-member.is-selected {
+  border-color: #8caaff;
+  background: #263f65;
+}
+
+.chat-owner-member input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #89a8ff;
+}
+
+.chat-owner-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #425f8a;
+  border-radius: 13px;
+  background: #294269;
+  color: #e0eaff;
+  font-weight: 800;
+}
+
+.chat-owner-avatar i {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #1b2b43;
+  border-radius: 50%;
+  background: #42d89a;
+}
+
+.chat-owner-member-copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.chat-owner-member-copy strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.chat-owner-member-copy small {
+  color: #7fd8b2;
+  font-size: 11px;
+}
+
+.chat-owner-member.is-offline .chat-owner-member-copy strong {
+  color: #a6b5cc;
+}
+
+.chat-owner-member.is-offline .chat-owner-member-copy small {
+  color: #8193af;
+}
+
+.chat-owner-confirm {
+  padding: 13px;
+  border-radius: 10px;
+  background: #203451;
+  color: #c1d3f3;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.chat-owner-empty {
+  padding: 24px 12px;
+  color: #acbeda;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.chat-owner-error {
+  color: #ffb5bc;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.chat-owner-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.chat-owner-actions button {
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chat-owner-actions .chat-owner-submit {
+  border-color: #6b8ef2;
+  background: #466be0;
+  color: #fff;
+}
+
+.chat-owner-dialog :is(button, input):focus-visible {
+  outline: 2px solid #a8bdff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .chat-owner-dialog {
+    padding: 20px;
+  }
+
+  .chat-owner-header h2 {
+    font-size: 19px;
+  }
+}
