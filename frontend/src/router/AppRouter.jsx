@@ -13,6 +13,7 @@ import AdminTermsPage from "../pages/AdminTermsPage";
 import AdminPage from "../pages/AdminPage";
 import AdminChatPage from "../pages/AdminChatPage";
 import ChatInvitePage from "../pages/ChatInvitePage";
+import DramaWatchPage from "../pages/DramaWatchPage";
 
 export default function AppRouter({
   user,
@@ -32,6 +33,31 @@ export default function AppRouter({
         path="/dramas"
         element={
           <DramaListPage user={user} onLogin={onLogin} onNotice={onNotice} />
+        }
+      />
+      <Route
+        path="/dramas/:dramaId/watch"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중…</main>
+          ) : user ? (
+            <DramaWatchPage key={user.id} />
+          ) : (
+            <main className="container main-content">
+              <h1>로그인 후 시청할 수 있어요</h1>
+              <p className="page-subtitle">
+                SPOILOCK에서 제공하는 웹드라마를 만나보세요.
+              </p>
+
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={onLogin}
+              >
+                로그인
+              </button>
+            </main>
+          )
         }
       />
 

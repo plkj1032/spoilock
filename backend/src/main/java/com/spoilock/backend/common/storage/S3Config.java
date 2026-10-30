@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 public class S3Config {
@@ -19,5 +20,12 @@ public class S3Config {
                 // EC2에서는 인스턴스 IAM 역할 사용
                 .build();
     }
-
+    @Bean(destroyMethod = "close")
+    public S3Presigner s3Presigner(
+            @Value("${app.media.s3.region}") String region
+    ) {
+        return S3Presigner.builder()
+                .region(Region.of(region))
+                .build();
+    }
 }
