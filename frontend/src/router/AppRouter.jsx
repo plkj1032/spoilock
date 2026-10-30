@@ -61,6 +61,7 @@ export default function AppRouter({
             <ChatRoomPage
               key={`${user.id}:${window.location.pathname}`}
               user={user}
+              onNotice={onNotice}
             />
           ) : (
             <main className="container main-content">

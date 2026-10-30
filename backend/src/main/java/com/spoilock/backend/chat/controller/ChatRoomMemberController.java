@@ -2,6 +2,7 @@ package com.spoilock.backend.chat.controller;
 
 import com.spoilock.backend.chat.domain.dto.ChatKickRequest;
 import com.spoilock.backend.chat.domain.dto.ChatMemberStatusResponse;
+import com.spoilock.backend.chat.domain.dto.ChatOwnershipTransferRequest;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.redis.ChatRedisPublisher;
 import com.spoilock.backend.chat.service.ChatRoomMemberQueryService;
@@ -91,6 +92,29 @@ public class ChatRoomMemberController {
         chatRedisPublisher.publish(event);
 
         return event;
+    }
+
+    @PostMapping("/{roomId}/transfer-and-leave")
+    public MembershipResponse transferAndLeave(
+            @PathVariable("roomId") Long roomId,
+            @Valid @RequestBody ChatOwnershipTransferRequest request,
+            @AuthenticationPrincipal Jwt jwt){
+
+        Long userId = Long.valueOf(jwt.getSubject());
+
+        Optional<ChatRedisEvent> event = chatService.transferOwnershipAndLeave(
+                roomId,
+                userId,
+                request.nextOwnerId()
+        );
+        event.ifPresent(chatRedisPublisher::publish);
+
+        return new MembershipResponse(
+                roomId,
+                false,
+                event.isPresent(),
+                event.map(ChatRedisEvent::messageId).orElse(null)
+        );
     }
 
     public record MembershipResponse(

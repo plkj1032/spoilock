@@ -2,6 +2,7 @@ package com.spoilock.backend.drama.domain.entity;
 
 import com.spoilock.backend.common.entity.AuditedEntity;
 import com.spoilock.backend.drama.domain.enums.DramaGenre;
+import com.spoilock.backend.drama.domain.enums.DramaProvisionType;
 import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import java.util.HashSet;
 import java.util.Set;
@@ -64,6 +65,10 @@ public class Drama extends AuditedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private DramaStatus status = DramaStatus.DRAFT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provision_type", nullable = false, length = 20)
+    private DramaProvisionType provisionType = DramaProvisionType.INFO_ONLY;
 
     public static Drama createDraft(
             String title,
@@ -165,5 +170,13 @@ public class Drama extends AuditedEntity {
                 1000,
                 "공식 홈페이지 주소"
         );
+    }
+    public void updateProvisionType(DramaProvisionType provisionType) {
+        if(provisionType != null){
+            this.provisionType = provisionType;
+        }
+    }
+    public boolean isStreamingProvided(){
+        return provisionType == DramaProvisionType.STREAMING;
     }
 }

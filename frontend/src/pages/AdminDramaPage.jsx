@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import "../styles/AdminDramaPage.css";
 import "../styles/AdminCenter.css";
 import AdminDramaMetadataFields from "../components/admin/AdminDramaMetadataFields";
+import AdminEpisodeUpload from "../components/admin/AdminEpisodeUpload";
 
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
@@ -18,6 +19,7 @@ function createEmptyDramaMetadata() {
     writers: "",
     castNames: "",
     officialHomepageUrl: "",
+    provisionType: "INFO_ONLY",
   };
 }
 
@@ -30,10 +32,14 @@ export default function AdminDramaPage() {
   const [episodes, setEpisodes] = useState(pioneerEpisodes);
   const [metadata, setMetadata] = useState(createEmptyDramaMetadata);
   const [dramas, setDramas] = useState([]);
-  const [busy, setBusy] = useState(false);
+  const [formBusy, setBusy] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
+
+  const busy = formBusy || uploadingCount > 0;
   const [processingId, setProcessingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [existingEpisodeCount, setExistingEpisodeCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -64,6 +70,7 @@ export default function AdminDramaPage() {
     setPosterUrl("");
     setEpisodes([{ episodeNumber: 1, title: "1화" }]);
     setMetadata(createEmptyDramaMetadata());
+    setExistingEpisodeCount(0);
   }
 
   function changeEpisode(index, value) {
@@ -85,6 +92,7 @@ export default function AdminDramaPage() {
   }
 
   function removeEpisode(index) {
+    if (index < existingEpisodeCount) return;
     setEpisodes((prev) => {
       if (prev.length <= 1) return prev;
 
@@ -110,6 +118,7 @@ export default function AdminDramaPage() {
       const detail = await adminDramaApi.getDetail(id);
 
       setEditingId(detail.id);
+      setExistingEpisodeCount(detail.episodes.length);
       setActiveTab("create");
       setTitle(detail.title);
       setSynopsis(detail.synopsis ?? "");
@@ -121,12 +130,14 @@ export default function AdminDramaPage() {
         writers: detail.writers ?? "",
         castNames: detail.castNames ?? "",
         officialHomepageUrl: detail.officialHomepageUrl ?? "",
+        provisionType: detail.provisionType ?? "INFO_ONLY",
       });
 
       setEpisodes(
-        detail.episodes
+        [...detail.episodes]
           .sort((a, b) => a.episodeNumber - b.episodeNumber)
           .map((episode) => ({
+            id: episode.id,
             episodeNumber: episode.episodeNumber,
             title: episode.title,
           })),
@@ -164,6 +175,7 @@ export default function AdminDramaPage() {
       writers: metadata.writers.trim() || null,
       castNames: metadata.castNames.trim() || null,
       officialHomepageUrl: metadata.officialHomepageUrl.trim() || null,
+      provisionType: metadata.provisionType,
     };
 
     if (!payload.title) {
@@ -187,14 +199,47 @@ export default function AdminDramaPage() {
 
       const wasEditing = editingId !== null;
 
-      resetForm();
-      setActiveTab("list");
+      if (payload.provisionType === "STREAMING") {
+        // 저장된 ID를 먼저 보존해서 이후 조회 실패 시 중복 생성 방지
+        setEditingId(saved.id);
+        setExistingEpisodeCount(payload.episodes.length);
+        setActiveTab("create");
 
-      setMessage(
-        wasEditing
-          ? `${saved.title} 작품을 수정했습니다.`
-          : `${saved.title} 작품을 초안으로 등록했습니다.`,
-      );
+        try {
+          const detail = await adminDramaApi.getDetail(saved.id);
+
+          setEpisodes(
+            [...detail.episodes]
+              .sort((a, b) => a.episodeNumber - b.episodeNumber)
+              .map((episode) => ({
+                id: episode.id,
+                episodeNumber: episode.episodeNumber,
+                title: episode.title,
+              })),
+          );
+
+          setExistingEpisodeCount(detail.episodes.length);
+
+          setMessage(
+            `${saved.title} 작품 정보를 저장했습니다. ` +
+              "아래 회차별 영상 업로드를 진행해 주세요.",
+          );
+        } catch {
+          setError(
+            "작품 저장은 완료됐지만 회차 정보를 불러오지 못했습니다. " +
+              "등록된 작품 관리에서 이 작품의 수정을 다시 열어 주세요.",
+          );
+        }
+      } else {
+        resetForm();
+        setActiveTab("list");
+
+        setMessage(
+          wasEditing
+            ? `${saved.title} 작품을 수정했습니다.`
+            : `${saved.title} 작품을 초안으로 등록했습니다.`,
+        );
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -373,34 +418,69 @@ export default function AdminDramaPage() {
           <div className="admin-heading">
             <h3>회차 정보 · 총 {episodes.length}화</h3>
           </div>
+          {editingId !== null && (
+            <p className="page-subtitle">
+              기존 회차의 영상·자막·분석 정보는 유지됩니다. 아래에서 새 회차를
+              추가할 수 있습니다.
+            </p>
+          )}
 
           <div className="admin-episode-grid">
             {episodes.map((episode, index) => (
-              <div className="admin-field" key={episode.episodeNumber}>
+              <div
+                className="admin-field"
+                key={episode.id ?? `new-${episode.episodeNumber}`}
+              >
                 <label htmlFor={`episode-${index}`}>{index + 1}화 제목</label>
 
                 <div className="admin-episode-row">
                   <input
                     id={`episode-${index}`}
                     value={episode.title}
-                    onChange={(e) => changeEpisode(index, e.target.value)}
+                    onChange={(event) =>
+                      changeEpisode(index, event.target.value)
+                    }
                     maxLength={200}
                     placeholder={`${index + 1}화`}
+                    readOnly={index < existingEpisodeCount}
+                    disabled={busy}
                   />
 
                   <button
                     type="button"
                     className="button button-outline episode-delete"
                     onClick={() => removeEpisode(index)}
-                    disabled={episodes.length === 1 || busy}
+                    disabled={
+                      busy ||
+                      episodes.length === 1 ||
+                      index < existingEpisodeCount
+                    }
                   >
                     삭제
                   </button>
                 </div>
+
+                {metadata.provisionType === "STREAMING" &&
+                  (episode.id != null ? (
+                    <AdminEpisodeUpload
+                      key={episode.id}
+                      episodeId={episode.id}
+                      disabled={busy}
+                      onUploadStart={() =>
+                        setUploadingCount((count) => count + 1)
+                      }
+                      onUploadEnd={() =>
+                        setUploadingCount((count) => Math.max(0, count - 1))
+                      }
+                    />
+                  ) : (
+                    <small>
+                      작품 정보를 저장하면 이 회차의 영상 업로드칸이 표시됩니다.
+                    </small>
+                  ))}
               </div>
             ))}
           </div>
-
           <button
             type="button"
             className="button button-outline episode-add"
@@ -433,7 +513,9 @@ export default function AdminDramaPage() {
             disabled={busy}
           >
             {busy
-              ? "저장 중..."
+              ? uploadingCount > 0
+                ? "영상 업로드 중..."
+                : "저장 중..."
               : editingId === null
                 ? `작품 및 ${episodes.length}개 회차 등록`
                 : "작품 수정사항 저장"}

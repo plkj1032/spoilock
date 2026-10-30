@@ -1,6 +1,7 @@
 package com.spoilock.backend.drama.domain.dto;
 
 import com.spoilock.backend.drama.domain.enums.DramaGenre;
+import com.spoilock.backend.drama.domain.enums.DramaProvisionType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
@@ -46,7 +47,9 @@ public record CreateDramaRequest(
                 regexp = "^https?://[^\\s]+$",
                 message = "공식 홈페이지 주소는 http:// 또는 https://로 시작해야 합니다."
         )
-                String officialHomepageUrl
+                String officialHomepageUrl,
+
+        DramaProvisionType provisionType
 ) {
     public record EpisodeItem(
             @NotNull

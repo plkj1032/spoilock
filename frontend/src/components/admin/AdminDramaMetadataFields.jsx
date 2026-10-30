@@ -44,6 +44,37 @@ export default function AdminDramaMetadataFields({
   return (
     <fieldset className="admin-drama-metadata" disabled={disabled}>
       <legend>작품 상세 정보</legend>
+      <fieldset className="admin-drama-genres">
+        <legend>작품 제공 방식</legend>
+
+        <div className="admin-drama-genre-list">
+          <button
+            type="button"
+            className="admin-drama-genre-chip"
+            aria-pressed={value.provisionType === "INFO_ONLY"}
+            onClick={() => updateField("provisionType", "INFO_ONLY")}
+          >
+            정보만 제공
+          </button>
+
+          <button
+            type="button"
+            className="admin-drama-genre-chip"
+            aria-pressed={value.provisionType === "STREAMING"}
+            onClick={() => updateField("provisionType", "STREAMING")}
+          >
+            영상 제공
+          </button>
+        </div>
+
+        <div className="admin-field" style={{ marginTop: 12, marginBottom: 0 }}>
+          <small>
+            {value.provisionType === "STREAMING"
+              ? "사이트에서 회차별 영상을 제공합니다. 사용자는 저장된 시청 진도를 낮출 수 없습니다."
+              : "작품 정보와 커뮤니티를 제공합니다. 사용자가 시청 진도를 자유롭게 변경할 수 있습니다."}
+          </small>
+        </div>
+      </fieldset>
 
       <fieldset className="admin-drama-genres">
         <legend>장르 · 여러 개 선택 가능</legend>

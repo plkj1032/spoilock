@@ -9,6 +9,7 @@ import com.spoilock.backend.drama.domain.dto.CreateDramaRequest;
 import com.spoilock.backend.drama.domain.entity.Drama;
 import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.domain.enums.DramaStatus;
+import com.spoilock.backend.drama.repository.DramaQueryRepository;
 import com.spoilock.backend.drama.repository.DramaRepository;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +38,7 @@ public class AdminDramaService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository  userRepository;
     private final EpisodeVideoRepository episodeVideoRepository;
+    private final DramaQueryRepository dramaQueryRepository;
 
     @Transactional(readOnly = true)
     public List<AdminDramaResponse> getAll() {
@@ -86,6 +89,7 @@ public class AdminDramaService {
                 request.castNames()
         );
         drama.updateOfficialHomepageUrl(request.officialHomepageUrl());
+        drama.updateProvisionType(request.provisionType());
 
         Drama savedDrama = dramaRepository.save(drama);
 
@@ -178,60 +182,76 @@ public class AdminDramaService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AdminDramaResponse update(
             Long dramaId,
             CreateDramaRequest request
     ) {
-        // 1. 수정할 드라마 조회
-        Drama drama = findDrama(dramaId);
+        Drama drama = dramaQueryRepository.findLockedForEdit(dramaId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "드라마를 찾을 수 없습니다."
+                ));
 
         String title = request.title().trim();
 
-        // 3. 자신을 제외한 작품 중 제목 중복 확인
-        if (dramaRepository.existsByTitleIgnoreCaseAndIdNot(
-                title,
-                dramaId
-        )) {
+        if (dramaQueryRepository.existsOtherTitle(title, dramaId)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "이미 등록된 작품입니다."
             );
         }
 
-        // 4. 전체 회차 검증
+        // 요청한 회차가 1화부터 전체 회차 수까지 연속인지 확인
         validateEpisodes(
                 request.totalEpisodeCount(),
                 request.episodes().stream()
-                        .map(
-                                CreateDramaRequest.EpisodeItem
-                                        ::episodeNumber
-                        )
+                        .map(CreateDramaRequest.EpisodeItem::episodeNumber)
                         .toList()
         );
 
-        if(episodeVideoRepository.existsByEpisode_Drama_Id(dramaId))
-        {
+        List<Episode> existingEpisodes =
+                dramaQueryRepository.findEpisodesForEdit(dramaId);
+
+        // 기존 회차 구성도 1화부터 연속인지 확인
+        validateEpisodes(
+                drama.getTotalEpisodeCount(),
+                existingEpisodes.stream()
+                        .map(Episode::getEpisodeNumber)
+                        .toList()
+        );
+
+        int existingCount = existingEpisodes.size();
+        int requestedCount = request.totalEpisodeCount();
+
+        if (requestedCount < existingCount) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "MP4 영상이 등록된 작품입니다. "
-                    + "연결된 회차를 전체 교체할 수 없습니다."
+                    "기존 회차는 삭제할 수 없습니다. 새 회차를 추가해 주세요."
             );
         }
 
-        // 5. QueryDSL로 기존 초안 회차 삭제
-        episodeRepository.deleteDraftEpisodes(dramaId);
+        // 기존 회차는 변경하지 않고 마지막 회차 뒤에 새 회차만 추가
+        List<Episode> addedEpisodes = request.episodes()
+                .stream()
+                .filter(item -> item.episodeNumber() > existingCount)
+                .map(item -> Episode.create(
+                        drama,
+                        item.episodeNumber(),
+                        item.title().trim()
+                ))
+                .toList();
 
-        // 6. Bulk Delete 후 clear()가 실행되므로 재조회
-        drama = findDrama(dramaId);
+        episodeRepository.saveAll(addedEpisodes);
 
-        // 7. 드라마 정보 수정
+        // 작품 정보와 전체 회차 수 갱신
         drama.updateDraft(
                 title,
                 request.synopsis(),
                 blankToNull(request.posterUrl()),
-                request.totalEpisodeCount()
+                requestedCount
         );
+
         drama.updateMetadata(
                 request.genres(),
                 request.premiereDate(),
@@ -239,26 +259,11 @@ public class AdminDramaService {
                 request.writers(),
                 request.castNames()
         );
+
         drama.updateOfficialHomepageUrl(request.officialHomepageUrl());
+        drama.updateProvisionType(request.provisionType());
 
-        // Lambda에서 사용할 영속 상태의 Drama
-        Drama managedDrama = drama;
-
-        // 8. 새 회차 생성
-        List<Episode> newEpisodes = request.episodes()
-                .stream()
-                .map(item -> Episode.create(
-                        managedDrama,
-                        item.episodeNumber(),
-                        item.title().trim()
-                ))
-                .toList();
-
-        // 9. 회차 저장
-        episodeRepository.saveAll(newEpisodes);
-
-        // 10. 응답 DTO 반환
-        return AdminDramaResponse.from(managedDrama);
+        return AdminDramaResponse.from(drama);
     }
 
 
