@@ -179,6 +179,9 @@
   border-color: transparent;
   background: transparent;
 }
+.chat-directory .chat-directory-summary select {
+  font-size: 12px;
+}
 
 .chat-directory-list {
   display: flex;

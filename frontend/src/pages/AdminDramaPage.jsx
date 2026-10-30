@@ -26,7 +26,7 @@ function createEmptyDramaMetadata() {
 export default function AdminDramaPage() {
   const [editingId, setEditingId] = useState(null);
   const [activeTab, setActiveTab] = useState("create");
-  const [title, setTitle] = useState("Pioneer One");
+  const [title, setTitle] = useState("");
   const [synopsis, setSynopsis] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
   const [episodes, setEpisodes] = useState(pioneerEpisodes);
@@ -378,6 +378,7 @@ export default function AdminDramaPage() {
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
               required
+              placeholder="작품명을 입력해 주세요."
             />
           </div>
 
