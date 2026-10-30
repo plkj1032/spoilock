@@ -9,7 +9,6 @@ import ChatRoomCreate from "../components/chat/ChatRoomCreate";
 import useRoomPage from "../hooks/useRoomPage";
 
 import "../styles/ChatPage.css";
-import DefaultRoomCrown from "../components/common/DefaultRoomCrown";
 
 const ROOM_TYPES = [
   { value: "ALL", label: "전체" },
@@ -443,15 +442,11 @@ export default function ChatPage({ user, onLogin, onNotice }) {
                 onClick={() => enterRoom(room.roomId)}
                 disabled={enteringRoomId !== null}
               >
-                {isDefault ? (
-                  <DefaultRoomCrown />
-                ) : (
-                  <RoomPoster
-                    key={`${room.dramaId}:${drama?.posterUrl ?? ""}`}
-                    src={drama?.posterUrl}
-                    title={drama?.title || room.roomName}
-                  />
-                )}
+                <RoomPoster
+                  key={`${room.dramaId}:${drama?.posterUrl ?? ""}`}
+                  src={drama?.posterUrl}
+                  title={drama?.title || room.roomName}
+                />
 
                 <span className="chat-directory-copy">
                   <span className="chat-directory-meta">

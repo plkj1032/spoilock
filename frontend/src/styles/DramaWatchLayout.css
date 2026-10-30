@@ -1,0 +1,67 @@
+/* 회차 목록을 접어도 플레이어 너비는 동일하게 유지 */
+.watch-page .watch-layout {
+  display: block;
+}
+
+.watch-page .watch-main-column {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 영상 아래에 회차 목록 배치 */
+.watch-page .watch-episodes {
+  margin-top: 20px;
+}
+
+.watch-page .watch-episodes[hidden] {
+  display: none;
+}
+
+.watch-page .watch-episodes-heading {
+  padding: 18px 20px;
+}
+
+/* 넓은 화면에서는 회차를 3열로 표시 */
+.watch-page .watch-episode-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 320px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.watch-page .watch-episode {
+  min-height: 78px;
+}
+
+/* 영상이 없어도 플레이어 자리를 16:9로 유지 */
+.watch-page .watch-main-column > .watch-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, #19243a, #070b13 75%);
+}
+
+.watch-page .watch-main-column > .watch-empty p {
+  margin: 10px 0 16px;
+}
+
+@media (max-width: 900px) {
+  .watch-page .watch-episode-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .watch-page .watch-episode-list {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: 280px;
+    padding: 10px;
+  }
+}
