@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { adminVideoApi } from "../../api/adminVideoApi";
-
+import FileDropInput from "../common/FileDropInput";
 import "../../styles/AdminEpisodeUpload.css";
 
 const MAX_SIZE = 400 * 1024 * 1024;
@@ -50,26 +50,6 @@ export default function AdminEpisodeUpload({
     setLoading(true);
     setLoadError("");
     setRevision((value) => value + 1);
-  }
-
-  function selectFile(event) {
-    const selected = event.target.files?.[0];
-    setError("");
-    setFile(null);
-
-    if (!selected) return;
-
-    if (
-      !selected.name.toLowerCase().endsWith(".mp4") ||
-      selected.size === 0 ||
-      selected.size > MAX_SIZE
-    ) {
-      event.target.value = "";
-      setError("400MB 이하의 MP4 파일을 선택해 주세요.");
-      return;
-    }
-
-    setFile(selected);
   }
 
   async function upload() {
@@ -144,26 +124,23 @@ export default function AdminEpisodeUpload({
         </div>
       ) : (
         <>
-          <label htmlFor={`upload-episode-${episodeId}`}>
-            회차 영상 · MP4 / 최대 400MB
-          </label>
-
-          <input
-            ref={inputRef}
-            id={`upload-episode-${episodeId}`}
-            type="file"
+          <FileDropInput
+            file={file}
+            inputRef={inputRef}
             accept=".mp4,video/mp4"
-            onChange={selectFile}
+            extension=".mp4"
+            maxBytes={MAX_SIZE}
+            description="회차 영상 · MP4 / 최대 400MB"
             disabled={disabled || uploading}
+            onSelect={(selected) => {
+              setError("");
+              setFile(selected);
+            }}
+            onError={(text) => {
+              setFile(null);
+              setError(text);
+            }}
           />
-
-          {file && (
-            <p>
-              {file.name}
-              {" · "}
-              {(file.size / (1024 * 1024)).toFixed(1)} MB
-            </p>
-          )}
 
           <button
             type="button"

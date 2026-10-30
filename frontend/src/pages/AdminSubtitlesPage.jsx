@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { adminDramaApi } from "../api/adminDramaApi";
 import { adminSubtitleApi } from "../api/adminSubtitleApi";
 import AdminEpisodeVideoPanel from "../components/admin/AdminEpisodeVideoPanel";
-
+import FileDropInput from "../components/common/FileDropInput";
 import "../styles/AdminSubtitlesPage.css";
 
 // SRT 최대 크기: 2MB
@@ -294,36 +294,6 @@ function AdminSubtitlesContent({ dramaId }) {
   }
 
   // ==========================================
-  // 12. SRT 파일 선택
-  // ==========================================
-  function handleFileChange(event) {
-    clearMessages();
-
-    const selected = event.target.files?.[0] ?? null;
-
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-
-    if (!selected.name.toLowerCase().endsWith(".srt")) {
-      setError("SRT 확장자의 자막 파일만 선택할 수 있습니다.");
-
-      resetFileInput();
-      return;
-    }
-
-    if (selected.size === 0 || selected.size > MAX_SRT_SIZE) {
-      setError("2MB 이하의 비어 있지 않은 SRT 파일을 선택해 주세요.");
-
-      resetFileInput();
-      return;
-    }
-
-    setFile(selected);
-  }
-
-  // ==========================================
   // 13. 공통 API 작업 처리
   // ==========================================
   async function perform(task, successMessage) {
@@ -422,7 +392,12 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 승인 시 최초 공개 회차 기본값: 사건이 나온 회차
   function revealValue(item) {
-    return revealDrafts[item.id] ?? item.firstRevealEpisode ?? item.sourceEpisode ?? 1;
+    return (
+      revealDrafts[item.id] ??
+      item.firstRevealEpisode ??
+      item.sourceEpisode ??
+      1
+    );
   }
 
   async function reviewEvent(item, status) {
@@ -688,31 +663,24 @@ function AdminSubtitlesContent({ dramaId }) {
                 <h3>자막 파일 등록</h3>
 
                 <div className="admin-subtitles__file-picker">
-                  <input
-                    ref={fileInputRef}
-                    id="admin-subtitles-file"
-                    className="admin-subtitles__file-input"
-                    type="file"
+                  <FileDropInput
+                    file={file}
+                    inputRef={fileInputRef}
                     accept=".srt"
+                    extension=".srt"
+                    maxBytes={MAX_SRT_SIZE}
+                    description="SRT 자막 · 최대 2MB · 선택 후 자막 업로드를 눌러 주세요."
                     disabled={!canChooseFile}
-                    onChange={handleFileChange}
+                    onSelect={(selected) => {
+                      clearMessages();
+                      setFile(selected);
+                    }}
+                    onError={(text) => {
+                      resetFileInput();
+                      setMessage("");
+                      setError(text);
+                    }}
                   />
-
-                  <label
-                    htmlFor="admin-subtitles-file"
-                    className={
-                      "admin-subtitles__file-label" +
-                      (!canChooseFile
-                        ? " admin-subtitles__file-label--disabled"
-                        : "")
-                    }
-                  >
-                    파일 선택
-                  </label>
-
-                  <span className="admin-subtitles__selected-file">
-                    {file?.name ?? "선택된 파일 없음"}
-                  </span>
                 </div>
 
                 <div className="admin-subtitles__actions">
@@ -925,7 +893,8 @@ function AdminSubtitlesContent({ dramaId }) {
 
                         <div className="admin-subtitles__event-meta">
                           <span>
-                            출처: {SOURCE_LABELS[item.sourceType] ?? item.sourceType}
+                            출처:{" "}
+                            {SOURCE_LABELS[item.sourceType] ?? item.sourceType}
                           </span>
 
                           {item.evidenceType && (

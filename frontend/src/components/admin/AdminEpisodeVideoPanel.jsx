@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { adminVideoApi } from "../../api/adminVideoApi";
-
+import FileDropInput from "../common/FileDropInput";
 import "../../styles/AdminEpisodeVideoPanel.css";
 
 const MAX_VIDEO_SIZE = 400 * 1024 * 1024;
@@ -86,35 +86,6 @@ export default function AdminEpisodeVideoPanel({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  }
-
-  // =========================================
-  // 파일 선택
-  // =========================================
-  function handleFileChange(event) {
-    setError("");
-    setMessage("");
-
-    const selected = event.target.files?.[0];
-
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-
-    if (!selected.name.toLowerCase().endsWith(".mp4")) {
-      setError("MP4 영상 파일을 선택해 주세요.");
-      resetFile();
-      return;
-    }
-
-    if (selected.size === 0 || selected.size > MAX_VIDEO_SIZE) {
-      setError("400MB 이하의 MP4 파일을 선택해 주세요.");
-      resetFile();
-      return;
-    }
-
-    setFile(selected);
   }
 
   // =========================================
@@ -309,39 +280,25 @@ export default function AdminEpisodeVideoPanel({
       ) : (
         <form className="admin-video__upload-form" onSubmit={uploadVideo}>
           <div className="admin-video__upload-area">
-            <div className="admin-video__upload-icon" aria-hidden="true">
-              ↑
-            </div>
-
-            <strong>회차 영상 등록</strong>
-
-            <p>
-              MP4 형식의 영상 파일을 선택해 주세요.
-              <span> 최대 100MB</span>
-            </p>
-
-            <input
-              ref={fileInputRef}
-              id={`episode-video-${episodeId}`}
-              type="file"
+            <FileDropInput
+              file={file}
+              inputRef={fileInputRef}
               accept=".mp4,video/mp4"
-              className="admin-video__file-input"
-              onChange={handleFileChange}
+              extension=".mp4"
+              maxBytes={MAX_VIDEO_SIZE}
+              description="MP4 영상 · 최대 400MB · 선택 후 영상 업로드를 눌러 주세요."
               disabled={busy}
+              onSelect={(selected) => {
+                setError("");
+                setMessage("");
+                setFile(selected);
+              }}
+              onError={(text) => {
+                resetFile();
+                setMessage("");
+                setError(text);
+              }}
             />
-
-            <label
-              className="admin-video__file-button"
-              htmlFor={`episode-video-${episodeId}`}
-            >
-              MP4 파일 선택
-            </label>
-
-            <span className="admin-video__selected-file">
-              {file
-                ? `${file.name} (${formatSize(file.size)})`
-                : "선택된 파일이 없습니다."}
-            </span>
           </div>
 
           <button
