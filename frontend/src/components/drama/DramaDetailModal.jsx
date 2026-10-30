@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { dramaApi } from "../../api/dramaApi";
 import "../../styles/DramaDetailLayout.css";
 import "../../styles/DramaDetailModal.css";
+import "../../styles/DramaWatchPage.css";
 
 export default function DramaDetailModal({ dramaId, onClose }) {
   const dialogRef = useRef(null);
@@ -202,7 +203,16 @@ export default function DramaDetailModal({ dramaId, onClose }) {
             <h3>출연 배우</h3>
             <p>{detail.castNames || "등록된 배우 정보가 없습니다."}</p>
           </section>
-
+          {detail.provisionType === "STREAMING" && (
+            <Link
+              to={`/dramas/${detail.id}/watch`}
+              className="drama-detail-watch-link"
+              onClick={onClose}
+            >
+              <span aria-hidden="true">▶</span>
+              시청하기
+            </Link>
+          )}
           <footer className="drama-detail-actions">
             <Link to={`/chat?dramaId=${detail.id}`} onClick={onClose}>
               채팅방 가기 <span aria-hidden="true">→</span>

@@ -1,0 +1,283 @@
+.watch-page {
+  max-width: 1200px;
+}
+
+.watch-back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: #a8bfeb;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.watch-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.watch-heading > div > span {
+  color: #8daaff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.watch-heading h1 {
+  margin: 10px 0;
+  color: #f0f5ff;
+  font-size: clamp(24px, 4vw, 34px);
+  overflow-wrap: anywhere;
+}
+
+.watch-heading p {
+  margin: 0;
+  color: #9fb4d5;
+  font-size: 13px;
+}
+
+.watch-links {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.watch-links a,
+.watch-page button {
+  border: 1px solid #3c547b;
+  border-radius: 10px;
+  background: #20324e;
+  color: #dfebff;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.watch-links a {
+  padding: 10px 14px;
+}
+
+.watch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  align-items: start;
+  gap: 22px;
+}
+
+.watch-layout > div {
+  min-width: 0;
+}
+
+.watch-player-panel {
+  overflow: hidden;
+  border: 1px solid #304765;
+  border-radius: 16px;
+  background: #121e30;
+}
+
+.watch-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  object-fit: contain;
+}
+
+.watch-player-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+  aspect-ratio: 16 / 9;
+  padding: 24px;
+  background: #080e19;
+  color: #b6c8e4;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.watch-player-placeholder p {
+  margin: 0;
+}
+
+.watch-player-placeholder button,
+.watch-empty button {
+  padding: 10px 15px;
+}
+
+.watch-current-episode {
+  padding: 20px;
+}
+
+.watch-current-episode > span {
+  color: #93aacc;
+  font-size: 11px;
+}
+
+.watch-current-episode h2 {
+  margin: 9px 0 0;
+  color: #edf3ff;
+  font-size: 18px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.watch-progress-note {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #2a405f;
+  border-radius: 12px;
+  color: #a9bddb;
+  background: #142238;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.watch-episodes {
+  overflow: hidden;
+  border: 1px solid #304765;
+  border-radius: 16px;
+  background: #121e30;
+}
+
+.watch-episodes-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 19px 18px;
+  border-bottom: 1px solid #2b405e;
+}
+
+.watch-episodes-heading h2 {
+  margin: 0;
+  color: #edf3ff;
+  font-size: 16px;
+}
+
+.watch-episodes-heading > span {
+  color: #9db3d4;
+  font-size: 12px;
+}
+
+.watch-episode-list {
+  display: grid;
+  gap: 9px;
+  max-height: 540px;
+  padding: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #405c86 transparent;
+}
+
+.watch-page .watch-episode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 15px 12px;
+  border-color: transparent;
+  background: #1a2a42;
+  text-align: left;
+}
+
+.watch-page .watch-episode.is-selected {
+  border-color: #819fff;
+  background: #283f69;
+}
+
+.watch-page .watch-episode:hover:not(:disabled) {
+  border-color: #819fff;
+}
+
+.watch-episode-number {
+  flex-shrink: 0;
+  color: #a9c0f5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.watch-episode-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+.watch-episode-copy strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.watch-episode-copy small {
+  color: #9db4d8;
+  font-size: 11px;
+}
+
+.watch-page .watch-episode:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.watch-empty {
+  padding: 48px 22px;
+  border: 1px solid #304765;
+  border-radius: 16px;
+  background: #121e30;
+  color: #b8cae5;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.watch-page :is(button, a):focus-visible {
+  outline: 2px solid #a5bcff;
+  outline-offset: 3px;
+}
+
+/* 상세 패널의 시청 버튼 */
+.drama-detail-watch-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 15px;
+  border: 1px solid #8ca8ff;
+  border-radius: 12px;
+  background: #466be0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.drama-detail-watch-link:hover {
+  background: #5579eb;
+}
+
+@media (max-width: 850px) {
+  .watch-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .watch-episode-list {
+    max-height: 320px;
+  }
+}
+
+@media (max-width: 520px) {
+  .watch-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .watch-current-episode {
+    padding: 16px;
+  }
+}
