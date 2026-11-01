@@ -14,6 +14,7 @@ import AdminPage from "../pages/AdminPage";
 import AdminChatPage from "../pages/AdminChatPage";
 import ChatInvitePage from "../pages/ChatInvitePage";
 import DramaWatchPage from "../pages/DramaWatchPage";
+import AdminMonitoringPage from "../pages/AdminMonitoringPage";
 
 export default function AppRouter({
   user,
@@ -122,6 +123,19 @@ export default function AppRouter({
             <main className="container main-content">로그인 확인 중...</main>
           ) : user?.role === "ADMIN" ? (
             <AdminPage />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      {/* 관리자 AI 모니터링 */}
+      <Route
+        path="/admin/monitoring"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminMonitoringPage />
           ) : (
             <Navigate to="/" replace />
           )
