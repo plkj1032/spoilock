@@ -23,6 +23,14 @@ const CENTERS = [
     to: "/admin/terms",
     label: "약관 관리",
   },
+  {
+    number: "04",
+    title: "AI 모니터링",
+    description:
+      "채팅 AI 판정, 응답 시간, 자막·영상 분석 및 서버 상태를 모니터링합니다.",
+    to: "/admin/monitoring",
+    label: "AI 모니터링",
+  },
 ];
 
 export default function AdminPage() {
