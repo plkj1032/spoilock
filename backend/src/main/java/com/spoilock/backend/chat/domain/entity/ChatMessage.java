@@ -9,6 +9,8 @@ import com.spoilock.backend.chat.domain.type.MessageType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "chat_messages")
 @Getter
@@ -73,6 +75,22 @@ public class ChatMessage extends CreatedAtEntity {
     )
     private ModerationStatus moderationStatus =
             ModerationStatus.PENDING;
+
+    // ================================
+    // AI 모니터링 V2 + V3
+    // ================================
+
+    // AI 판정 결과
+    @Column(name = "analysis_outcome", length = 30)
+    private String analysisOutcome;
+
+    // AI 판정 소요 시간 (ms)
+    @Column(name = "analysis_duration_ms")
+    private Long analysisDurationMs;
+
+    // AI 분석 완료 시간
+    @Column(name = "analyzed_at")
+    private LocalDateTime analyzedAt;
 
     public static ChatMessage createChat(
             ChatRoom room,
