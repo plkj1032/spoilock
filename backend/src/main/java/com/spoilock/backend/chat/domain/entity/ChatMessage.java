@@ -58,10 +58,9 @@ public class ChatMessage extends CreatedAtEntity {
     @Column(name = "required_episode_number")
     private Integer requiredEpisodeNumber;
 
-    // 판정이 애매해 '드라마 마지막 회차' 기준으로 공개한 글
-    // (작품 회차 수가 바뀌면 공개 회차 갱신, 새 사건이 등록되면 다시 판정)
+    // 마지막 회차 기준 공개 여부
     @Column(name = "required_until_finale", nullable = false)
-    private boolean requiredUntilFinale;
+    private boolean requiredUntilFinale = false;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -153,24 +152,34 @@ public class ChatMessage extends CreatedAtEntity {
      *                                false → PENDING (관리자 검토 대기, 원문 차단)
      * @param requiredEpisodeNumber   공개에 필요한 회차 (publish=false 면 무시)
      */
+    // 기존 2개 인자 호출과 호환
     public void completeAnalysis(
             boolean publish,
             Integer requiredEpisodeNumber
     ) {
-        completeAnalysis(publish, requiredEpisodeNumber, false);
+        completeAnalysis(
+                publish,
+                requiredEpisodeNumber,
+                false
+        );
     }
-
-    /** @param untilFinale 드라마 마지막 회차 기준으로 정한 공개 범위인지 */
+    /**
+     * AI 분석 완료 및 공개 정책 저장
+     */
     public void completeAnalysis(
             boolean publish,
             Integer requiredEpisodeNumber,
             boolean untilFinale
     ) {
         this.analysisStatus = AnalysisStatus.COMPLETED;
-        this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
-        this.requiredUntilFinale = publish && untilFinale;
 
-        // 관리자가 이미 숨김/삭제한 메시지는 분석 결과로 다시 공개하지 않음
+        this.requiredEpisodeNumber =
+                publish ? requiredEpisodeNumber : null;
+
+        this.requiredUntilFinale =
+                publish && untilFinale;
+
+        // 관리자에 의해 숨김 또는 삭제된 메시지는 다시 공개하지 않음
         if (isModeratedByAdmin()) {
             return;
         }
