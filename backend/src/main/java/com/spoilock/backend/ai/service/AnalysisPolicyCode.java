@@ -13,6 +13,9 @@ public enum AnalysisPolicyCode {
     MATCH_REVIEW,
     MATCH_INVALID,
     UNVERIFIED_EVENT,
+    GUESS_KNOWN,
+    FINALE_ONLY,
+    GUESS_UNVERIFIED,
     NO_MATCH_PUBLISHED,
     OFF_TOPIC,
     NO_MATCH_REVIEW,
@@ -29,6 +32,7 @@ public enum AnalysisPolicyCode {
 
     public static AnalysisPolicyCode from(AnalysisDecision decision) {
         if (decision == null) return OTHER_FAILED;
+        if (decision.untilFinale()) return FINALE_ONLY;
         String note = decision.note();
         if (note == null) note = "";
 
@@ -44,6 +48,8 @@ public enum AnalysisPolicyCode {
         if (note.startsWith("MATCH 인데") || note.startsWith("MATCH 회차가 색인 범위 밖")) return MATCH_INVALID;
         if (note.startsWith("MATCH ") && decision.publish() && decision.requiredEpisode() != null) return EVENT_MATCH;
         if (note.startsWith("미검증 사건 회차")) return UNVERIFIED_EVENT;
+        if (note.startsWith("작성자가 본 회차의 추측이지만 미검증")) return GUESS_UNVERIFIED;
+        if (note.startsWith("추측이지만 작성자가 이미 본")) return GUESS_KNOWN;
         if (note.startsWith("사건 미등록 작품")) return NO_EVENTS;
         if (note.startsWith("사건 DB 조회 실패")) return KB_LOOKUP_FAILED;
         if (note.startsWith("호출 실패:")) return AI_REQUEST_FAILED;

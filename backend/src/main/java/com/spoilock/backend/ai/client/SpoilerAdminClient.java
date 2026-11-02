@@ -254,6 +254,46 @@ public class SpoilerAdminClient {
     }
 
     // ============================================
+    // 게시글 이미지 스포일러 판정 (영상 + 자막 분석 드라마)
+    // ============================================
+
+    /**
+     * 이미지 1장 판정. Gemini 를 두 번 부르므로 업로드용(긴 제한시간) 클라이언트를 쓴다.
+     *
+     * @param episodes 판정 범위 (Spring 이 작품별로 조회한 사건 회차)
+     */
+    public ImageJudgeResponse judgeImage(
+            byte[] image,
+            String contentType,
+            long dramaId,
+            List<Integer> episodes,
+            Long mediaId
+    ) {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+
+        String filename = "media-" + mediaId + ("image/png".equals(contentType) ? ".png" : ".jpg");
+        form.add("file", new ByteArrayResource(image) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+        form.add("drama_id", String.valueOf(dramaId));
+        form.add("kb_version", properties.kbVersion());
+        form.add("episodes", String.join(",", episodes.stream().map(String::valueOf).toList()));
+        if (mediaId != null) {
+            form.add("message_id", String.valueOf(mediaId));
+        }
+
+        return call(() -> uploadClient.post()
+                .uri("/admin/judge-image")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(form)
+                .retrieve()
+                .body(ImageJudgeResponse.class));
+    }
+
+    // ============================================
     // 공통: 오류 변환
     // ============================================
     private <T> T call(Supplier<T> action) {

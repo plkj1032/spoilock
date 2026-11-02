@@ -1,6 +1,7 @@
 
 package com.spoilock.backend.drama.service;
 
+import com.spoilock.backend.ai.service.SpoilerFinaleService;
 import com.spoilock.backend.chat.domain.entity.ChatRoom;
 import com.spoilock.backend.chat.repository.ChatRoomRepository;
 import com.spoilock.backend.drama.domain.dto.AdminDramaDetailResponse;
@@ -34,6 +35,7 @@ import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 public class AdminDramaService {
 
     private final DramaRepository dramaRepository;
+    private final SpoilerFinaleService finaleService;
     private final EpisodeRepository episodeRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository  userRepository;
@@ -262,6 +264,9 @@ public class AdminDramaService {
 
         drama.updateOfficialHomepageUrl(request.officialHomepageUrl());
         drama.updateProvisionType(request.provisionType());
+
+        // 회차 수가 바뀌었으면 '마지막 회차 기준'으로 공개한 글의 공개 회차도 새 마지막 회차로
+        finaleService.syncDrama(drama.getId());
 
         return AdminDramaResponse.from(drama);
     }

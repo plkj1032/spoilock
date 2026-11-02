@@ -4,6 +4,16 @@ import { feedApi } from "../../api/feedApi";
 import FollowButton from "../common/FollowButton";
 import UserFollowDialog from "../user/UserFollowDialog";
 
+// 이미지 블러 안내 (서버가 판정한 이유)
+function mediaBlurMessage(item) {
+  if (item.blurReason === "SPOILER") {
+    return item.requiredEpisode
+      ? `${item.requiredEpisode}화 내용이 담긴 스포일러 이미지예요.`
+      : "스포일러가 담긴 이미지예요.";
+  }
+  return "스포일러가 담겨 있는지 확인하고 있어요.";
+}
+
 const BLOCK_MESSAGES = {
   ANALYZING: "AI가 스포일러 여부를 확인하고 있어요.",
   REVIEW: "스포일러 검토가 필요하여 원문을 보호하고 있어요.",
@@ -31,6 +41,8 @@ export default function FeedCard({ post, user }) {
   const [social, setSocial] = useState(null);
   const [media, setMedia] = useState([]);
   const [mediaIndex, setMediaIndex] = useState(0);
+  // '이미지 보기'를 눌러 원본을 연 이미지 ID
+  const [revealedMedia, setRevealedMedia] = useState(() => new Set());
 
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState([]);
@@ -317,11 +329,53 @@ export default function FeedCard({ post, user }) {
       {/* 최대 4장의 사진 캐러셀 */}
       {post.visible && media.length > 0 && (
         <div className="feed-card__media">
-          <img
-            src={media[mediaIndex].url}
-            alt={`${post.authorNickname}님의 첨부 이미지 ${mediaIndex + 1}`}
-            loading="lazy"
-          />
+          {(() => {
+            const item = media[mediaIndex];
+            const alt = `${post.authorNickname}님의 첨부 이미지 ${mediaIndex + 1}`;
+            const revealed = revealedMedia.has(item.id);
+
+            if (item.blurred && !revealed) {
+              return (
+                <div className="feed-card__media-blurred">
+                  {/* 아주 작게 줄인 미리보기를 늘려 흐리게 표시 (원본 내용은 받지 않음) */}
+                  <img
+                    className="feed-card__media-blur-image"
+                    src={item.previewUrl}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                  />
+
+                  <div className="feed-card__media-guard">
+                    <span className="feed-card__media-guard-icon">🔒</span>
+                    <strong>
+                      {item.blurReason === "SPOILER"
+                        ? "스포일러 이미지"
+                        : "확인 중인 이미지"}
+                    </strong>
+                    <p>{mediaBlurMessage(item)}</p>
+                    <button
+                      type="button"
+                      className="feed-card__media-reveal"
+                      onClick={() =>
+                        setRevealedMedia((prev) => new Set(prev).add(item.id))
+                      }
+                    >
+                      이미지 보기
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <img
+                src={item.blurred ? `${item.url}?reveal=true` : item.url}
+                alt={alt}
+                loading="lazy"
+              />
+            );
+          })()}
 
           {media.length > 1 && (
             <>

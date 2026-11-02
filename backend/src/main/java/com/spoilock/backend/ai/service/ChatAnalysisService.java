@@ -22,15 +22,18 @@ public class ChatAnalysisService {
     private final ChatAnalysisStateService stateService;
     private final ChatRedisPublisher chatRedisPublisher;
     private final SpoilerJudgeService judgeService;
+    private final AuthorProgressService authorProgressService;
 
     public ChatAnalysisService(
             ChatAnalysisStateService stateService,
             ChatRedisPublisher chatRedisPublisher,
-            SpoilerJudgeService judgeService
+            SpoilerJudgeService judgeService,
+            AuthorProgressService authorProgressService
     ) {
         this.stateService = stateService;
         this.chatRedisPublisher = chatRedisPublisher;
         this.judgeService = judgeService;
+        this.authorProgressService = authorProgressService;
     }
 
     public void analyze(ChatAnalysisRequested event) {
@@ -70,6 +73,7 @@ public class ChatAnalysisService {
     }
 
     private AnalysisDecision judge(ChatAnalysisRequested event) {
-        return judgeService.judge(event.messageId(), event.dramaId(), event.content());
+        Integer authorWatched = authorProgressService.forChatMessage(event.messageId(), event.dramaId());
+        return judgeService.judge(event.messageId(), event.dramaId(), event.content(), authorWatched);
     }
 }
