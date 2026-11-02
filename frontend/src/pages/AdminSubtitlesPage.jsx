@@ -90,6 +90,8 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   const [analysis, setAnalysis] = useState(null);
   const [events, setEvents] = useState([]);
+  // 사건 목록은 분석 서버(FastAPI)에서 가져옴 → 서버가 꺼져 있어도 자막·영상 업로드는 가능해야 함
+  const [eventsError, setEventsError] = useState("");
 
   // 분석 옵션
   const [videoRegistered, setVideoRegistered] = useState(false);
@@ -166,19 +168,31 @@ function AdminSubtitlesContent({ dramaId }) {
 
     let active = true;
 
-    Promise.all([
+    // 분석 정보(Spring DB)와 사건 목록(분석 서버)을 따로 처리:
+    // 분석 서버가 꺼져 사건 조회가 실패해도 자막 업로드·삭제는 그대로 가능
+    Promise.allSettled([
       adminSubtitleApi.getAnalysis(episodeId),
       adminSubtitleApi.getEvents(episodeId),
     ])
-      .then(([analysisData, eventData]) => {
+      .then(([analysisResult, eventResult]) => {
         if (!active) return;
 
-        setAnalysis(analysisData);
-        setEvents(eventData);
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.message);
+        if (analysisResult.status === "fulfilled") {
+          setAnalysis(analysisResult.value);
+        } else {
+          setError(
+            analysisResult.reason?.message || "분석 정보를 불러오지 못했습니다.",
+          );
+        }
+
+        if (eventResult.status === "fulfilled") {
+          setEvents(eventResult.value);
+          setEventsError("");
+        } else {
+          setEvents([]);
+          setEventsError(
+            eventResult.reason?.message || "분석 서버에 연결할 수 없습니다.",
+          );
         }
       })
       .finally(() => {
@@ -288,6 +302,7 @@ function AdminSubtitlesContent({ dramaId }) {
     setEpisodeId(id);
     setAnalysis(null);
     setEvents([]);
+    setEventsError("");
     setManualSummary("");
 
     resetFileInput();
@@ -329,6 +344,34 @@ function AdminSubtitlesContent({ dramaId }) {
     const result = await perform(
       () => adminSubtitleApi.upload(episodeId, file),
       "자막 파일이 정상적으로 등록되었습니다.",
+    );
+
+    if (result) {
+      setAnalysis(result);
+      resetFileInput();
+    }
+  }
+
+  // ==========================================
+  // 14-1. 등록된 자막 삭제 (교체용)
+  //      분석 서버와 무관하게 동작. 이미 등록된 사건은 그대로 유지
+  // ==========================================
+  async function deleteSubtitle() {
+    if (!episodeId || busy || loadingDetails || !analysis?.subtitleFilename) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "등록된 자막을 삭제하시겠습니까?\n" +
+        "이미 분석으로 등록된 사건은 그대로 남습니다. " +
+        "새 자막으로 다시 분석하려면 업로드 후 '기존 사건 교체'를 선택해 주세요.",
+    );
+
+    if (!confirmed) return;
+
+    const result = await perform(
+      () => adminSubtitleApi.deleteSubtitle(episodeId),
+      "등록된 자막을 삭제했습니다. 새 자막 파일을 업로드할 수 있습니다.",
     );
 
     if (result) {
@@ -450,6 +493,13 @@ function AdminSubtitlesContent({ dramaId }) {
     !analysis?.subtitleFilename;
 
   const canUpload = canChooseFile && Boolean(file);
+
+  // 분석 대기·진행 중에는 삭제 불가 (서버도 같은 규칙)
+  const canDeleteSubtitle =
+    !busy &&
+    !loadingDetails &&
+    Boolean(analysis?.subtitleFilename) &&
+    !analysisActive;
 
   // 분석 전 / 실패 / '기존 사건 교체'(재분석) 선택 시 요청 가능
   const canRequest =
@@ -653,6 +703,22 @@ function AdminSubtitlesContent({ dramaId }) {
                 <span className="admin-subtitles__muted">
                   SRT 형식 · UTF-8 · 최대 2MB
                 </span>
+
+                {!loadingDetails && analysis?.subtitleFilename && (
+                  <button
+                    type="button"
+                    className="admin-subtitles__button admin-subtitles__button--danger"
+                    disabled={!canDeleteSubtitle}
+                    onClick={deleteSubtitle}
+                    title={
+                      analysisActive
+                        ? "분석이 진행 중일 때는 삭제할 수 없습니다."
+                        : undefined
+                    }
+                  >
+                    자막 삭제
+                  </button>
+                )}
               </div>
 
               {/* 자막 업로드 */}
@@ -854,7 +920,18 @@ function AdminSubtitlesContent({ dramaId }) {
                   </p>
                 )}
 
-                {!loadingDetails && events.length === 0 && (
+                {!loadingDetails && eventsError && (
+                  <div className="admin-subtitles__empty">
+                    <strong>사건 목록을 불러오지 못했습니다.</strong>
+
+                    <p>
+                      {eventsError} 자막·영상 업로드와 삭제는 그대로 할 수 있고,
+                      분석 서버가 켜지면 새로고침으로 다시 확인할 수 있습니다.
+                    </p>
+                  </div>
+                )}
+
+                {!loadingDetails && !eventsError && events.length === 0 && (
                   <div className="admin-subtitles__empty">
                     <strong>등록된 사건이 없습니다.</strong>
 
