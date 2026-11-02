@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { adminMonitoringApi } from "../api/adminMonitoringApi";
 import "../styles/AdminCenter.css";
@@ -28,6 +28,54 @@ const LABELS = {
   REDIS_PUBLISHED: "Redis 갱신 알림 전송",
   REDIS_FAILED: "Redis 갱신 알림 실패",
 };
+
+// ========================================
+// V21: 서버가 기록한 정책 코드만 관리자에게 표시합니다.
+// 이전 메시지의 NULL은 추측하지 않고 '정책 기록 없음'으로 표시합니다.
+// ========================================
+const POLICY_LABELS = {
+  GENERAL_CHAT: "일반 대화 · 전체 공개",
+  GENERAL_HELD: "일반 대화 · 공개 보류",
+  UNRELATED_CHAT: "사건 무관 · 전체 공개",
+  UNRELATED_HELD: "사건 무관 · 공개 보류",
+  EVENT_MATCH: "스포일러 사건 매칭",
+  MATCH_REVIEW: "사건 매칭 · 검토 필요",
+  MATCH_INVALID: "사건 매칭 정보 불완전",
+  UNVERIFIED_EVENT: "검증되지 않은 사건",
+  NO_MATCH_PUBLISHED: "일치 사건 없음 · 정책 공개",
+  OFF_TOPIC: "작품과 무관한 일상 대화",
+  NO_MATCH_REVIEW: "일치 사건 없음 · 검토 대기",
+  UNCERTAIN_REVIEW: "판정 불확실 · 검토 대기",
+  NO_EVENTS: "등록된 사건 없음",
+  KB_LOOKUP_FAILED: "사건 DB 조회 실패",
+  AI_REQUEST_FAILED: "AI 서버 호출 실패",
+  AI_SERVER_ERROR: "AI 서버 판정 오류",
+  EMPTY_VERDICT: "AI 빈 응답",
+  UNKNOWN_VERDICT: "알 수 없는 AI 판정",
+  OTHER_FAILED: "기타 분석 실패",
+  OTHER_HELD: "기타 검토 대기",
+  OTHER_PUBLIC: "기타 전체 공개",
+};
+
+function policyLabel(code) {
+  if (!code) return "정책 기록 없음";
+  return POLICY_LABELS[code] || "기타 정책 판정";
+}
+
+function policyTone(code) {
+  if (!code) return "neutral";
+  if (/FAILED|ERROR|INVALID|EMPTY|UNKNOWN/.test(code)) return "danger";
+  if (/HELD|REVIEW|UNCERTAIN|UNVERIFIED|NO_EVENTS/.test(code)) return "warn";
+  return "good";
+}
+
+function PolicyTag({ code }) {
+  return (
+    <span className={`monitor-tag monitor-tag-${policyTone(code)}`}>
+      {policyLabel(code)}
+    </span>
+  );
+}
 
 // ========================================
 // 2. 공통 포맷 함수
@@ -154,6 +202,75 @@ function ChatChart({ timeline, range }) {
 }
 
 // ========================================
+// V21: 최근 정책 판정 로그 — 기존 chats.recent 결과 재사용
+// 별도의 컴포넌트 파일/추가 API가 필요하지 않습니다.
+// ========================================
+function MonitoringPolicyLog({ rows, onTrace }) {
+  return (
+    <section className="monitor-panel" aria-label="최근 AI 정책 판정 로그">
+      <h2>
+        최근 AI 정책 판정 로그{" "}
+        <span className="monitor-subtitle">최대 20건 · 자동 갱신</span>
+      </h2>
+      <p className="monitor-note">
+        AI 판정의 정책 코드와 처리 결과만 표시합니다. 채팅 원문이나 서버 오류
+        원문은 표시하지 않습니다.
+      </p>
+      <div className="monitor-table-wrap">
+        <table className="monitor-table">
+          <thead>
+            <tr>
+              <th>메시지 ID</th>
+              <th>작품</th>
+              <th>정책 사유</th>
+              <th>최종 판정</th>
+              <th>분석 시각</th>
+              <th>추적</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length > 0 ? (
+              rows.map((row) => (
+                <tr key={row.messageId}>
+                  <td>#{row.messageId}</td>
+                  <td>{row.dramaTitle || "-"}</td>
+                  <td>
+                    <PolicyTag
+                      code={row.policyCode ?? row.analysisPolicyCode}
+                    />
+                  </td>
+                  <td>
+                    <StatusTag
+                      value={row.analysisOutcome || row.analysisStatus}
+                    />
+                  </td>
+                  <td>{date(row.analyzedAt)}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="monitor-text-button"
+                      onClick={() => onTrace(row.messageId)}
+                    >
+                      흐름 보기
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="monitor-empty">
+                  선택한 기간에 채팅 기록이 없습니다.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+// ========================================
 // 6. 관리자 AI 모니터링 메인 페이지
 // ========================================
 export default function AdminMonitoringPage() {
@@ -164,6 +281,10 @@ export default function AdminMonitoringPage() {
   // 메시지 추적
   const [messageInput, setMessageInput] = useState("");
   const [targetMessageId, setTargetMessageId] = useState("");
+  const traceSectionRef = useRef(null);
+  const [traceLoadedId, setTraceLoadedId] = useState("");
+  const [traceErrorId, setTraceErrorId] = useState("");
+  const [traceInputError, setTraceInputError] = useState("");
 
   // API 데이터
   const [chats, setChats] = useState(null);
@@ -220,8 +341,12 @@ export default function AdminMonitoringPage() {
 
       if (advancedResult.status === "fulfilled") {
         setAdvanced(advancedResult.value);
+        setTraceLoadedId(targetMessageId);
+        setTraceErrorId("");
       } else {
         setAdvanced(null);
+        setTraceLoadedId(targetMessageId);
+        setTraceErrorId(targetMessageId);
       }
 
       const failed = [];
@@ -270,6 +395,27 @@ export default function AdminMonitoringPage() {
       document.removeEventListener("visibilitychange", visible);
     };
   }, [range, dramaId, targetMessageId, reloadKey]);
+
+  // 같은 메시지 ID를 반복 클릭해도 강제로 다시 조회할 수 있습니다.
+  function openTrace(messageId) {
+    const id = String(messageId ?? "").trim();
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
+      setTraceInputError("메시지 ID에 1 이상의 정수를 입력해 주세요.");
+      return;
+    }
+    setTraceInputError("");
+    setMessageInput(id);
+    setTraceLoadedId("");
+    setTraceErrorId("");
+    setTargetMessageId(id);
+    setReloadKey((key) => key + 1);
+    window.requestAnimationFrame(() => {
+      traceSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
 
   const summary = chats?.summary;
   const timeline = chats?.timeline || [];
@@ -488,6 +634,7 @@ export default function AdminMonitoringPage() {
                     <th>메시지 ID</th>
                     <th>작품</th>
                     <th>판정</th>
+                    <th>정책 사유</th>
                     <th>처리시간</th>
                     <th>등록시각</th>
                     <th>추적</th>
@@ -507,6 +654,12 @@ export default function AdminMonitoringPage() {
                           />
                         </td>
 
+                        <td>
+                          <PolicyTag
+                            code={row.policyCode ?? row.analysisPolicyCode}
+                          />
+                        </td>
+
                         <td>{duration(row.durationMs)}</td>
 
                         <td>{date(row.createdAt)}</td>
@@ -515,11 +668,7 @@ export default function AdminMonitoringPage() {
                           <button
                             type="button"
                             className="monitor-text-button"
-                            onClick={() => {
-                              setMessageInput(String(row.messageId));
-
-                              setTargetMessageId(String(row.messageId));
-                            }}
+                            onClick={() => openTrace(row.messageId)}
                           >
                             흐름 보기
                           </button>
@@ -528,7 +677,7 @@ export default function AdminMonitoringPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="monitor-empty">
+                      <td colSpan={7} className="monitor-empty">
                         조회할 데이터가 없습니다.
                       </td>
                     </tr>
@@ -537,6 +686,8 @@ export default function AdminMonitoringPage() {
               </table>
             </div>
           </section>
+
+          <MonitoringPolicyLog rows={chats.recent || []} onTrace={openTrace} />
         </>
       )}
 
@@ -615,7 +766,12 @@ export default function AdminMonitoringPage() {
       {/* ========================================
           16. 메시지별 AI 분석 흐름 추적
       ======================================== */}
-      <section className="monitor-panel">
+      <section
+        ref={traceSectionRef}
+        className="monitor-panel"
+        style={{ scrollMarginTop: "110px" }}
+        aria-label="메시지별 AI 분석 흐름 추적"
+      >
         <h2>채팅 메시지 분석 흐름 추적</h2>
 
         <p className="monitor-note">
@@ -628,7 +784,7 @@ export default function AdminMonitoringPage() {
           onSubmit={(e) => {
             e.preventDefault();
 
-            setTargetMessageId(messageInput.trim());
+            openTrace(messageInput);
           }}
         >
           <label htmlFor="trace-message-id">메시지 ID</label>
@@ -642,6 +798,7 @@ export default function AdminMonitoringPage() {
             value={messageInput}
             onChange={(e) => {
               setMessageInput(e.target.value);
+              setTraceInputError("");
             }}
           />
 
@@ -655,20 +812,61 @@ export default function AdminMonitoringPage() {
             onClick={() => {
               setMessageInput("");
               setTargetMessageId("");
+              setTraceLoadedId("");
+              setTraceErrorId("");
+              setTraceInputError("");
             }}
           >
             초기화
           </button>
         </form>
 
+        {traceInputError && (
+          <p className="monitor-alert" role="alert">
+            {traceInputError}
+          </p>
+        )}
+
+        {targetMessageId &&
+          traceLoadedId === targetMessageId &&
+          advanced?.selectedPolicy && (
+            <div className="monitor-health-item" style={{ marginBottom: 12 }}>
+              <div>
+                <strong>
+                  메시지 #{advanced.selectedPolicy.messageId} 판정 결과
+                </strong>
+                <PolicyTag
+                  code={
+                    advanced.selectedPolicy.policyCode ??
+                    advanced.selectedPolicy.analysisPolicyCode
+                  }
+                />
+              </div>
+              <small>
+                최종 상태:{" "}
+                {stateText(
+                  advanced.selectedPolicy.analysisOutcome ||
+                    advanced.selectedPolicy.analysisStatus,
+                )}
+              </small>
+            </div>
+          )}
+
         {!targetMessageId ? (
           <p className="monitor-empty">
             메시지 ID를 입력하거나 최근 판정 내역에서 '흐름 보기'를 누르세요.
           </p>
-        ) : !advanced ? (
-          <p className="monitor-empty">
-            분석 흐름을 불러오는 중이거나 조회에 실패했습니다.
+        ) : traceLoadedId !== targetMessageId ? (
+          <p className="monitor-empty" role="status">
+            메시지 #{targetMessageId} 분석 흐름을 조회하고 있습니다…
           </p>
+        ) : traceErrorId === targetMessageId || !advanced ? (
+          <p className="monitor-alert" role="alert">
+            조회에 실패했습니다. 새로고침 후 다시 시도해 주세요.
+          </p>
+        ) : Object.prototype.hasOwnProperty.call(advanced, "selectedPolicy") &&
+          !advanced.selectedPolicy ? (
+          <p className="monitor-empty">해당 메시지 ID가 존재하지 않습니다.</p>
         ) : (advanced.trace || []).length ? (
           <ol className="monitor-trace-list">
             {advanced.trace.map((item, i) => (
@@ -691,8 +889,8 @@ export default function AdminMonitoringPage() {
           </ol>
         ) : (
           <p className="monitor-empty">
-            해당 ID의 단계 기록이 없습니다. 분석 전 메시지거나 고도화 패치 적용
-            이전 기록일 수 있습니다.
+            해당 메시지에 저장된 처리 단계가 없습니다. V21 적용 전 기록이거나
+            아직 분석 단계 저장이 완료되지 않았을 수 있습니다.
           </p>
         )}
       </section>
