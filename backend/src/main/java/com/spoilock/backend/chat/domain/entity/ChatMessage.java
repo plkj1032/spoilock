@@ -99,15 +99,20 @@ public class ChatMessage extends CreatedAtEntity {
     @Column(name = "analysis_policy_code", length = 40)
     private String analysisPolicyCode;
 
+    @Column(name = "analysis_policy_detail", length = 255)
+    private String analysisPolicyDetail;
+
     public void recordAnalysisMetrics(
             String outcome,
             long durationMs,
-            String policyCode
+            String policyCode,
+            String policyDetail
     )
     {
         this.analysisOutcome = outcome;
         this.analysisDurationMs = Math.max(0L, durationMs);
         this.analysisPolicyCode = policyCode;
+        this.analysisPolicyDetail = policyDetail;
         this.analyzedAt = LocalDateTime.now();
     }
 

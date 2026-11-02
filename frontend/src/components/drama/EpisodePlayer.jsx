@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { dramaWatchApi } from "../../api/dramaWatchApi";
 
 export default function EpisodePlayer({ dramaId, episode }) {
@@ -54,7 +54,8 @@ export default function EpisodePlayer({ dramaId, episode }) {
   // ==========================================
   // 3. 재생 위치 저장
   // ==========================================
-  function saveLatestPosition() {
+
+  const saveLatestPosition = useCallback(() => {
     const snapshot = snapshotRef.current;
     if (!snapshot) return;
 
@@ -67,7 +68,9 @@ export default function EpisodePlayer({ dramaId, episode }) {
     void dramaWatchApi
       .savePosition(dramaId, episode.episodeId, snapshot)
       .then(() => {
-        if (activeRef.current) setSaveError("");
+        if (activeRef.current) {
+          setSaveError("");
+        }
       })
       .catch(() => {
         if (lastQueuedRef.current === signature) {
@@ -80,11 +83,12 @@ export default function EpisodePlayer({ dramaId, episode }) {
           );
         }
       });
-  }
+  }, [dramaId, episode.episodeId]);
 
   // ==========================================
   // 4. 재생 중 10초마다 위치 저장
   // ==========================================
+
   useEffect(() => {
     activeRef.current = true;
 
@@ -115,7 +119,7 @@ export default function EpisodePlayer({ dramaId, episode }) {
 
       saveLatestPosition();
     };
-  }, [dramaId, episode.episodeId]);
+  }, [dramaId, episode.episodeId, saveLatestPosition]);
 
   // ==========================================
   // 5. 영상 정보 및 이어보기 조회
