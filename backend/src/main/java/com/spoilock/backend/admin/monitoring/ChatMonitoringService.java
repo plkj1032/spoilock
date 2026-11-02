@@ -140,8 +140,18 @@ public class ChatMonitoringService {
         )));
 
         List<ChatMonitoringResponse.Recent> recent = queryFactory
-                .select(cm.id, room.drama.id, drama.title, cm.analysisStatus,
-                        cm.analysisOutcome, cm.analysisDurationMs, cm.createdAt, cm.analyzedAt)
+                .select(
+                        cm.id,
+                        room.drama.id,
+                        drama.title,
+                        cm.content,               // 채팅 원문
+                        cm.analysisStatus,
+                        cm.analysisOutcome,
+                        cm.analysisPolicyCode,
+                        cm.analysisDurationMs,
+                        cm.createdAt,
+                        cm.analyzedAt
+                )
                 .from(cm)
                 .join(cm.room, room)
                 .join(room.drama, drama)
@@ -151,10 +161,19 @@ public class ChatMonitoringService {
                 .fetch()
                 .stream()
                 .map(row -> new ChatMonitoringResponse.Recent(
-                        row.get(cm.id), row.get(room.drama.id), row.get(drama.title),
-                        row.get(cm.analysisStatus) == null ? null : row.get(cm.analysisStatus).name(),
-                        row.get(cm.analysisOutcome), row.get(cm.analysisDurationMs),
-                        row.get(cm.createdAt), row.get(cm.analyzedAt)))
+                        row.get(cm.id),
+                        row.get(room.drama.id),
+                        row.get(drama.title),
+                        row.get(cm.content),
+                        row.get(cm.analysisStatus) == null
+                                ? null
+                                : row.get(cm.analysisStatus).name(),
+                        row.get(cm.analysisOutcome),
+                        row.get(cm.analysisPolicyCode),
+                        row.get(cm.analysisDurationMs),
+                        row.get(cm.createdAt),
+                        row.get(cm.analyzedAt)
+                ))
                 .toList();
 
         List<ChatMonitoringResponse.DramaOption> dramas = queryFactory

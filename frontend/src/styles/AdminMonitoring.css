@@ -302,3 +302,31 @@
     width: 100%;
   }
 }
+/* 채팅 원문 표시 */
+.monitor-chat-content {
+  min-width: 230px;
+  max-width: 340px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.monitor-message-details summary {
+  color: #e0eaff;
+  cursor: pointer;
+}
+
+.monitor-message-details summary:hover {
+  color: #8fb4ff;
+}
+
+.monitor-message-details > div {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #344766;
+  border-radius: 8px;
+  background: #0f1d32;
+  color: #f1f5ff;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
