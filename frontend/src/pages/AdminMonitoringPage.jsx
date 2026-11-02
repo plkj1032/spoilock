@@ -202,75 +202,6 @@ function ChatChart({ timeline, range }) {
 }
 
 // ========================================
-// V21: 최근 정책 판정 로그 — 기존 chats.recent 결과 재사용
-// 별도의 컴포넌트 파일/추가 API가 필요하지 않습니다.
-// ========================================
-function MonitoringPolicyLog({ rows, onTrace }) {
-  return (
-    <section className="monitor-panel" aria-label="최근 AI 정책 판정 로그">
-      <h2>
-        최근 AI 정책 판정 로그{" "}
-        <span className="monitor-subtitle">최대 20건 · 자동 갱신</span>
-      </h2>
-      <p className="monitor-note">
-        AI 판정의 정책 코드와 처리 결과만 표시합니다. 채팅 원문이나 서버 오류
-        원문은 표시하지 않습니다.
-      </p>
-      <div className="monitor-table-wrap">
-        <table className="monitor-table">
-          <thead>
-            <tr>
-              <th>메시지 ID</th>
-              <th>작품</th>
-              <th>정책 사유</th>
-              <th>최종 판정</th>
-              <th>분석 시각</th>
-              <th>추적</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length > 0 ? (
-              rows.map((row) => (
-                <tr key={row.messageId}>
-                  <td>#{row.messageId}</td>
-                  <td>{row.dramaTitle || "-"}</td>
-                  <td>
-                    <PolicyTag
-                      code={row.policyCode ?? row.analysisPolicyCode}
-                    />
-                  </td>
-                  <td>
-                    <StatusTag
-                      value={row.analysisOutcome || row.analysisStatus}
-                    />
-                  </td>
-                  <td>{date(row.analyzedAt)}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="monitor-text-button"
-                      onClick={() => onTrace(row.messageId)}
-                    >
-                      흐름 보기
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="monitor-empty">
-                  선택한 기간에 채팅 기록이 없습니다.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-// ========================================
 // 6. 관리자 AI 모니터링 메인 페이지
 // ========================================
 export default function AdminMonitoringPage() {
@@ -622,10 +553,19 @@ export default function AdminMonitoringPage() {
           {/* ========================================
               14. 최근 채팅 판정
           ======================================== */}
+          {/* 최근 채팅 판정 */}
           <section className="monitor-panel">
             <h2>
-              최근 채팅 판정 <span className="monitor-subtitle">최대 20건</span>
+              최근 채팅 판정{" "}
+              <span className="monitor-subtitle">
+                최대 20건 · 10초 자동 갱신
+              </span>
             </h2>
+
+            <p className="monitor-note">
+              채팅 내용과 AI 판정 결과, 정책 사유 및 처리시간을 확인합니다. 채팅
+              원문은 관리자에게만 제공됩니다.
+            </p>
 
             <div className="monitor-table-wrap">
               <table className="monitor-table">
@@ -633,6 +573,7 @@ export default function AdminMonitoringPage() {
                   <tr>
                     <th>메시지 ID</th>
                     <th>작품</th>
+                    <th>채팅 내용</th>
                     <th>판정</th>
                     <th>정책 사유</th>
                     <th>처리시간</th>
@@ -642,11 +583,27 @@ export default function AdminMonitoringPage() {
                 </thead>
 
                 <tbody>
-                  {(chats.recent || []).length ? (
+                  {(chats.recent || []).length > 0 ? (
                     chats.recent.map((row) => (
                       <tr key={row.messageId}>
                         <td>#{row.messageId}</td>
-                        <td>{row.dramaTitle}</td>
+
+                        <td>{row.dramaTitle || "-"}</td>
+
+                        <td className="monitor-chat-content">
+                          {row.content ? (
+                            row.content.length > 80 ? (
+                              <details className="monitor-message-details">
+                                <summary>{row.content.slice(0, 80)}…</summary>
+                                <div>{row.content}</div>
+                              </details>
+                            ) : (
+                              <span>{row.content}</span>
+                            )
+                          ) : (
+                            "-"
+                          )}
+                        </td>
 
                         <td>
                           <StatusTag
@@ -677,8 +634,8 @@ export default function AdminMonitoringPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="monitor-empty">
-                        조회할 데이터가 없습니다.
+                      <td colSpan={8} className="monitor-empty">
+                        조회할 채팅 기록이 없습니다.
                       </td>
                     </tr>
                   )}
@@ -686,8 +643,6 @@ export default function AdminMonitoringPage() {
               </table>
             </div>
           </section>
-
-          <MonitoringPolicyLog rows={chats.recent || []} onTrace={openTrace} />
         </>
       )}
 

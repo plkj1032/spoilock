@@ -37,8 +37,10 @@ public record ChatMonitoringResponse(
             Long messageId,
             Long dramaId,
             String dramaTitle,
+            String content,
             String analysisStatus,
             String analysisOutcome,
+            String policyCode,
             Long durationMs,
             LocalDateTime createdAt,
             LocalDateTime analyzedAt
