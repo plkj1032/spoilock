@@ -330,3 +330,47 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* V24 페이징 */
+.monitor-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  color: #b3c5df;
+  font-size: 13px;
+}
+
+.monitor-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.monitor-pagination button {
+  padding: 8px 14px;
+  border: 1px solid #415b82;
+  border-radius: 8px;
+  color: #edf3ff;
+  background: #1b3152;
+  cursor: pointer;
+}
+
+.monitor-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.monitor-policy-detail {
+  display: inline-block;
+  color: #dce8ff;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.monitor-chat-content {
+  min-width: 180px;
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}

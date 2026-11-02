@@ -30,32 +30,36 @@ const LABELS = {
 };
 
 // ========================================
-// V21: 서버가 기록한 정책 코드만 관리자에게 표시합니다.
-// 이전 메시지의 NULL은 추측하지 않고 '정책 기록 없음'으로 표시합니다.
+// 2. AI 정책 코드 한글 표시
 // ========================================
 const POLICY_LABELS = {
   GENERAL_CHAT: "일반 대화 · 전체 공개",
   GENERAL_HELD: "일반 대화 · 공개 보류",
   UNRELATED_CHAT: "사건 무관 · 전체 공개",
   UNRELATED_HELD: "사건 무관 · 공개 보류",
+
   EVENT_MATCH: "스포일러 사건 매칭",
   MATCH_REVIEW: "사건 매칭 · 검토 필요",
   MATCH_INVALID: "사건 매칭 정보 불완전",
   UNVERIFIED_EVENT: "검증되지 않은 사건",
+
   GUESS_KNOWN: "본 회차 내용을 추측처럼 · 회차 제한",
   GUESS_UNKNOWN: "안 본 회차 추측 · 전체 공개",
   FINALE_ONLY: "판정 애매 · 마지막 회차부터 공개",
   GUESS_UNVERIFIED: "본 회차 추측 · 미검증 사건 보류",
+
   NO_MATCH_PUBLISHED: "일치 사건 없음 · 정책 공개",
   OFF_TOPIC: "작품과 무관한 일상 대화",
   NO_MATCH_REVIEW: "일치 사건 없음 · 검토 대기",
   UNCERTAIN_REVIEW: "판정 불확실 · 검토 대기",
+
   NO_EVENTS: "등록된 사건 없음",
   KB_LOOKUP_FAILED: "사건 DB 조회 실패",
   AI_REQUEST_FAILED: "AI 서버 호출 실패",
   AI_SERVER_ERROR: "AI 서버 판정 오류",
   EMPTY_VERDICT: "AI 빈 응답",
   UNKNOWN_VERDICT: "알 수 없는 AI 판정",
+
   OTHER_FAILED: "기타 분석 실패",
   OTHER_HELD: "기타 검토 대기",
   OTHER_PUBLIC: "기타 전체 공개",
@@ -63,26 +67,27 @@ const POLICY_LABELS = {
 
 function policyLabel(code) {
   if (!code) return "정책 기록 없음";
-  return POLICY_LABELS[code] || "기타 정책 판정";
+  return POLICY_LABELS[code] ?? "기타 정책 판정";
 }
 
 function policyTone(code) {
   if (!code) return "neutral";
-  if (/FAILED|ERROR|INVALID|EMPTY|UNKNOWN/.test(code)) return "danger";
-  if (/HELD|REVIEW|UNCERTAIN|UNVERIFIED|NO_EVENTS/.test(code)) return "warn";
+
+  if (code === "GUESS_UNKNOWN") return "good";
+
+  if (/FAILED|ERROR|INVALID|EMPTY|UNKNOWN_VERDICT/.test(code)) {
+    return "danger";
+  }
+
+  if (/HELD|REVIEW|UNCERTAIN|UNVERIFIED|NO_EVENTS|GUESS_KNOWN/.test(code)) {
+    return "warn";
+  }
+
   return "good";
 }
 
-function PolicyTag({ code }) {
-  return (
-    <span className={`monitor-tag monitor-tag-${policyTone(code)}`}>
-      {policyLabel(code)}
-    </span>
-  );
-}
-
 // ========================================
-// 2. 공통 포맷 함수
+// 3. 공통 포맷 함수
 // ========================================
 function number(value) {
   return Number(value ?? 0).toLocaleString("ko-KR");
@@ -95,7 +100,9 @@ function percent(part, total) {
 function duration(value) {
   if (value == null) return "측정값 없음";
 
-  return value >= 1000 ? `${(value / 1000).toFixed(2)}초` : `${value}ms`;
+  const ms = Number(value);
+
+  return ms >= 1000 ? `${(ms / 1000).toFixed(2)}초` : `${ms}ms`;
 }
 
 function date(value) {
@@ -127,7 +134,7 @@ function tone(value) {
 }
 
 // ========================================
-// 3. 상태 뱃지
+// 4. 공통 컴포넌트
 // ========================================
 function StatusTag({ value }) {
   return (
@@ -137,9 +144,22 @@ function StatusTag({ value }) {
   );
 }
 
-// ========================================
-// 4. 통계 카드
-// ========================================
+function PolicyTag({ code, detail }) {
+  // V24: 안전하게 저장된 상세 정책을 우선 표시
+  return (
+    <span
+      className={`monitor-tag monitor-tag-${policyTone(code)}`}
+      style={{
+        whiteSpace: "normal",
+        lineHeight: 1.6,
+        overflowWrap: "anywhere",
+      }}
+    >
+      {detail || policyLabel(code)}
+    </span>
+  );
+}
+
 function Metric({ label, value, hint }) {
   return (
     <article className="monitor-stat">
@@ -151,21 +171,17 @@ function Metric({ label, value, hint }) {
 }
 
 // ========================================
-// 5. 시간대별 채팅 처리량
+// 5. 채팅 처리량 차트
 // ========================================
 function ChatChart({ timeline, range }) {
-  const peak = Math.max(1, ...timeline.map((row) => row.total));
+  const peak = Math.max(1, ...timeline.map((row) => row.total ?? 0));
 
   if (!timeline.length) {
     return <p className="monitor-empty">선택한 기간에 채팅 기록이 없습니다.</p>;
   }
 
   return (
-    <div
-      className="monitor-chart"
-      role="img"
-      aria-label="전체 채팅, 진도 제한 및 분석 실패 처리량"
-    >
+    <div className="monitor-chart" role="img" aria-label="채팅 처리량">
       {timeline.map((row) => (
         <div className="monitor-bar-row" key={row.period}>
           <span className="monitor-bar-label">
@@ -176,7 +192,7 @@ function ChatChart({ timeline, range }) {
             <div
               className="monitor-bar monitor-bar-total"
               style={{
-                width: `${(row.total / peak) * 100}%`,
+                width: `${((row.total ?? 0) / peak) * 100}%`,
               }}
               title={`채팅 ${row.total}건`}
             />
@@ -184,7 +200,7 @@ function ChatChart({ timeline, range }) {
             <div
               className="monitor-bar monitor-bar-gated"
               style={{
-                width: `${(row.episodeGated / peak) * 100}%`,
+                width: `${((row.episodeGated ?? 0) / peak) * 100}%`,
               }}
               title={`진도 제한 ${row.episodeGated}건`}
             />
@@ -192,7 +208,7 @@ function ChatChart({ timeline, range }) {
             <div
               className="monitor-bar monitor-bar-failed"
               style={{
-                width: `${(row.failed / peak) * 100}%`,
+                width: `${((row.failed ?? 0) / peak) * 100}%`,
               }}
               title={`분석 실패 ${row.failed}건`}
             />
@@ -206,24 +222,92 @@ function ChatChart({ timeline, range }) {
 }
 
 // ========================================
-// 6. 관리자 AI 모니터링 메인 페이지
+// 6. 공통 페이징 컴포넌트
+// ========================================
+function MonitoringPagination({ data, page, onChange, label }) {
+  if (!data) return null;
+
+  const totalPages = Number(data.totalPages ?? 0);
+  const total = Number(data.total ?? 0);
+
+  return (
+    <nav className="monitor-pagination" aria-label={`${label} 페이지 이동`}>
+      <span>총 {number(total)}건 · 페이지당 20건</span>
+
+      <div>
+        <button
+          type="button"
+          disabled={page <= 0}
+          onClick={() => onChange(page - 1)}
+        >
+          이전
+        </button>
+
+        <span>
+          {totalPages === 0 ? 0 : page + 1}
+          {" / "}
+          {totalPages}
+        </span>
+
+        <button
+          type="button"
+          disabled={totalPages === 0 || page >= totalPages - 1}
+          onClick={() => onChange(page + 1)}
+        >
+          다음
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// ========================================
+// 7. 채팅 원문 컴포넌트
+// ========================================
+function ChatContent({ content }) {
+  if (!content) return "-";
+
+  if (content.length <= 80) {
+    return <span style={{ overflowWrap: "anywhere" }}>{content}</span>;
+  }
+
+  return (
+    <details className="monitor-message-details">
+      <summary>{content.slice(0, 80)}…</summary>
+      <div>{content}</div>
+    </details>
+  );
+}
+
+// ========================================
+// 8. 메인 페이지
 // ========================================
 export default function AdminMonitoringPage() {
-  // 조회 조건
+  // 통계 조회 조건
   const [range, setRange] = useState("24h");
   const [dramaId, setDramaId] = useState("");
+
+  // 각각 독립적인 페이징
+  const [chatPage, setChatPage] = useState(0);
+  const [jobPage, setJobPage] = useState(0);
+
+  // 기존 통계 데이터
+  const [chats, setChats] = useState(null);
+  const [advanced, setAdvanced] = useState(null);
+
+  // V24 전체 이력 데이터
+  const [chatHistory, setChatHistory] = useState(null);
+  const [jobHistory, setJobHistory] = useState(null);
 
   // 메시지 추적
   const [messageInput, setMessageInput] = useState("");
   const [targetMessageId, setTargetMessageId] = useState("");
-  const traceSectionRef = useRef(null);
   const [traceLoadedId, setTraceLoadedId] = useState("");
   const [traceErrorId, setTraceErrorId] = useState("");
   const [traceInputError, setTraceInputError] = useState("");
+  const [selectedTraceRow, setSelectedTraceRow] = useState(null);
 
-  // API 데이터
-  const [chats, setChats] = useState(null);
-  const [advanced, setAdvanced] = useState(null);
+  const traceSectionRef = useRef(null);
 
   // 화면 상태
   const [error, setError] = useState("");
@@ -232,20 +316,19 @@ export default function AdminMonitoringPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   // ========================================
-  // 7. API 조회 및 10초 자동 갱신
+  // 9. API 데이터 조회 및 자동 갱신
   // ========================================
   useEffect(() => {
     let mounted = true;
-    let current = null;
+    let currentController = null;
 
     async function reload() {
       if (document.hidden) return;
 
-      // 이전 요청이 남아 있으면 취소
-      current?.abort();
+      currentController?.abort();
 
       const controller = new AbortController();
-      current = controller;
+      currentController = controller;
 
       const base = {
         range,
@@ -253,12 +336,28 @@ export default function AdminMonitoringPage() {
         signal: controller.signal,
       };
 
-      // 한쪽 API가 실패해도 다른 결과 표시
       const responses = await Promise.allSettled([
+        // 기존 채팅 통계
         adminMonitoringApi.chats(base),
+
+        // 기존 확장 모니터링 및 흐름 추적
         adminMonitoringApi.advanced({
           ...base,
           messageId: targetMessageId,
+        }),
+
+        // V24 채팅 이력
+        adminMonitoringApi.chatHistory({
+          page: chatPage,
+          dramaId,
+          signal: controller.signal,
+        }),
+
+        // V24 자막/영상 분석 이력
+        adminMonitoringApi.jobHistory({
+          page: jobPage,
+          dramaId,
+          signal: controller.signal,
         }),
       ]);
 
@@ -266,14 +365,19 @@ export default function AdminMonitoringPage() {
         return;
       }
 
-      const [chatResult, advancedResult] = responses;
+      const [chatResult, advancedResult, historyResult, jobsResult] = responses;
 
+      const failed = [];
+
+      // 채팅 통계
       if (chatResult.status === "fulfilled") {
         setChats(chatResult.value);
       } else {
         setChats(null);
+        failed.push(`채팅 통계: ${chatResult.reason?.message || "조회 실패"}`);
       }
 
+      // 확장 모니터링
       if (advancedResult.status === "fulfilled") {
         setAdvanced(advancedResult.value);
         setTraceLoadedId(targetMessageId);
@@ -282,68 +386,90 @@ export default function AdminMonitoringPage() {
         setAdvanced(null);
         setTraceLoadedId(targetMessageId);
         setTraceErrorId(targetMessageId);
-      }
 
-      const failed = [];
-
-      if (chatResult.status === "rejected") {
-        failed.push(`채팅 통계: ${chatResult.reason?.message || "조회 실패"}`);
-      }
-
-      if (advancedResult.status === "rejected") {
         failed.push(
           `확장 모니터링: ${advancedResult.reason?.message || "조회 실패"}`,
         );
       }
 
+      // 채팅 전체 이력
+      if (historyResult.status === "fulfilled") {
+        setChatHistory(historyResult.value);
+      } else {
+        setChatHistory(null);
+
+        failed.push(
+          `채팅 이력: ${historyResult.reason?.message || "조회 실패"}`,
+        );
+      }
+
+      // 자막/영상 작업 전체 이력
+      if (jobsResult.status === "fulfilled") {
+        setJobHistory(jobsResult.value);
+      } else {
+        setJobHistory(null);
+
+        failed.push(
+          `분석 작업 이력: ${jobsResult.reason?.message || "조회 실패"}`,
+        );
+      }
+
       setError(failed.join(" / "));
 
-      if (!failed.length) {
+      if (failed.length === 0) {
         setUpdated(new Date());
       }
 
       setLoading(false);
     }
 
-    // 최초 API 호출
     void reload();
 
-    // 10초마다 자동 갱신
-    const id = window.setInterval(() => {
+    // 10초 자동 갱신
+    const timer = window.setInterval(() => {
       void reload();
     }, 10000);
 
-    // 다른 탭에서 돌아오면 즉시 갱신
-    const visible = () => {
+    // 탭 복귀 시 갱신
+    const onVisible = () => {
       if (!document.hidden) {
         void reload();
       }
     };
 
-    document.addEventListener("visibilitychange", visible);
+    document.addEventListener("visibilitychange", onVisible);
 
     return () => {
       mounted = false;
-      window.clearInterval(id);
-      current?.abort();
-
-      document.removeEventListener("visibilitychange", visible);
+      currentController?.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [range, dramaId, targetMessageId, reloadKey]);
+  }, [range, dramaId, chatPage, jobPage, targetMessageId, reloadKey]);
 
-  // 같은 메시지 ID를 반복 클릭해도 강제로 다시 조회할 수 있습니다.
-  function openTrace(messageId) {
-    const id = String(messageId ?? "").trim();
+  // ========================================
+  // 10. 메시지 분석 흐름 열기
+  // ========================================
+  function openTrace(value) {
+    const row = value && typeof value === "object" ? value : null;
+
+    const id = String(row ? row.messageId : (value ?? "")).trim();
+
     if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
       setTraceInputError("메시지 ID에 1 이상의 정수를 입력해 주세요.");
       return;
     }
+
     setTraceInputError("");
     setMessageInput(id);
+    setSelectedTraceRow(row);
+    setTargetMessageId(id);
     setTraceLoadedId("");
     setTraceErrorId("");
-    setTargetMessageId(id);
+
+    // 같은 메시지를 눌러도 재조회
     setReloadKey((key) => key + 1);
+
     window.requestAnimationFrame(() => {
       traceSectionRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -352,12 +478,18 @@ export default function AdminMonitoringPage() {
     });
   }
 
+  // ========================================
+  // 11. 공통 파생 데이터
+  // ========================================
   const summary = chats?.summary;
   const timeline = chats?.timeline || [];
   const jobs = advanced?.jobs;
 
+  const chatRows = chatHistory?.items || [];
+  const jobRows = jobHistory?.items || [];
+
   // ========================================
-  // 8. 화면 렌더링
+  // 12. 화면
   // ========================================
   return (
     <main className="container main-content admin-center monitor-page">
@@ -371,23 +503,18 @@ export default function AdminMonitoringPage() {
         <h1>AI 운영 모니터링</h1>
 
         <p>
-          채팅 판정, 자막·영상 분석 작업, FastAPI·Redis 연결 상태를 조회합니다.
-          원문 및 사용자 정보는 제외됩니다.
+          채팅 판정, 자막·영상 분석, AI 정책 사유, 처리시간 및 서버 연결 상태를
+          조회합니다. 채팅 원문은 관리자에게만 표시됩니다.
         </p>
       </header>
 
       {/* ========================================
-          9. 조회 필터
+          13. 조회 필터
       ======================================== */}
       <section className="monitor-toolbar" aria-label="조회 필터">
         <label>
-          조회 기간
-          <select
-            value={range}
-            onChange={(e) => {
-              setRange(e.target.value);
-            }}
-          >
+          통계 조회 기간
+          <select value={range} onChange={(e) => setRange(e.target.value)}>
             <option value="24h">최근 24시간</option>
             <option value="7d">최근 7일</option>
           </select>
@@ -399,13 +526,17 @@ export default function AdminMonitoringPage() {
             value={dramaId}
             onChange={(e) => {
               setDramaId(e.target.value);
+
+              // 작품 변경 시 두 목록 모두 첫 페이지로
+              setChatPage(0);
+              setJobPage(0);
             }}
           >
             <option value="">전체 작품</option>
 
-            {(chats?.dramas || []).map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.title}
+            {(chats?.dramas || []).map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.title}
               </option>
             ))}
           </select>
@@ -415,16 +546,18 @@ export default function AdminMonitoringPage() {
           type="button"
           className="button button-outline"
           onClick={() => {
-            setReloadKey((value) => value + 1);
+            setReloadKey((key) => key + 1);
           }}
         >
           새로고침
         </button>
       </section>
 
-      {/* ========================================
-          10. 자동 갱신 상태
-      ======================================== */}
+      <p className="monitor-note">
+        통계 기간은 위의 요약 통계와 처리량에 적용됩니다. 아래 채팅 및 분석 작업
+        이력은 전체 기간을 조회합니다.
+      </p>
+
       <p className="monitor-updated" role="status">
         {loading && !chats && !advanced
           ? "조회 중…"
@@ -442,20 +575,20 @@ export default function AdminMonitoringPage() {
       )}
 
       {/* ========================================
-          11. 서버 연결 상태
+          14. 서버 연결 상태
       ======================================== */}
       {advanced && (
         <section className="monitor-panel">
           <h2>
             서비스 연결 상태{" "}
             <span className="monitor-subtitle">
-              이번 요청을 처리한 서버: {advanced.nodeName || "확인 불가"}
+              응답 서버: {advanced.nodeName || "확인 불가"}
             </span>
           </h2>
 
           <p className="monitor-note">
-            FastAPI는 포트 연결만 검사합니다. 실제 /judge 또는 관리자 API 성공
-            여부와는 별개입니다. JVM 힙은 EC2 전체 메모리가 아닙니다.
+            FastAPI는 TCP 포트 연결 상태를 확인합니다. 실제 AI 판정 API 성공
+            여부와는 다를 수 있습니다.
           </p>
 
           <div className="monitor-health-grid">
@@ -478,14 +611,14 @@ export default function AdminMonitoringPage() {
                 </span>
               </div>
 
-              <small>ALB가 선택한 현재 응답 서버 기준</small>
+              <small>현재 응답한 Spring Boot 서버 기준</small>
             </div>
           </div>
         </section>
       )}
 
       {/* ========================================
-          12. 채팅 분석 통계
+          15. 채팅 통계
       ======================================== */}
       {summary && (
         <>
@@ -523,13 +656,13 @@ export default function AdminMonitoringPage() {
             <Metric
               label="평균 처리시간"
               value={duration(summary.averageDurationMs)}
-              hint="신규 계측 기준"
+              hint="측정된 분석 기준"
             />
 
             <Metric
               label="P95 처리시간"
               value={duration(summary.p95DurationMs)}
-              hint="신규 계측 기준"
+              hint="측정된 분석 기준"
             />
 
             <Metric
@@ -537,13 +670,10 @@ export default function AdminMonitoringPage() {
               value={`${number(
                 summary.processing,
               )} / ${number(summary.pending)}`}
-              hint="메시지 현재 상태"
+              hint="현재 메시지 상태"
             />
           </section>
 
-          {/* ========================================
-              13. 시간대별 그래프
-          ======================================== */}
           <section className="monitor-panel">
             <h2>{range === "24h" ? "시간대별" : "일별"} 채팅 처리량</h2>
 
@@ -553,196 +683,203 @@ export default function AdminMonitoringPage() {
 
             <ChatChart timeline={timeline} range={range} />
           </section>
-
-          {/* ========================================
-              14. 최근 채팅 판정
-          ======================================== */}
-          {/* 최근 채팅 판정 */}
-          <section className="monitor-panel">
-            <h2>
-              최근 채팅 판정{" "}
-              <span className="monitor-subtitle">
-                최대 20건 · 10초 자동 갱신
-              </span>
-            </h2>
-
-            <p className="monitor-note">
-              채팅 내용과 AI 판정 결과, 정책 사유 및 처리시간을 확인합니다. 채팅
-              원문은 관리자에게만 제공됩니다.
-            </p>
-
-            <div className="monitor-table-wrap">
-              <table className="monitor-table">
-                <thead>
-                  <tr>
-                    <th>메시지 ID</th>
-                    <th>작품</th>
-                    <th>채팅 내용</th>
-                    <th>판정</th>
-                    <th>정책 사유</th>
-                    <th>처리시간</th>
-                    <th>등록시각</th>
-                    <th>추적</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {(chats.recent || []).length > 0 ? (
-                    chats.recent.map((row) => (
-                      <tr key={row.messageId}>
-                        <td>#{row.messageId}</td>
-
-                        <td>{row.dramaTitle || "-"}</td>
-
-                        <td className="monitor-chat-content">
-                          {row.content ? (
-                            row.content.length > 80 ? (
-                              <details className="monitor-message-details">
-                                <summary>{row.content.slice(0, 80)}…</summary>
-                                <div>{row.content}</div>
-                              </details>
-                            ) : (
-                              <span>{row.content}</span>
-                            )
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-
-                        <td>
-                          <StatusTag
-                            value={row.analysisOutcome || row.analysisStatus}
-                          />
-                        </td>
-
-                        <td>
-                          <PolicyTag
-                            code={row.policyCode ?? row.analysisPolicyCode}
-                          />
-                        </td>
-
-                        <td>{duration(row.durationMs)}</td>
-
-                        <td>{date(row.createdAt)}</td>
-
-                        <td>
-                          <button
-                            type="button"
-                            className="monitor-text-button"
-                            onClick={() => openTrace(row.messageId)}
-                          >
-                            흐름 보기
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="monitor-empty">
-                        조회할 채팅 기록이 없습니다.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
         </>
       )}
 
       {/* ========================================
-          15. 자막 및 영상 AI 분석
+          16. 채팅 판정 전체 이력
       ======================================== */}
-      {advanced && (
-        <section className="monitor-panel">
-          <h2>자막·영상 AI 분석 작업</h2>
+      <section className="monitor-panel">
+        <h2>
+          채팅 판정 이력{" "}
+          <span className="monitor-subtitle">전체 기록 · 20건씩</span>
+        </h2>
 
-          <p className="monitor-note">
-            선택한 기간에 분석을 요청한 회차 기준. 완료 후에도 최신 작업 상태가
-            표시됩니다.
-          </p>
+        <p className="monitor-note">
+          채팅 원문, AI 판정 결과, 상세 정책 사유 및 처리시간을 확인합니다. 기존
+          기록에는 정책 상세 정보가 없을 수 있습니다.
+        </p>
 
+        <div className="monitor-table-wrap">
+          <table className="monitor-table">
+            <thead>
+              <tr>
+                <th>메시지 ID</th>
+                <th>작품</th>
+                <th>채팅 내용</th>
+                <th>판정</th>
+                <th>정책 사유</th>
+                <th>처리시간</th>
+                <th>등록시각</th>
+                <th>추적</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {chatRows.length > 0 ? (
+                chatRows.map((row) => (
+                  <tr key={row.messageId}>
+                    <td>#{row.messageId}</td>
+
+                    <td>{row.dramaTitle || "-"}</td>
+
+                    <td className="monitor-chat-content">
+                      <ChatContent content={row.content} />
+                    </td>
+
+                    <td>
+                      <StatusTag
+                        value={row.analysisOutcome || row.analysisStatus}
+                      />
+                    </td>
+
+                    <td>
+                      <PolicyTag
+                        code={row.policyCode}
+                        detail={row.policyDetail}
+                      />
+                    </td>
+
+                    <td>{duration(row.durationMs)}</td>
+
+                    <td>{date(row.createdAt)}</td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="monitor-text-button"
+                        onClick={() => openTrace(row)}
+                      >
+                        흐름 보기
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="monitor-empty">
+                    조회할 채팅 기록이 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <MonitoringPagination
+          data={chatHistory}
+          page={chatPage}
+          onChange={setChatPage}
+          label="채팅 판정"
+        />
+      </section>
+
+      {/* ========================================
+          17. 자막·영상 AI 분석 이력
+      ======================================== */}
+      <section className="monitor-panel">
+        <h2>
+          자막·영상 AI 분석 작업{" "}
+          <span className="monitor-subtitle">전체 기록 · 20건씩</span>
+        </h2>
+
+        <p className="monitor-note">
+          이전에 분석했던 회차까지 확인할 수 있습니다. 같은 회차를 재분석한
+          경우에는 현재 DB에 남아 있는 최신 작업 상태를 표시합니다.
+        </p>
+
+        {jobs && (
           <div className="monitor-stats monitor-job-stats">
-            <Metric label="전체 작업" value={`${number(jobs?.total)}건`} />
+            <Metric
+              label="선택 기간 전체 작업"
+              value={`${number(jobs.total)}건`}
+            />
 
             <Metric
               label="대기 / 진행"
-              value={`${number(jobs?.pending)} / ${number(jobs?.processing)}`}
+              value={`${number(jobs.pending)} / ${number(jobs.processing)}`}
             />
 
-            <Metric label="완료" value={`${number(jobs?.completed)}건`} />
+            <Metric label="완료" value={`${number(jobs.completed)}건`} />
 
-            <Metric label="실패" value={`${number(jobs?.failed)}건`} />
+            <Metric label="실패" value={`${number(jobs.failed)}건`} />
           </div>
+        )}
 
-          <div className="monitor-table-wrap">
-            <table className="monitor-table">
-              <thead>
-                <tr>
-                  <th>회차 ID</th>
-                  <th>작품</th>
-                  <th>분석 대상</th>
-                  <th>상태</th>
-                  <th>진행률</th>
-                  <th>사건 수</th>
-                  <th>요청시각</th>
-                </tr>
-              </thead>
+        <div className="monitor-table-wrap">
+          <table className="monitor-table">
+            <thead>
+              <tr>
+                <th>회차 ID</th>
+                <th>작품</th>
+                <th>분석 대상</th>
+                <th>상태</th>
+                <th>진행률</th>
+                <th>사건 수</th>
+                <th>요청시각</th>
+              </tr>
+            </thead>
 
-              <tbody>
-                {(advanced.recentJobs || []).length ? (
-                  advanced.recentJobs.map((row) => (
-                    <tr key={row.episodeId}>
-                      <td>#{row.episodeId}</td>
-                      <td>{row.dramaTitle}</td>
+            <tbody>
+              {jobRows.length > 0 ? (
+                jobRows.map((row) => (
+                  <tr key={row.episodeId}>
+                    <td>#{row.episodeId}</td>
 
-                      <td>{stateText(row.source)}</td>
+                    <td>{row.dramaTitle || "-"}</td>
 
-                      <td>
-                        <StatusTag value={row.status} />
-                      </td>
+                    <td>{stateText(row.source)}</td>
 
-                      <td>{row.progress == null ? "-" : `${row.progress}%`}</td>
-
-                      <td>{row.eventCount ?? "-"}</td>
-
-                      <td>{date(row.requestedAt)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="monitor-empty">
-                      분석 작업 기록이 없습니다.
+                    <td>
+                      <StatusTag value={row.status} />
                     </td>
+
+                    <td>{row.progress == null ? "-" : `${row.progress}%`}</td>
+
+                    <td>{row.eventCount ?? "-"}</td>
+
+                    <td>{date(row.requestedAt)}</td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="monitor-empty">
+                    분석 작업 기록이 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <MonitoringPagination
+          data={jobHistory}
+          page={jobPage}
+          onChange={setJobPage}
+          label="자막 영상 분석"
+        />
+      </section>
 
       {/* ========================================
-          16. 메시지별 AI 분석 흐름 추적
+          18. 채팅 분석 흐름 추적
       ======================================== */}
       <section
         ref={traceSectionRef}
         className="monitor-panel"
         style={{ scrollMarginTop: "110px" }}
-        aria-label="메시지별 AI 분석 흐름 추적"
+        aria-label="채팅 메시지 분석 흐름 추적"
       >
         <h2>채팅 메시지 분석 흐름 추적</h2>
 
         <p className="monitor-note">
-          메시지 ID로 AI 판정 → DB 반영 → Redis 알림을 확인합니다. 기존 기록에는
-          단계 로그가 없을 수 있습니다.
+          메시지별 AI 판정 → DB 반영 → Redis 알림을 확인합니다. 단계 기록이
+          저장되지 않은 이전 메시지에는 이력이 없을 수 있습니다.
         </p>
 
         <form
           className="monitor-trace-form"
           onSubmit={(e) => {
             e.preventDefault();
-
             openTrace(messageInput);
           }}
         >
@@ -753,7 +890,7 @@ export default function AdminMonitoringPage() {
             type="number"
             min="1"
             step="1"
-            placeholder="예: 125"
+            placeholder="예: 458"
             value={messageInput}
             onChange={(e) => {
               setMessageInput(e.target.value);
@@ -771,6 +908,7 @@ export default function AdminMonitoringPage() {
             onClick={() => {
               setMessageInput("");
               setTargetMessageId("");
+              setSelectedTraceRow(null);
               setTraceLoadedId("");
               setTraceErrorId("");
               setTraceInputError("");
@@ -786,53 +924,47 @@ export default function AdminMonitoringPage() {
           </p>
         )}
 
-        {targetMessageId &&
-          traceLoadedId === targetMessageId &&
-          advanced?.selectedPolicy && (
-            <div className="monitor-health-item" style={{ marginBottom: 12 }}>
-              <div>
-                <strong>
-                  메시지 #{advanced.selectedPolicy.messageId} 판정 결과
-                </strong>
-                <PolicyTag
-                  code={
-                    advanced.selectedPolicy.policyCode ??
-                    advanced.selectedPolicy.analysisPolicyCode
-                  }
-                />
-              </div>
-              <small>
-                최종 상태:{" "}
-                {stateText(
-                  advanced.selectedPolicy.analysisOutcome ||
-                    advanced.selectedPolicy.analysisStatus,
-                )}
-              </small>
+        {targetMessageId && selectedTraceRow && (
+          <div className="monitor-health-item" style={{ marginBottom: 14 }}>
+            <div>
+              <strong>메시지 #{selectedTraceRow.messageId}</strong>
+
+              <StatusTag
+                value={
+                  selectedTraceRow.analysisOutcome ||
+                  selectedTraceRow.analysisStatus
+                }
+              />
             </div>
-          )}
+
+            <small>
+              정책 사유:{" "}
+              {selectedTraceRow.policyDetail ||
+                policyLabel(selectedTraceRow.policyCode)}
+            </small>
+
+            <small>처리시간: {duration(selectedTraceRow.durationMs)}</small>
+          </div>
+        )}
 
         {!targetMessageId ? (
           <p className="monitor-empty">
-            메시지 ID를 입력하거나 최근 판정 내역에서 '흐름 보기'를 누르세요.
+            메시지 ID를 입력하거나 채팅 판정 이력에서 '흐름 보기'를 클릭하세요.
           </p>
         ) : traceLoadedId !== targetMessageId ? (
           <p className="monitor-empty" role="status">
-            메시지 #{targetMessageId} 분석 흐름을 조회하고 있습니다…
+            메시지 #{targetMessageId} 분석 흐름 조회 중…
           </p>
         ) : traceErrorId === targetMessageId || !advanced ? (
           <p className="monitor-alert" role="alert">
-            조회에 실패했습니다. 새로고침 후 다시 시도해 주세요.
+            흐름 조회에 실패했습니다.
           </p>
-        ) : Object.prototype.hasOwnProperty.call(advanced, "selectedPolicy") &&
-          !advanced.selectedPolicy ? (
-          <p className="monitor-empty">해당 메시지 ID가 존재하지 않습니다.</p>
-        ) : (advanced.trace || []).length ? (
+        ) : (advanced.trace || []).length > 0 ? (
           <ol className="monitor-trace-list">
-            {advanced.trace.map((item, i) => (
-              <li key={`${item.stage}-${i}`}>
+            {advanced.trace.map((item, index) => (
+              <li key={`${item.stage}-${index}`}>
                 <div>
                   <strong>{stateText(item.stage)}</strong>
-
                   <StatusTag value={item.stage} />
                 </div>
 
@@ -848,19 +980,19 @@ export default function AdminMonitoringPage() {
           </ol>
         ) : (
           <p className="monitor-empty">
-            해당 메시지에 저장된 처리 단계가 없습니다. V21 적용 전 기록이거나
-            아직 분석 단계 저장이 완료되지 않았을 수 있습니다.
+            해당 메시지에 저장된 단계별 처리 기록이 없습니다. V24 백엔드의
+            MonitoringTraceService 기록 연결이 적용되었는지 확인해 주세요.
           </p>
         )}
       </section>
 
       {/* ========================================
-          17. 모니터링 안내
+          19. 안내
       ======================================== */}
       <p className="monitor-footnote">
-        유의: 이 화면은 서버 로그 원문을 제공하지 않으며, 장애 발생 횟수의 영구
-        이력은 별도 계측이 필요합니다. 503 오류의 원인이 FastAPI 비가용성인지
-        API 인증·내부 오류인지는 서버 로그와 함께 확인해야 합니다.
+        관리자 전용 모니터링입니다. AI 처리시간은 판정 구간의 측정값이며, 서버
+        전체 응답시간과는 다를 수 있습니다. 서버 장애 분석 시에는 journalctl
+        로그와 함께 확인해 주세요.
       </p>
     </main>
   );

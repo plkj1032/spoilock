@@ -95,7 +95,8 @@ public class ChatAnalysisStateService {
         message.recordAnalysisMetrics(
                 outcome,
                 durationMs,
-                policyCode
+                policyCode,
+                AnalysisPolicyDetail.from(decision)
         );
 
         return true;
