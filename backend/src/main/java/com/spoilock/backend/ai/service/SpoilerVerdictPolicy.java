@@ -37,6 +37,26 @@ public final class SpoilerVerdictPolicy {
             SpoilerJudgeResponse response,
             List<Integer> indexedEpisodes
     ) {
+        return decide(response, indexedEpisodes, null);
+    }
+
+    /**
+     * @param authorWatchedEpisode 작성자의 이 작품 시청 회차 (모르면 null, 안 봤으면 0).
+     *                             추측성 글이 작성자가 이미 본 회차의 사건과 맞으면 그 회차부터 공개한다.
+     */
+    public AnalysisDecision decide(
+            SpoilerJudgeResponse response,
+            List<Integer> indexedEpisodes,
+            Integer authorWatchedEpisode
+    ) {
+        AnalysisDecision decision = decideVerdict(response, indexedEpisodes);
+        return applyAuthorGuess(decision, response, indexedEpisodes, authorWatchedEpisode);
+    }
+
+    private AnalysisDecision decideVerdict(
+            SpoilerJudgeResponse response,
+            List<Integer> indexedEpisodes
+    ) {
         if (response == null || response.verdict() == null) {
             return AnalysisDecision.failed("빈 판정");
         }
@@ -117,6 +137,99 @@ public final class SpoilerVerdictPolicy {
                 episode,
                 "MATCH " + response.matchedEventId() + " → " + episode + "화"
                         + (unverified ? " (미검증 데모)" : "")
+        );
+    }
+
+    /**
+     * 추측·질문 형태지만 사건과 맞는 글.
+     * 작성자가 아직 안 본 회차 → 모르고 하는 추측이므로 기존 결정 유지 (보통 전체 공개).
+     * 작성자가 이미 본 회차   → 아는 내용을 추측처럼 말한 것이므로 그 회차부터 공개.
+     */
+    private AnalysisDecision applyAuthorGuess(
+            AnalysisDecision decision,
+            SpoilerJudgeResponse response,
+            List<Integer> indexedEpisodes,
+            Integer authorWatchedEpisode
+    ) {
+        if (decision.failed()
+                || response == null
+                || authorWatchedEpisode == null
+                || authorWatchedEpisode <= 0
+                || response.guessEpisodes() == null
+                || response.guessEpisodes().isEmpty()
+                || indexedEpisodes == null) {
+            return decision;
+        }
+
+        Integer known = response.guessEpisodes().stream()
+                .filter(e -> e != null && e > 0 && e <= authorWatchedEpisode && indexedEpisodes.contains(e))
+                .max(Integer::compareTo)
+                .orElse(null);
+
+        if (known == null) {
+            return decision;
+        }
+
+        boolean unverified = response.guessBasis() == null
+                || response.guessBasis().startsWith(UNVERIFIED_BASIS_PREFIX);
+
+        if (unverified && !allowUnverifiedDemo) {
+            return decision.publish()
+                    ? AnalysisDecision.hold("작성자가 본 회차의 추측이지만 미검증 사건(데모 허용 꺼짐)")
+                    : decision;
+        }
+
+        String note = "추측이지만 작성자가 이미 본 " + known + "화 내용 (작성자 " + authorWatchedEpisode + "화)";
+
+        if (!decision.publish()) {
+            // NO_MATCH 보류는 추측 회차로 공개 범위를 정할 수 있음. UNCERTAIN 등 다른 보류는 유지
+            return "NO_MATCH".equals(response.verdict())
+                    ? AnalysisDecision.publishFrom(known, note)
+                    : decision;
+        }
+
+        Integer current = decision.requiredEpisode();
+        if (current != null && current >= known) {
+            return decision;
+        }
+        return AnalysisDecision.publishFrom(
+                known,
+                current == null ? note : note + " / " + decision.note()
+        );
+    }
+
+    /**
+     * 보류(검토 대기) 결정을 '드라마 마지막 회차부터 공개'로 바꾼다.
+     * 보류는 관리자가 처리하기 전까지 작성자 외 누구에게도 보이지 않아 사실상 영구 비공개였다.
+     * 끝까지 본 사람에게만 보이므로 스포일러는 막으면서 글이 사라지지 않는다.
+     *
+     * @param finaleEpisode 작품의 마지막 회차 (전체 회차 수·등록 회차 중 큰 값, 모르면 null)
+     */
+    public static AnalysisDecision toFinale(
+            AnalysisDecision decision,
+            Integer finaleEpisode,
+            List<Integer> indexedEpisodes
+    ) {
+        if (decision == null || decision.failed() || decision.publish()) {
+            return decision;
+        }
+
+        int finale = finaleEpisode == null ? 0 : finaleEpisode;
+        if (indexedEpisodes != null) {
+            for (Integer ep : indexedEpisodes) {
+                if (ep != null && ep > finale) {
+                    finale = ep;
+                }
+            }
+        }
+
+        if (finale <= 0) {
+            return decision;   // 마지막 회차를 알 수 없으면 보류 유지
+        }
+
+        return AnalysisDecision.publishUntilFinale(
+                finale,
+                "마지막 회차 기준(" + finale + "화): " + decision.note()
         );
     }
 

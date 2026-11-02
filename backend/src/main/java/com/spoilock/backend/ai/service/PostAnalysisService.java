@@ -22,6 +22,7 @@ public class PostAnalysisService {
 
     private final PostAnalysisStateService stateService;
     private final SpoilerJudgeService judgeService;
+    private final AuthorProgressService authorProgressService;
 
     public void analyze(PostAnalysisRequested event) {
 
@@ -31,8 +32,9 @@ public class PostAnalysisService {
         }
 
         long startedAt = System.currentTimeMillis();
+        Integer authorWatched = authorProgressService.forPost(event.postId(), event.dramaId());
         AnalysisDecision decision = judgeService.judge(
-                event.postId(), event.dramaId(), event.content()
+                event.postId(), event.dramaId(), event.content(), authorWatched
         );
 
         boolean applied;

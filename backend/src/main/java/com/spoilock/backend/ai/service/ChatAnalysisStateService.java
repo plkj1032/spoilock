@@ -56,7 +56,7 @@ public class ChatAnalysisStateService {
         if (decision.failed()) {
             message.failAnalysis();
         } else {
-            message.completeAnalysis(decision.publish(), decision.requiredEpisode());
+            message.completeAnalysis(decision.publish(), decision.requiredEpisode(), decision.untilFinale());
         }
 
         return true;

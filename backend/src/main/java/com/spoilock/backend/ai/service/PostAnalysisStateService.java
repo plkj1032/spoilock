@@ -55,7 +55,7 @@ public class PostAnalysisStateService {
         if (decision.failed()) {
             post.failAnalysis();
         } else {
-            post.completeAnalysis(decision.publish(), decision.requiredEpisode());
+            post.completeAnalysis(decision.publish(), decision.requiredEpisode(), decision.untilFinale());
         }
 
         return true;

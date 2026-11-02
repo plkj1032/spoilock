@@ -4,6 +4,7 @@ import com.spoilock.backend.ai.client.KbIngestJob;
 import com.spoilock.backend.ai.client.KbVideoJob;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
+import com.spoilock.backend.ai.service.SpoilerFinaleService;
 import com.spoilock.backend.ai.service.SpoilerKbService;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
@@ -38,6 +39,7 @@ public class SubtitleAnalysisPoller {
     private final SubtitleAnalysisStateService stateService;
     private final SpoilerAdminClient adminClient;
     private final SpoilerKbService kbService;
+    private final SpoilerFinaleService finaleService;
 
     @Scheduled(
             initialDelayString = "${app.spoiler.admin.poll-interval-ms:5000}",
@@ -76,6 +78,9 @@ public class SubtitleAnalysisPoller {
                 if (completed) {
                     // 새 회차가 판정 범위에 들어올 수 있으므로 캐시 갱신
                     kbService.evictAll();
+                    // 새 사건이 생겼으므로 '마지막 회차 기준'으로 공개한 최근 글 다시 판정
+                    analysisRepository.findKbRef(active.episodeId())
+                            .ifPresent(ref -> finaleService.requeueRecent(ref.dramaId()));
                 }
 
             } catch (SpoilerAdminException ex) {
