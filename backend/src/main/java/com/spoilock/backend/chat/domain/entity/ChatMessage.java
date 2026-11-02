@@ -152,6 +152,17 @@ public class ChatMessage extends CreatedAtEntity {
      *                                false → PENDING (관리자 검토 대기, 원문 차단)
      * @param requiredEpisodeNumber   공개에 필요한 회차 (publish=false 면 무시)
      */
+    // 기존 2개 인자 호출과 호환
+    public void completeAnalysis(
+            boolean publish,
+            Integer requiredEpisodeNumber
+    ) {
+        completeAnalysis(
+                publish,
+                requiredEpisodeNumber,
+                false
+        );
+    }
     /**
      * AI 분석 완료 및 공개 정책 저장
      */
