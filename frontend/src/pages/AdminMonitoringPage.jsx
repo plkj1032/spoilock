@@ -43,6 +43,7 @@ const POLICY_LABELS = {
   MATCH_INVALID: "사건 매칭 정보 불완전",
   UNVERIFIED_EVENT: "검증되지 않은 사건",
   GUESS_KNOWN: "본 회차 내용을 추측처럼 · 회차 제한",
+  GUESS_UNKNOWN: "안 본 회차 추측 · 전체 공개",
   FINALE_ONLY: "판정 애매 · 마지막 회차부터 공개",
   GUESS_UNVERIFIED: "본 회차 추측 · 미검증 사건 보류",
   NO_MATCH_PUBLISHED: "일치 사건 없음 · 정책 공개",
