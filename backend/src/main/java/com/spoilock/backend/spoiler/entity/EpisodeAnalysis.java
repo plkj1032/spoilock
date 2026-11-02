@@ -124,6 +124,33 @@ public class EpisodeAnalysis extends AuditedEntity {
                 || this.analysisStatus == AnalysisStatus.PROCESSING);
     }
 
+    /**
+     * 영상을 분석 서버로 보내는 중임을 나타내는 임시 작업 ID 접두어.
+     * 실제 작업 ID 를 받기 전에도 '진행 중'으로 보여 중복 요청·자막 삭제를 막는다.
+     */
+    public static final String UPLOADING_PREFIX = "UPLOADING-";
+
+    /** 영상을 분석 서버로 보내는 중인지 (실제 작업 ID 를 받기 전) */
+    public boolean isUploading()
+    {
+        return this.analysisJobId != null
+                && this.analysisJobId.startsWith(UPLOADING_PREFIX)
+                && isJobActive();
+    }
+
+    /** 분석 요청 접수 (영상 전달은 별도 스레드에서 진행) */
+    public void startUpload(String token, AnalysisSource source)
+    {
+        startJob(token, source);
+    }
+
+    /** 영상 전달 실패·중단 → 임시 작업 ID 를 지우고 실패로 기록 (같은 방식 재시도 시 새 작업으로 시작) */
+    public void failUpload(String message)
+    {
+        this.analysisJobId = null;
+        failRequest(message);
+    }
+
     /** Python 분석 작업 시작(또는 재시도) 기록 */
     public void startJob(String jobId, AnalysisSource source)
     {
