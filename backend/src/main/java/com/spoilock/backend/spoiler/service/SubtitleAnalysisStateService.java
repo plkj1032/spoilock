@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 자막 분석 상태 저장 (짧은 트랜잭션만).
@@ -150,6 +152,68 @@ public class SubtitleAnalysisStateService {
                 source == AnalysisSource.VIDEO ? "영상" : "자막", episodeId, jobId);
 
         return AdminEpisodeAiResponse.from(analysis);
+    }
+
+    // ============================================
+    // 2-1. 영상 포함 분석: 요청 접수 → 별도 스레드에서 전달
+    // ============================================
+
+    /** 접수 결과: 화면 응답 + 전달 작업이 결과를 기록할 때 쓰는 임시 작업 ID */
+    public record UploadTicket(String token, AdminEpisodeAiResponse response) {
+    }
+
+    @Transactional
+    public UploadTicket markUploading(Long episodeId, AnalysisSource source) {
+
+        EpisodeAnalysis analysis = findAnalysis(episodeId);
+
+        if (analysis.isJobActive()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 분석이 진행 중입니다.");
+        }
+
+        String token = EpisodeAnalysis.UPLOADING_PREFIX + UUID.randomUUID();
+        analysis.startUpload(token, source);
+
+        log.info("분석 요청 접수 (영상 전달 대기): episodeId={}, source={}", episodeId, source);
+
+        return new UploadTicket(token, AdminEpisodeAiResponse.from(analysis));
+    }
+
+    /** 전달 완료 → 실제 작업 ID 로 교체. 그사이 자막 교체 등으로 접수 기록이 바뀌었으면 무시 */
+    @Transactional
+    public boolean markUploaded(Long episodeId, String token, String jobId, AnalysisSource source) {
+
+        Optional<EpisodeAnalysis> found = analysisRepository.findByEpisode_Id(episodeId)
+                .filter(a -> token.equals(a.getAnalysisJobId()));
+
+        if (found.isEmpty()) {
+            log.warn("분석 요청 접수 기록이 바뀌어 결과를 반영하지 않음: episodeId={}, jobId={}", episodeId, jobId);
+            return false;
+        }
+
+        found.get().startJob(jobId, source);
+        log.info("영상 전달 완료, 분석 작업 시작: episodeId={}, jobId={}", episodeId, jobId);
+        return true;
+    }
+
+    @Transactional
+    public void markUploadFailed(Long episodeId, String token, String message) {
+        analysisRepository.findByEpisode_Id(episodeId)
+                .filter(a -> token.equals(a.getAnalysisJobId()))
+                .ifPresent(a -> a.failUpload(message));
+    }
+
+    /** 서버 재시작 등으로 전달이 중단된 접수 기록 정리 */
+    @Transactional
+    public void expireUploadIfStale(Long episodeId, String token, long staleMinutes) {
+        analysisRepository.findByEpisode_Id(episodeId)
+                .filter(a -> token.equals(a.getAnalysisJobId()))
+                .filter(a -> a.getAnalysisRequestedAt() != null
+                        && a.getAnalysisRequestedAt().isBefore(LocalDateTime.now().minusMinutes(staleMinutes)))
+                .ifPresent(a -> {
+                    log.warn("영상 전달이 {}분 넘게 끝나지 않아 실패 처리: episodeId={}", staleMinutes, episodeId);
+                    a.failUpload("영상을 분석 서버로 보내는 중 중단되었습니다. 다시 분석을 요청해 주세요.");
+                });
     }
 
     // ============================================

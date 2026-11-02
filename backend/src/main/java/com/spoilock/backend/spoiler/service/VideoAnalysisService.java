@@ -5,29 +5,24 @@ import com.spoilock.backend.ai.client.KbVideoJob;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
 import com.spoilock.backend.common.enums.AnalysisStatus;
-import com.spoilock.backend.common.storage.S3StorageService;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
 import com.spoilock.backend.spoiler.enums.AnalysisSource;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * MP4 영상 기반 AI 분석 서비스.
  *
  * 1. 분석 가능 여부 확인
- * 2. S3에서 MP4 다운로드
- * 3. FastAPI 영상 분석 작업 요청
- * 4. 작업 ID 저장
- * 5. 임시 MP4 파일 삭제
+ * 2. 요청 접수 후 바로 응답
+ * 3. S3 다운로드 → FastAPI 영상 분석 작업 요청 → 작업 ID 저장은 AnalysisUploadWorker(별도 스레드)
  *
  * 영상 전송 중 DB 트랜잭션을 유지하지 않는다.
  */
@@ -38,7 +33,7 @@ public class VideoAnalysisService {
 
     private final SubtitleAnalysisStateService stateService;
     private final SpoilerAdminClient adminClient;
-    private final S3StorageService s3StorageService;
+    private final AnalysisUploadWorker uploadWorker;
 
     // ==========================================
     // 1. 영상 AI 분석 요청
@@ -85,88 +80,31 @@ public class VideoAnalysisService {
         }
 
         // ==========================================
-        // S3에서 MP4 다운로드
+        // 요청은 바로 접수하고, S3 다운로드·분석 서버 전달은 별도 스레드에서
+        // (큰 MP4 를 올리는 동안 화면 요청이 시간 제한에 걸리지 않게)
         // ==========================================
-        String s3Key = "videos/" + target.videoStorageKey();
-
-        Path tempVideo = s3StorageService
-                .downloadToTemporaryFile(
-                        s3Key,
-                        ".mp4"
-                );
+        SubtitleAnalysisStateService.UploadTicket ticket =
+                stateService.markUploading(episodeId, AnalysisSource.VIDEO);
 
         try {
-
-            // ======================================
-            // FastAPI 영상 분석 요청
-            // ======================================
-            KbVideoJob job;
-
-            try {
-
-                job = adminClient.createVideoJob(
-                        tempVideo,
-                        target.dramaId(),
-                        episodeId,
-                        target.episodeNumber(),
-                        replace
-                );
-
-            } catch (SpoilerAdminException ex) {
-
-                if (ex.upstreamStatus() == 400
-                        || ex.upstreamStatus() == 413) {
-
-                    stateService.markRequestFailed(
-                            episodeId,
-                            ex.getReason()
-                    );
-                }
-
-                throw ex;
-            }
-
-            // ======================================
-            // FastAPI 작업 생성 결과 검증
-            // ======================================
-            if (job == null || job.jobId() == null) {
-
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "분석 서버 응답에 작업 ID가 없습니다."
-                );
-            }
-
-            log.info(
-                    "영상 AI 분석 요청 성공: episodeId={}, jobId={}",
+            uploadWorker.sendVideo(
                     episodeId,
-                    job.jobId()
+                    ticket.token(),
+                    target.dramaId(),
+                    target.episodeNumber(),
+                    target.videoStorageKey(),
+                    replace
             );
-
-            return stateService.markStarted(
-                    episodeId,
-                    job.jobId(),
-                    AnalysisSource.VIDEO
+        } catch (TaskRejectedException ex) {
+            stateService.markUploadFailed(episodeId, ticket.token(),
+                    "영상 전달 대기열이 가득 찼습니다. 잠시 후 다시 요청해 주세요.");
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "영상 전달 대기열이 가득 찼습니다. 잠시 후 다시 요청해 주세요."
             );
-
-        } finally {
-
-            // ======================================
-            // 임시 MP4 파일 정리
-            // ======================================
-            try {
-
-                Files.deleteIfExists(tempVideo);
-
-            } catch (IOException ex) {
-
-                log.warn(
-                        "임시 MP4 파일 삭제 실패: {}",
-                        tempVideo,
-                        ex
-                );
-            }
         }
+
+        return ticket.response();
     }
 
     // ==========================================

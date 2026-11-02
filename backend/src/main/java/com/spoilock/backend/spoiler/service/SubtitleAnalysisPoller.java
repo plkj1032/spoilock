@@ -6,6 +6,7 @@ import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
 import com.spoilock.backend.ai.service.SpoilerKbService;
 import com.spoilock.backend.common.enums.AnalysisStatus;
+import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
 import com.spoilock.backend.spoiler.enums.AnalysisSource;
 import com.spoilock.backend.spoiler.repository.ActiveAnalysisJob;
 import com.spoilock.backend.spoiler.repository.EpisodeAnalysisRepository;
@@ -27,6 +28,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubtitleAnalysisPoller {
 
+    // 업로드 제한 시간(10분)보다 넉넉하게
+    private static final long UPLOAD_STALE_MINUTES = 20;
+
     private static final List<AnalysisStatus> ACTIVE =
             List.of(AnalysisStatus.PENDING, AnalysisStatus.PROCESSING);
 
@@ -44,6 +48,17 @@ public class SubtitleAnalysisPoller {
         List<ActiveAnalysisJob> jobs = analysisRepository.findActiveJobs(ACTIVE);
 
         for (ActiveAnalysisJob active : jobs) {
+
+            // 영상을 분석 서버로 보내는 중 (아직 작업 ID 없음) → 조회하지 않고, 너무 오래되면 실패 처리
+            if (active.jobId().startsWith(EpisodeAnalysis.UPLOADING_PREFIX)) {
+                try {
+                    stateService.expireUploadIfStale(active.episodeId(), active.jobId(), UPLOAD_STALE_MINUTES);
+                } catch (Exception ex) {
+                    log.warn("영상 전달 상태 정리 실패: episodeId={}", active.episodeId(), ex);
+                }
+                continue;
+            }
+
             try {
                 // 영상 작업은 음성 인식 + 사건 추출을 합친 상태를 자막 작업 형태로 변환
                 KbIngestJob job = active.source() == AnalysisSource.VIDEO

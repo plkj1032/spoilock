@@ -234,6 +234,11 @@ function AdminSubtitlesContent({ dramaId }) {
       return "분석 요청 전";
     }
 
+    // 영상을 분석 서버로 보내는 중 (분석 작업 생성 전)
+    if (analysis.uploading) {
+      return "영상 전달 중";
+    }
+
     let label =
       ANALYSIS_LABELS[analysis.analysisStatus] ?? analysis.analysisStatus;
 
@@ -397,7 +402,7 @@ function AdminSubtitlesContent({ dramaId }) {
           withVideo: useVideo,
         }),
       useVideo
-        ? "자막 + 영상 분석을 시작했습니다. 영상 처리에 시간이 걸리니 새로고침으로 진행 상황을 확인해 주세요."
+        ? "자막 + 영상 분석 요청을 접수했습니다. 영상을 분석 서버로 보내는 데 몇 분 걸릴 수 있으니 새로고침으로 진행 상황을 확인해 주세요."
         : "자막 분석을 시작했습니다. 새로고침으로 진행 상황을 확인해 주세요.",
     );
 

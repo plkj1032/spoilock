@@ -13,22 +13,18 @@ import com.spoilock.backend.spoiler.enums.AnalysisSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * 자막 또는 자막 + 영상을 FastAPI에 전달해 AI 분석 작업 생성.
  *
  * 1. 분석 가능 여부 확인
- * 2. S3에서 자막 및 선택적 영상 다운로드
- * 3. FastAPI 분석 작업 요청
- * 4. 작업 ID 저장
- * 5. 임시 영상 파일 정리
+ * 2. 자막만: S3 자막 → FastAPI 분석 작업 요청 → 작업 ID 저장
+ * 3. 자막 + 영상: 요청 접수만 하고 응답, 영상 전달은 AnalysisUploadWorker(별도 스레드)
  *
  * 외부 HTTP 호출 중 DB 연결을 유지하지 않도록
  * 클래스에 @Transactional을 붙이지 않는다.
@@ -42,6 +38,7 @@ public class SubtitleAnalysisService {
     private final SpoilerAdminClient adminClient;
     private final EpisodeVideoRepository videoRepository;
     private final S3StorageService s3StorageService;
+    private final AnalysisUploadWorker uploadWorker;
 
     // ==========================================
     // 1. 자막만 분석
@@ -111,105 +108,98 @@ public class SubtitleAnalysisService {
         // ==========================================
         byte[] srt = readSubtitle(episodeId);
 
-        Path tempVideo = null;
+        // ==========================================
+        // 자막 + 영상: 요청은 바로 접수하고, 영상 전달은 별도 스레드에서
+        // (MP4 를 S3 에서 받아 분석 서버로 올리는 동안 화면 요청이 시간 제한에 걸리지 않게)
+        // ==========================================
+        if (withVideo) {
+
+            String storageKey = videoRepository
+                    .findByEpisode_Id(episodeId)
+                    .map(v -> v.getStorageKey())
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.CONFLICT,
+                                    "등록된 MP4 영상이 없습니다."
+                            )
+                    );
+
+            SubtitleAnalysisStateService.UploadTicket ticket =
+                    stateService.markUploading(episodeId, source);
+
+            try {
+                uploadWorker.sendSubtitleWithVideo(
+                        episodeId,
+                        ticket.token(),
+                        srt,
+                        target.dramaId(),
+                        target.episodeNumber(),
+                        storageKey,
+                        replace
+                );
+            } catch (TaskRejectedException ex) {
+                stateService.markUploadFailed(episodeId, ticket.token(),
+                        "영상 전달 대기열이 가득 찼습니다. 잠시 후 다시 요청해 주세요.");
+                throw new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "영상 전달 대기열이 가득 찼습니다. 잠시 후 다시 요청해 주세요."
+                );
+            }
+
+            return ticket.response();
+        }
+
+        // ==========================================
+        // 자막만: 파일이 작아 바로 분석 서버에 전달
+        // ==========================================
+        KbIngestJob job;
 
         try {
 
-            // ======================================
-            // 영상 함께 분석하는 경우
-            // ======================================
-            if (withVideo) {
+            job = adminClient.createIngestJob(
+                    srt,
+                    target.dramaId(),
+                    episodeId,
+                    target.episodeNumber(),
+                    replace,
+                    null
+            );
 
-                String storageKey = videoRepository
-                        .findByEpisode_Id(episodeId)
-                        .map(v -> v.getStorageKey())
-                        .orElseThrow(() ->
-                                new ResponseStatusException(
-                                        HttpStatus.CONFLICT,
-                                        "등록된 MP4 영상이 없습니다."
-                                )
-                        );
+        } catch (SpoilerAdminException ex) {
 
-                // S3 → 임시 파일 다운로드
-                tempVideo = s3StorageService
-                        .downloadToTemporaryFile(
-                                "videos/" + storageKey,
-                                ".mp4"
-                        );
-            }
+            if (ex.upstreamStatus() == 400
+                    || ex.upstreamStatus() == 413) {
 
-            // ======================================
-            // FastAPI 분석 요청
-            // ======================================
-            KbIngestJob job;
-
-            try {
-
-                job = adminClient.createIngestJob(
-                        srt,
-                        target.dramaId(),
+                stateService.markRequestFailed(
                         episodeId,
-                        target.episodeNumber(),
-                        replace,
-                        tempVideo
-                );
-
-            } catch (SpoilerAdminException ex) {
-
-                if (ex.upstreamStatus() == 400
-                        || ex.upstreamStatus() == 413) {
-
-                    stateService.markRequestFailed(
-                            episodeId,
-                            ex.getReason()
-                    );
-                }
-
-                throw ex;
-            }
-
-            // FastAPI 작업 생성 결과 검증
-            if (job == null || job.jobId() == null) {
-
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_GATEWAY,
-                        "분석 서버 응답에 작업 ID가 없습니다."
+                        ex.getReason()
                 );
             }
 
-            log.info(
-                    "AI 분석 요청 성공: episodeId={}, source={}, jobId={}",
-                    episodeId,
-                    source,
-                    job.jobId()
-            );
-
-            return stateService.markStarted(
-                    episodeId,
-                    job.jobId(),
-                    source
-            );
-
-        } finally {
-
-            // ======================================
-            // 분석 요청 종료 후 임시 MP4 삭제
-            // ======================================
-            if (tempVideo != null) {
-
-                try {
-                    Files.deleteIfExists(tempVideo);
-
-                } catch (IOException ex) {
-
-                    log.warn(
-                            "임시 MP4 파일 정리 실패: {}",
-                            tempVideo,
-                            ex
-                    );
-                }
-            }
+            throw ex;
         }
+
+        // FastAPI 작업 생성 결과 검증
+        if (job == null || job.jobId() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "분석 서버 응답에 작업 ID가 없습니다."
+            );
+        }
+
+        log.info(
+                "AI 분석 요청 성공: episodeId={}, source={}, jobId={}",
+                episodeId,
+                source,
+                job.jobId()
+        );
+
+        return stateService.markStarted(
+                episodeId,
+                job.jobId(),
+                source
+        );
     }
 
     // ==========================================
