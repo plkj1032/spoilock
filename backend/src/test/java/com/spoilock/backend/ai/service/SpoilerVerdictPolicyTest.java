@@ -269,4 +269,48 @@ class SpoilerVerdictPolicyTest {
         assertEquals(held, SpoilerVerdictPolicy.toFinale(held, null, List.of()));
         assertFalse(SpoilerVerdictPolicy.toFinale(held, null, null).publish());
     }
+
+    // ---------------------------------------------------------------- 안 본 회차 추측 (모르고 하는 추측)
+
+    @Test
+    void unknown_guess_is_public_with_its_own_reason() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2, 3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void unknown_guess_is_public_even_if_uncertain_or_about_story() {
+        AnalysisDecision uncertain = demoPolicy.decide(
+                guess("UNCERTAIN", null, DEMO_BASIS, true, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+        AnalysisDecision aboutStory = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, true, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 0);
+
+        assertTrue(uncertain.publish());
+        assertNull(uncertain.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(uncertain));
+        assertTrue(aboutStory.publish());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(aboutStory));
+    }
+
+    @Test
+    void unknown_guess_is_not_labeled_as_no_match_publish_policy() {
+        SpoilerVerdictPolicy openNoMatch = new SpoilerVerdictPolicy(true, true, false, true, true);
+        AnalysisDecision d = openNoMatch.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void match_with_unknown_guess_keeps_match() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("MATCH", 1, "VERIFIED_FIRST_REVEAL", true, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertEquals(1, d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.EVENT_MATCH, AnalysisPolicyCode.from(d));
+    }
 }

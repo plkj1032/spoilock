@@ -153,21 +153,39 @@ public final class SpoilerVerdictPolicy {
     ) {
         if (decision.failed()
                 || response == null
-                || authorWatchedEpisode == null
-                || authorWatchedEpisode <= 0
+                || authorWatchedEpisode == null          // 작성자 진도 조회 실패 → 기존 결정 유지
                 || response.guessEpisodes() == null
                 || response.guessEpisodes().isEmpty()
                 || indexedEpisodes == null) {
             return decision;
         }
 
-        Integer known = response.guessEpisodes().stream()
-                .filter(e -> e != null && e > 0 && e <= authorWatchedEpisode && indexedEpisodes.contains(e))
+        List<Integer> guessed = response.guessEpisodes().stream()
+                .filter(e -> e != null && e > 0 && indexedEpisodes.contains(e))
+                .toList();
+
+        if (guessed.isEmpty()) {
+            return decision;
+        }
+
+        int author = Math.max(0, authorWatchedEpisode);
+
+        Integer known = guessed.stream()
+                .filter(e -> e <= author)
                 .max(Integer::compareTo)
                 .orElse(null);
 
         if (known == null) {
-            return decision;
+            // 작성자가 아직 안 본 회차에 대한 추측 = 모르고 하는 추측 → 전체 공개.
+            // (Gemini 가 NO_MATCH·UNCERTAIN 어느 쪽으로 판정했든, 공개 정책 설정과 무관하게 같은 결과·같은 사유)
+            // MATCH 는 같은 글에 사실 진술이 섞인 경우라 그대로 둔다.
+            if ("MATCH".equals(response.verdict())) {
+                return decision;
+            }
+            return AnalysisDecision.publishAll(
+                    "안 본 회차 추측: 작성자 " + author + "화, 추측 내용 "
+                            + guessed.stream().min(Integer::compareTo).orElse(0) + "화 이후"
+            );
         }
 
         boolean unverified = response.guessBasis() == null
