@@ -236,6 +236,14 @@ public class SpoilerAdminClient {
                 .body(KbEvent.class));
     }
 
+    /** 사건 1건 조회 (검수·수정·삭제 전에 작품 상태 확인용) */
+    public KbEvent getEvent(String eventId) {
+        return call(() -> restClient.get()
+                .uri("/admin/events/{eventId}", eventId)
+                .retrieve()
+                .body(KbEvent.class));
+    }
+
     public void deleteEvent(String eventId) {
         call(() -> restClient.delete()
                 .uri("/admin/events/{eventId}", eventId)

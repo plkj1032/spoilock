@@ -98,6 +98,8 @@ public class SpoilerEventAdminService {
             String eventId,
             ReviewSpoilerEventRequest request
     ) {
+        requireManageableEvent(eventId);
+
         String status = request.verificationStatus();
 
         if ("VERIFIED".equals(status) && request.firstRevealEpisode() == null) {
@@ -133,6 +135,8 @@ public class SpoilerEventAdminService {
             String eventId,
             UpdateSpoilerEventRequest request
     ) {
+        requireManageableEvent(eventId);
+
         Map<String, Object> changes = new LinkedHashMap<>();
 
         if (request.eventSummary() != null) {
@@ -166,12 +170,25 @@ public class SpoilerEventAdminService {
     // 5. 사건 삭제
     // ============================================
     public void deleteEvent(String eventId) {
+        requireManageableEvent(eventId);
 
         adminClient.deleteEvent(eventId);
 
         kbService.evictAll();
 
         log.info("스포일러 사건 삭제: eventId={}", eventId);
+    }
+
+    /**
+     * 사건 ID 로 바로 들어오는 요청(검수·수정·삭제)은 회차를 거치지 않으므로
+     * 사건이 속한 작품을 조회해 삭제된 작품이면 막는다 (URL 직접 호출 방어)
+     */
+    private void requireManageableEvent(String eventId) {
+        KbEvent event = adminClient.getEvent(eventId);
+        if (event == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사건을 찾을 수 없습니다.");
+        }
+        dramaAdminAccessService.requireManageableDrama(event.dramaId());
     }
 
     private static String blankToNull(String value) {
