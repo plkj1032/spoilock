@@ -6,6 +6,7 @@ import com.spoilock.backend.ai.client.SpoilerJudgeResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,14 +23,21 @@ public class SpoilerJudgeService {
     private final SpoilerKbService kbService;
     private final SpoilerVerdictPolicy policy;
     private final boolean publishUnindexedDrama;
+    private final SpoilerFinaleService finaleService;
+    // 보류 대신 '드라마 마지막 회차부터 공개' (false 면 이전처럼 관리자 검토 대기)
+    private final boolean holdAsFinale;
 
     public SpoilerJudgeService(
             SpoilerApiClient spoilerApiClient,
             SpoilerApiProperties properties,
-            SpoilerKbService kbService
+            SpoilerKbService kbService,
+            SpoilerFinaleService finaleService,
+            @Value("${app.spoiler.hold-as-finale:true}") boolean holdAsFinale
     ) {
         this.spoilerApiClient = spoilerApiClient;
         this.kbService = kbService;
+        this.finaleService = finaleService;
+        this.holdAsFinale = holdAsFinale;
         this.publishUnindexedDrama = properties.publishUnindexedDrama();
         this.policy = new SpoilerVerdictPolicy(
                 properties.allowUnverifiedDemo(),
@@ -45,6 +53,34 @@ public class SpoilerJudgeService {
      * @param dramaId Spring dramas.id
      */
     public AnalysisDecision judge(Long logId, Long dramaId, String content) {
+        return judge(logId, dramaId, content, null);
+    }
+
+    /**
+     * @param authorWatchedEpisode 작성자의 이 작품 시청 회차 (추측성 글 판단용, 모르면 null)
+     */
+    public AnalysisDecision judge(Long logId, Long dramaId, String content, Integer authorWatchedEpisode) {
+        AnalysisDecision decision = judgeOnce(logId, dramaId, content, authorWatchedEpisode);
+
+        if (!holdAsFinale || decision.failed() || decision.publish()) {
+            return decision;
+        }
+
+        // 보류 → 마지막 회차부터 공개 (끝까지 본 사람만)
+        try {
+            SpoilerKbService.KbLookup lookup = kbService.lookup(dramaId);
+            return SpoilerVerdictPolicy.toFinale(
+                    decision,
+                    finaleService.finaleEpisode(dramaId),
+                    lookup.kb() == null ? null : lookup.kb().episodes()
+            );
+        } catch (Exception e) {
+            log.warn("[spoiler] 마지막 회차 조회 실패 dramaId={}: {}", dramaId, e.toString());
+            return decision;   // 보류 유지
+        }
+    }
+
+    private AnalysisDecision judgeOnce(Long logId, Long dramaId, String content, Integer authorWatchedEpisode) {
 
         // 작품별 판정 범위: Python 에 사건이 등록된 회차 (관리자 페이지에서 적재·검수)
         SpoilerKbService.KbLookup lookup = kbService.lookup(dramaId);
@@ -70,7 +106,7 @@ public class SpoilerJudgeService {
                     content,
                     kb.episodes()
             );
-            return policy.decide(response, kb.episodes());
+            return policy.decide(response, kb.episodes(), authorWatchedEpisode);
 
         } catch (Exception e) {
             // 연결 실패·시간 초과·4xx/5xx·잘못된 응답

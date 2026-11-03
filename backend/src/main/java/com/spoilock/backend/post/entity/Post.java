@@ -55,6 +55,11 @@ public class Post extends AuditedEntity {
     @Column(name = "required_episode_number")
     private Integer requiredEpisodeNumber;
 
+    // 판정이 애매해 '드라마 마지막 회차' 기준으로 공개한 글
+    // (작품 회차 수가 바뀌면 공개 회차 갱신, 새 사건이 등록되면 다시 판정)
+    @Column(name = "required_until_finale", nullable = false)
+    private boolean requiredUntilFinale;
+
     @Enumerated(EnumType.STRING)
     @Column(
             name = "analysis_status",
@@ -131,8 +136,19 @@ public class Post extends AuditedEntity {
             Integer requiredEpisodeNumber
     )
     {
+        completeAnalysis(publish, requiredEpisodeNumber, false);
+    }
+
+    /** @param untilFinale 드라마 마지막 회차 기준으로 정한 공개 범위인지 */
+    public void completeAnalysis(
+            boolean publish,
+            Integer requiredEpisodeNumber,
+            boolean untilFinale
+    )
+    {
         this.analysisStatus = AnalysisStatus.COMPLETED;
         this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
+        this.requiredUntilFinale = publish && untilFinale;
 
         // 관리자가 이미 숨김/삭제한 글은 분석 결과로 다시 공개하지 않음
         if (isModeratedByAdmin()) {
@@ -149,6 +165,7 @@ public class Post extends AuditedEntity {
     {
         this.analysisStatus = AnalysisStatus.FAILED;
         this.requiredEpisodeNumber = null;
+        this.requiredUntilFinale = false;
 
         if (!isModeratedByAdmin()) {
             this.moderationStatus = ModerationStatus.PENDING;

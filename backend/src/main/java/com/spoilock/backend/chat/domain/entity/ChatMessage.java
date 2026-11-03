@@ -9,6 +9,8 @@ import com.spoilock.backend.chat.domain.type.MessageType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "chat_messages")
 @Getter
@@ -56,6 +58,10 @@ public class ChatMessage extends CreatedAtEntity {
     @Column(name = "required_episode_number")
     private Integer requiredEpisodeNumber;
 
+    // 마지막 회차 기준 공개 여부
+    @Column(name = "required_until_finale", nullable = false)
+    private boolean requiredUntilFinale = false;
+
     @Enumerated(EnumType.STRING)
     @Column(
             name = "analysis_status",
@@ -73,6 +79,42 @@ public class ChatMessage extends CreatedAtEntity {
     )
     private ModerationStatus moderationStatus =
             ModerationStatus.PENDING;
+
+    // ================================
+    // AI 모니터링 V2 + V3
+    // ================================
+
+    // AI 판정 결과
+    @Column(name = "analysis_outcome", length = 30)
+    private String analysisOutcome;
+
+    // AI 판정 소요 시간 (ms)
+    @Column(name = "analysis_duration_ms")
+    private Long analysisDurationMs;
+
+    // AI 분석 완료 시간
+    @Column(name = "analyzed_at")
+    private LocalDateTime analyzedAt;
+
+    @Column(name = "analysis_policy_code", length = 40)
+    private String analysisPolicyCode;
+
+    @Column(name = "analysis_policy_detail", length = 255)
+    private String analysisPolicyDetail;
+
+    public void recordAnalysisMetrics(
+            String outcome,
+            long durationMs,
+            String policyCode,
+            String policyDetail
+    )
+    {
+        this.analysisOutcome = outcome;
+        this.analysisDurationMs = Math.max(0L, durationMs);
+        this.analysisPolicyCode = policyCode;
+        this.analysisPolicyDetail = policyDetail;
+        this.analyzedAt = LocalDateTime.now();
+    }
 
     public static ChatMessage createChat(
             ChatRoom room,
@@ -115,14 +157,34 @@ public class ChatMessage extends CreatedAtEntity {
      *                                false → PENDING (관리자 검토 대기, 원문 차단)
      * @param requiredEpisodeNumber   공개에 필요한 회차 (publish=false 면 무시)
      */
+    // 기존 2개 인자 호출과 호환
     public void completeAnalysis(
             boolean publish,
             Integer requiredEpisodeNumber
     ) {
+        completeAnalysis(
+                publish,
+                requiredEpisodeNumber,
+                false
+        );
+    }
+    /**
+     * AI 분석 완료 및 공개 정책 저장
+     */
+    public void completeAnalysis(
+            boolean publish,
+            Integer requiredEpisodeNumber,
+            boolean untilFinale
+    ) {
         this.analysisStatus = AnalysisStatus.COMPLETED;
-        this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
 
-        // 관리자가 이미 숨김/삭제한 메시지는 분석 결과로 다시 공개하지 않음
+        this.requiredEpisodeNumber =
+                publish ? requiredEpisodeNumber : null;
+
+        this.requiredUntilFinale =
+                publish && untilFinale;
+
+        // 관리자에 의해 숨김 또는 삭제된 메시지는 다시 공개하지 않음
         if (isModeratedByAdmin()) {
             return;
         }
@@ -136,6 +198,7 @@ public class ChatMessage extends CreatedAtEntity {
     public void failAnalysis() {
         this.analysisStatus = AnalysisStatus.FAILED;
         this.requiredEpisodeNumber = null;
+        this.requiredUntilFinale = false;
 
         if (!isModeratedByAdmin()) {
             this.moderationStatus = ModerationStatus.PENDING;

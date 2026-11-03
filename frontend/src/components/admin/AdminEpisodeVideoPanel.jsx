@@ -128,8 +128,8 @@ export default function AdminEpisodeVideoPanel({
       await adminVideoApi.requestAnalysis(episodeId, replace);
 
       setMessage(
-        "영상 분석을 시작했습니다. 음성 인식에 시간이 걸리니 " +
-          "아래 AI 분석 상태에서 새로고침으로 진행 상황을 확인해 주세요.",
+        "영상 분석 요청을 접수했습니다. 영상을 분석 서버로 보내고 음성 인식을 하는 데 " +
+          "시간이 걸리니 아래 AI 분석 상태에서 새로고침으로 진행 상황을 확인해 주세요.",
       );
       onAnalysisRequested?.();
     } catch (err) {

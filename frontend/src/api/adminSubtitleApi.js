@@ -18,6 +18,14 @@ export const adminSubtitleApi = {
     });
   },
 
+  // 등록된 자막 삭제 (교체용, 등록된 사건은 유지)
+  deleteSubtitle(episodeId) {
+    return apiRequest(`/api/admin/episodes/${episodeId}/subtitles`, {
+      method: "DELETE",
+      retryOn401: true,
+    });
+  },
+
   // replace: 이미 사건이 있는 회차 재분석 (검수·수동 사건은 보존)
   // withVideo: 같은 회차에 등록된 MP4 화면도 함께 분석 (자막 + 영상)
   requestAnalysis(episodeId, { replace = false, withVideo = false } = {}) {

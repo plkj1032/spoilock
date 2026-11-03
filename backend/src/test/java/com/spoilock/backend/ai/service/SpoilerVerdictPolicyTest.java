@@ -147,4 +147,170 @@ class SpoilerVerdictPolicyTest {
         assertTrue(demoPolicy.decide(null, EPISODES).failed());
         assertTrue(demoPolicy.decide(response(null, null, null, null, null), EPISODES).failed());
     }
+
+    // ---------------------------------------------------------------- 추측성 글 + 작성자 시청 진도
+
+    private static SpoilerJudgeResponse guess(String verdict, Integer matchEpisode, String basis,
+                                              Boolean aboutStory, List<Integer> guessEpisodes, String guessBasis) {
+        return new SpoilerJudgeResponse(1L, verdict, matchEpisode == null ? null : "e-m", matchEpisode,
+                basis, matchEpisode == null, "r", null, aboutStory,
+                List.of("e-g"), guessEpisodes, guessBasis);
+    }
+
+    @Test
+    void guess_by_author_who_has_not_watched_is_public() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+    }
+
+    @Test
+    void guess_by_author_who_already_watched_is_hidden_until_that_episode() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 3);
+
+        assertTrue(d.publish());
+        assertEquals(2, d.requiredEpisode());
+    }
+
+    @Test
+    void guess_uses_latest_episode_the_author_has_watched() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2, 4, 6), "VERIFIED_FIRST_REVEAL"), EPISODES, 5);
+
+        assertEquals(4, d.requiredEpisode());
+    }
+
+    @Test
+    void guess_raises_episode_of_match_when_later() {
+        AnalysisDecision raised = demoPolicy.decide(
+                guess("MATCH", 2, "VERIFIED_FIRST_REVEAL", true, List.of(4), "VERIFIED_FIRST_REVEAL"), EPISODES, 6);
+        assertEquals(4, raised.requiredEpisode());
+
+        AnalysisDecision kept = demoPolicy.decide(
+                guess("MATCH", 5, "VERIFIED_FIRST_REVEAL", true, List.of(4), "VERIFIED_FIRST_REVEAL"), EPISODES, 6);
+        assertEquals(5, kept.requiredEpisode());
+    }
+
+    @Test
+    void held_no_match_becomes_episode_bound_when_author_watched_guess() {
+        // about_story=true NO_MATCH 는 원래 보류 → 작성자가 본 회차의 추측이면 그 회차부터 공개
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, true, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 4);
+
+        assertTrue(d.publish());
+        assertEquals(3, d.requiredEpisode());
+    }
+
+    @Test
+    void guess_is_ignored_when_progress_unknown_or_episode_out_of_range() {
+        assertNull(demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, null)
+                .requiredEpisode());
+        assertNull(demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 0)
+                .requiredEpisode());
+        assertNull(demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(9), "VERIFIED_FIRST_REVEAL"), EPISODES, 9)
+                .requiredEpisode());
+    }
+
+    @Test
+    void unverified_guess_is_held_in_strict_mode() {
+        AnalysisDecision d = strictPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2), DEMO_BASIS), EPISODES, 3);
+
+        assertFalse(d.failed());
+        assertFalse(d.publish());
+    }
+
+    @Test
+    void uncertain_stays_held_even_with_known_guess() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("UNCERTAIN", null, DEMO_BASIS, true, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 3);
+
+        assertFalse(d.publish());
+    }
+
+    // ---------------------------------------------------------------- 보류 → 마지막 회차부터 공개
+
+    @Test
+    void held_decision_becomes_visible_from_finale() {
+        AnalysisDecision held = demoPolicy.decide(
+                response("UNCERTAIN", null, null, DEMO_BASIS, true), EPISODES);
+        assertFalse(held.publish());
+
+        AnalysisDecision d = SpoilerVerdictPolicy.toFinale(held, 16, EPISODES);
+
+        assertTrue(d.publish());
+        assertTrue(d.untilFinale());
+        assertEquals(16, d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.FINALE_ONLY, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void finale_is_at_least_last_indexed_episode() {
+        AnalysisDecision held = AnalysisDecision.hold("NO_MATCH: 검토 대기");
+
+        assertEquals(6, SpoilerVerdictPolicy.toFinale(held, 4, EPISODES).requiredEpisode());
+        assertEquals(6, SpoilerVerdictPolicy.toFinale(held, null, EPISODES).requiredEpisode());
+    }
+
+    @Test
+    void finale_keeps_published_failed_and_unknown_finale() {
+        AnalysisDecision published = AnalysisDecision.publishFrom(3, "MATCH");
+        AnalysisDecision failed = AnalysisDecision.failed("오류");
+        AnalysisDecision held = AnalysisDecision.hold("UNCERTAIN: 검토 대기");
+
+        assertEquals(published, SpoilerVerdictPolicy.toFinale(published, 16, EPISODES));
+        assertEquals(failed, SpoilerVerdictPolicy.toFinale(failed, 16, EPISODES));
+        assertEquals(held, SpoilerVerdictPolicy.toFinale(held, null, List.of()));
+        assertFalse(SpoilerVerdictPolicy.toFinale(held, null, null).publish());
+    }
+
+    // ---------------------------------------------------------------- 안 본 회차 추측 (모르고 하는 추측)
+
+    @Test
+    void unknown_guess_is_public_with_its_own_reason() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2, 3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void unknown_guess_is_public_even_if_uncertain_or_about_story() {
+        AnalysisDecision uncertain = demoPolicy.decide(
+                guess("UNCERTAIN", null, DEMO_BASIS, true, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+        AnalysisDecision aboutStory = demoPolicy.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, true, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 0);
+
+        assertTrue(uncertain.publish());
+        assertNull(uncertain.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(uncertain));
+        assertTrue(aboutStory.publish());
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(aboutStory));
+    }
+
+    @Test
+    void unknown_guess_is_not_labeled_as_no_match_publish_policy() {
+        SpoilerVerdictPolicy openNoMatch = new SpoilerVerdictPolicy(true, true, false, true, true);
+        AnalysisDecision d = openNoMatch.decide(
+                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void match_with_unknown_guess_keeps_match() {
+        AnalysisDecision d = demoPolicy.decide(
+                guess("MATCH", 1, "VERIFIED_FIRST_REVEAL", true, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
+
+        assertEquals(1, d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.EVENT_MATCH, AnalysisPolicyCode.from(d));
+    }
 }

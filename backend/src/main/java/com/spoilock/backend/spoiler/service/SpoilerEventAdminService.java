@@ -2,6 +2,7 @@ package com.spoilock.backend.spoiler.service;
 
 import com.spoilock.backend.ai.client.KbEvent;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
+import com.spoilock.backend.ai.service.SpoilerFinaleService;
 import com.spoilock.backend.ai.service.SpoilerKbService;
 import com.spoilock.backend.spoiler.dto.AdminSpoilerEventResponse;
 import com.spoilock.backend.spoiler.dto.CreateManualEventRequest;
@@ -35,6 +36,7 @@ public class SpoilerEventAdminService {
     private final EpisodeAnalysisRepository analysisRepository;
     private final SpoilerAdminClient adminClient;
     private final SpoilerKbService kbService;
+    private final SpoilerFinaleService finaleService;
 
     private EpisodeKbRef findEpisode(Long episodeId) {
         return analysisRepository.findKbRef(episodeId)
@@ -77,6 +79,7 @@ public class SpoilerEventAdminService {
         );
 
         kbService.evictAll();
+        requeueFinale(episode.dramaId());
 
         log.info("스포일러 사건 수동 등록: episodeId={}, eventId={}",
                 episodeId, created.eventId());
@@ -109,6 +112,9 @@ public class SpoilerEventAdminService {
         KbEvent updated = adminClient.updateEvent(eventId, changes);
 
         kbService.evictAll();
+        if (!"REJECTED".equals(status)) {
+            requeueFinale(updated == null ? null : updated.dramaId());
+        }
 
         log.info("스포일러 사건 검수: eventId={}, status={}, firstReveal={}",
                 eventId, status, request.firstRevealEpisode());
@@ -144,6 +150,9 @@ public class SpoilerEventAdminService {
 
         KbEvent updated = adminClient.updateEvent(eventId, changes);
 
+        kbService.evictAll();
+        requeueFinale(updated == null ? null : updated.dramaId());
+
         log.info("스포일러 사건 수정: eventId={}, fields={}", eventId, changes.keySet());
 
         return AdminSpoilerEventResponse.from(updated);
@@ -163,5 +172,14 @@ public class SpoilerEventAdminService {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    /** 새 사건이 생기거나 바뀌면 '마지막 회차 기준'으로 공개한 최근 글을 다시 판정 (실패해도 사건 관리는 계속) */
+    private void requeueFinale(Long dramaId) {
+        try {
+            finaleService.requeueRecent(dramaId);
+        } catch (Exception e) {
+            log.warn("마지막 회차 기준 글 재판정 요청 실패: dramaId={}, {}", dramaId, e.toString());
+        }
     }
 }

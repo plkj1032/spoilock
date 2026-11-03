@@ -442,6 +442,24 @@
   background: #2a4569;
 }
 
+.admin-subtitles__button--danger {
+  align-self: flex-start;
+  min-height: 36px;
+  margin-top: 4px;
+  padding: 8px 14px;
+
+  color: #ffd2d2;
+  background: transparent;
+  border-color: #9d5764;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-subtitles__button--danger:hover:not(:disabled) {
+  background: rgba(157, 87, 100, 0.18);
+}
+
 /* ==========================================
    ANALYSIS STATUS
    ========================================== */

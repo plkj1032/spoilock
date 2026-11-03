@@ -1,3 +1,4 @@
+
 package com.spoilock.backend.ai.service;
 
 import com.spoilock.backend.chat.domain.entity.ChatMessage;
@@ -11,28 +12,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * 분석 상태 저장 전용. 메서드마다 짧은 독립 트랜잭션(REQUIRES_NEW).
- * Python HTTP 호출 구간에는 DB 트랜잭션을 걸지 않기 위해 별도 Bean 으로 분리.
- */
 @Service
 @RequiredArgsConstructor
 public class ChatAnalysisStateService {
 
     private final ChatMessageRepository chatMessageRepository;
 
-    /** PENDING/FAILED → PROCESSING. 이미 다른 작업이 가져갔으면 false */
+    // 분석 작업 선점
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryStart(Long messageId) {
         return chatMessageRepository.transitionAnalysisStatus(
                 messageId,
                 MessageType.CHAT,
-                List.of(AnalysisStatus.PENDING, AnalysisStatus.FAILED),
+                List.of(
+                        AnalysisStatus.PENDING,
+                        AnalysisStatus.FAILED
+                ),
                 AnalysisStatus.PROCESSING
         ) == 1;
     }
 
-    /** 멈춘 PROCESSING → PENDING (복구용) */
+    // 멈춘 작업 복구
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean releaseStuck(Long messageId) {
         return chatMessageRepository.transitionAnalysisStatus(
@@ -43,21 +43,61 @@ public class ChatAnalysisStateService {
         ) == 1;
     }
 
-    /** 분석 결정을 메시지 상태에 반영. PROCESSING 이 아니면(다른 작업이 처리함) 무시 */
+    /**
+     * 분석 상태 + 정책 코드 + 처리시간 저장
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean apply(Long messageId, AnalysisDecision decision) {
-        ChatMessage message = chatMessageRepository.findById(messageId).orElse(null);
+    public boolean apply(
+            Long messageId,
+            AnalysisDecision decision,
+            long durationMs
+    ) {
+        ChatMessage message =
+                chatMessageRepository.findById(messageId)
+                        .orElse(null);
 
         if (message == null
-                || message.getAnalysisStatus() != AnalysisStatus.PROCESSING) {
+                || message.getAnalysisStatus()
+                != AnalysisStatus.PROCESSING) {
             return false;
         }
 
+        String outcome;
+
         if (decision.failed()) {
+
             message.failAnalysis();
+            outcome = "FAILED";
+
         } else {
-            message.completeAnalysis(decision.publish(), decision.requiredEpisode());
+
+            // 기존 시청 진도 및 마지막 회차 공개 정책 유지
+            message.completeAnalysis(
+                    decision.publish(),
+                    decision.requiredEpisode(),
+                    decision.untilFinale()
+            );
+
+            if (!decision.publish()) {
+                outcome = "HELD";
+            } else if (decision.requiredEpisode() != null) {
+                outcome = "EPISODE_GATED";
+            } else {
+                outcome = "PUBLIC";
+            }
         }
+
+        // 정책 사유 코드
+        String policyCode =
+                AnalysisPolicyCode.from(decision).name();
+
+        // 모니터링 데이터 저장
+        message.recordAnalysisMetrics(
+                outcome,
+                durationMs,
+                policyCode,
+                AnalysisPolicyDetail.from(decision)
+        );
 
         return true;
     }

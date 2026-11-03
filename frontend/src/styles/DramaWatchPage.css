@@ -523,3 +523,10 @@
     flex-direction: column;
   }
 }
+/* SPOILOCK 영상 선택 및 모바일 길게 누르기 메뉴 제한 */
+.watch-video {
+  -webkit-user-select: none;
+  user-select: none;
+
+  -webkit-touch-callout: none;
+}
