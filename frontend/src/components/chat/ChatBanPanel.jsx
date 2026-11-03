@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { chatApi } from "../../api/chatApi";
 import "../../styles/ChatBanPanel.css";
+import Modal from "../common/Modal";
 
 export default function ChatBanPanel({
   roomId,
@@ -55,7 +56,7 @@ export default function ChatBanPanel({
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="chat-ban-dialog"
       aria-labelledby="chat-ban-title"
@@ -133,7 +134,7 @@ export default function ChatBanPanel({
             </article>
           ))}
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

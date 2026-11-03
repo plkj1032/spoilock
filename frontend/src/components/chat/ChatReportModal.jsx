@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { chatApi } from "../../api/chatApi";
 import "../../styles/ChatReportModal.css";
+import Modal from "../common/Modal";
 
 const REASONS = [
   { value: "SPOILER", label: "스포일러" },
@@ -96,7 +97,7 @@ export default function ChatReportModal({ roomId, message, onClose }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="chat-report-dialog"
       aria-labelledby={titleId}
@@ -194,7 +195,7 @@ export default function ChatReportModal({ roomId, message, onClose }) {
           </footer>
         </form>
       )}
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }
