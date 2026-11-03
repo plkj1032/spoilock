@@ -1,6 +1,7 @@
 package com.spoilock.backend.ai.service;
 
 import com.spoilock.backend.ai.client.SpoilerApiProperties;
+import com.spoilock.backend.ai.client.SpoilerHealthProbe;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.chat.repository.ChatMessageRepository;
 import com.spoilock.backend.common.enums.AnalysisStatus;
@@ -30,6 +31,7 @@ public class ChatAnalysisRecoveryJob {
     private final ChatAnalysisStateService stateService;
     private final ChatAnalysisService chatAnalysisService;
     private final SpoilerApiProperties properties;
+    private final SpoilerHealthProbe healthProbe;
 
     @Scheduled(
             initialDelayString = "${app.spoiler.recovery.interval-ms:30000}",
@@ -51,11 +53,17 @@ public class ChatAnalysisRecoveryJob {
                 AnalysisStatus.PROCESSING,
                 now.minusSeconds(recovery.processingAfterSeconds()),
                 AnalysisStatus.FAILED,
-                now.minusMinutes(recovery.retryFailedWithinMinutes()),
+                recovery.maxAttempts(),
+                now,
                 PageRequest.of(0, recovery.batchSize())
         );
 
         if (targets.isEmpty()) {
+            return;
+        }
+
+        if (!healthProbe.isUp()) {
+            // 분석 서버가 꺼져 있으면 이번 주기는 건너뜀 (재시도 횟수도 쓰지 않음)
             return;
         }
 

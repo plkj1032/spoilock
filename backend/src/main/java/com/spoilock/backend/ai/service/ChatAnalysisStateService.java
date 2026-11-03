@@ -1,6 +1,7 @@
 
 package com.spoilock.backend.ai.service;
 
+import com.spoilock.backend.ai.client.SpoilerApiProperties;
 import com.spoilock.backend.chat.domain.entity.ChatMessage;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.chat.repository.ChatMessageRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,18 +19,20 @@ import java.util.List;
 public class ChatAnalysisStateService {
 
     private final ChatMessageRepository chatMessageRepository;
+    private final SpoilerApiProperties properties;
 
     // 분석 작업 선점
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryStart(Long messageId) {
-        return chatMessageRepository.transitionAnalysisStatus(
+        return chatMessageRepository.claimAnalysis(
                 messageId,
                 MessageType.CHAT,
                 List.of(
                         AnalysisStatus.PENDING,
                         AnalysisStatus.FAILED
                 ),
-                AnalysisStatus.PROCESSING
+                AnalysisStatus.PROCESSING,
+                LocalDateTime.now()
         ) == 1;
     }
 
@@ -66,7 +70,7 @@ public class ChatAnalysisStateService {
 
         if (decision.failed()) {
 
-            message.failAnalysis();
+            message.failAnalysis(retryBaseDelaySeconds());
             outcome = "FAILED";
 
         } else {
@@ -100,5 +104,10 @@ public class ChatAnalysisStateService {
         );
 
         return true;
+    }
+
+    private long retryBaseDelaySeconds() {
+        SpoilerApiProperties.Recovery recovery = properties.recovery();
+        return recovery == null ? 30 : recovery.retryBaseDelaySeconds();
     }
 }

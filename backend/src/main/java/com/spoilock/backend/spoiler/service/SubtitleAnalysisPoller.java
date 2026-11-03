@@ -4,6 +4,7 @@ import com.spoilock.backend.ai.client.KbIngestJob;
 import com.spoilock.backend.ai.client.KbVideoJob;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.client.SpoilerAdminException;
+import com.spoilock.backend.ai.client.SpoilerHealthProbe;
 import com.spoilock.backend.ai.service.SpoilerFinaleService;
 import com.spoilock.backend.ai.service.SpoilerKbService;
 import com.spoilock.backend.common.enums.AnalysisStatus;
@@ -40,6 +41,7 @@ public class SubtitleAnalysisPoller {
     private final SpoilerAdminClient adminClient;
     private final SpoilerKbService kbService;
     private final SpoilerFinaleService finaleService;
+    private final SpoilerHealthProbe healthProbe;
 
     @Scheduled(
             initialDelayString = "${app.spoiler.admin.poll-interval-ms:5000}",
@@ -48,6 +50,9 @@ public class SubtitleAnalysisPoller {
     public void poll() {
 
         List<ActiveAnalysisJob> jobs = analysisRepository.findActiveJobs(ACTIVE);
+
+        // 분석 서버 상태는 조회할 작업이 있을 때만, 주기당 최대 1번 확인
+        Boolean serverUp = null;
 
         for (ActiveAnalysisJob active : jobs) {
 
@@ -58,6 +63,14 @@ public class SubtitleAnalysisPoller {
                 } catch (Exception ex) {
                     log.warn("영상 전달 상태 정리 실패: episodeId={}", active.episodeId(), ex);
                 }
+                continue;
+            }
+
+            if (serverUp == null) {
+                serverUp = healthProbe.isUp();
+            }
+            if (!serverUp) {
+                // 분석 서버가 꺼져 있으면 조회하지 않음 (다시 켜지면 작업 없음 응답으로 정리됨)
                 continue;
             }
 

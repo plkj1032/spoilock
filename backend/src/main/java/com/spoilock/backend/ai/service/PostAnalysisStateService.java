@@ -1,5 +1,6 @@
 package com.spoilock.backend.ai.service;
 
+import com.spoilock.backend.ai.client.SpoilerApiProperties;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.post.repository.PostRepository;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -21,14 +23,16 @@ import java.util.List;
 public class PostAnalysisStateService {
 
     private final PostRepository postRepository;
+    private final SpoilerApiProperties properties;
 
     /** PENDING/FAILED → PROCESSING. 이미 다른 작업이 가져갔으면 false */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean tryStart(Long postId) {
-        return postRepository.transitionAnalysisStatus(
+        return postRepository.claimAnalysis(
                 postId,
                 List.of(AnalysisStatus.PENDING, AnalysisStatus.FAILED),
-                AnalysisStatus.PROCESSING
+                AnalysisStatus.PROCESSING,
+                LocalDateTime.now()
         ) == 1;
     }
 
@@ -53,7 +57,8 @@ public class PostAnalysisStateService {
         }
 
         if (decision.failed()) {
-            post.failAnalysis();
+            SpoilerApiProperties.Recovery recovery = properties.recovery();
+            post.failAnalysis(recovery == null ? 30 : recovery.retryBaseDelaySeconds());
         } else {
             post.completeAnalysis(decision.publish(), decision.requiredEpisode(), decision.untilFinale());
         }

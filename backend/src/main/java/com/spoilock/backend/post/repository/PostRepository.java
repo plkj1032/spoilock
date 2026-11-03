@@ -59,7 +59,25 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     );
 
     /**
-     * 복구 대상: 오래 남은 PENDING, 멈춘 PROCESSING, 최근 FAILED
+     * 분석 선점: PENDING/FAILED → PROCESSING + 시작 시각 기록 (원자적). 다른 서버가 먼저 가져갔으면 0
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update Post p
+               set p.analysisStatus = :to,
+                   p.analysisStartedAt = :now
+             where p.id = :postId
+               and p.analysisStatus in :from
+            """)
+    int claimAnalysis(
+            @Param("postId") Long postId,
+            @Param("from") Collection<AnalysisStatus> from,
+            @Param("to") AnalysisStatus to,
+            @Param("now") LocalDateTime now
+    );
+
+    /**
+     * 복구 대상: 오래 남은 PENDING, 멈춘 PROCESSING, 재시도 시각이 된 FAILED(최대 횟수 미만)
      * (관리자가 숨김/삭제한 글은 제외)
      */
     @Query("""
@@ -70,8 +88,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
              where p.moderationStatus in :moderation
                and (
                     (p.analysisStatus = :pending    and p.createdAt < :pendingBefore)
-                 or (p.analysisStatus = :processing and p.createdAt < :processingBefore)
-                 or (p.analysisStatus = :failed     and p.createdAt > :failedAfter)
+                 or (p.analysisStatus = :processing
+                     and coalesce(p.analysisStartedAt, p.createdAt) < :processingBefore)
+                 or (p.analysisStatus = :failed
+                     and p.analysisAttempts < :maxAttempts
+                     and (p.analysisRetryAt is null or p.analysisRetryAt <= :now))
                )
              order by p.id asc
             """)
@@ -82,7 +103,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("processing") AnalysisStatus processing,
             @Param("processingBefore") LocalDateTime processingBefore,
             @Param("failed") AnalysisStatus failed,
-            @Param("failedAfter") LocalDateTime failedAfter,
+            @Param("maxAttempts") int maxAttempts,
+            @Param("now") LocalDateTime now,
             Pageable pageable
     );
 }

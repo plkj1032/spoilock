@@ -37,7 +37,27 @@ public interface ChatMessageRepository
     );
 
     /**
-     * 복구 대상: 오래 남은 PENDING, 멈춘 PROCESSING, 최근 FAILED
+     * 분석 선점: PENDING/FAILED → PROCESSING + 시작 시각 기록 (원자적). 다른 서버가 먼저 가져갔으면 0
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update ChatMessage m
+               set m.analysisStatus = :to,
+                   m.analysisStartedAt = :now
+             where m.id = :messageId
+               and m.messageType = :type
+               and m.analysisStatus in :from
+            """)
+    int claimAnalysis(
+            @Param("messageId") Long messageId,
+            @Param("type") MessageType type,
+            @Param("from") Collection<AnalysisStatus> from,
+            @Param("to") AnalysisStatus to,
+            @Param("now") LocalDateTime now
+    );
+
+    /**
+     * 복구 대상: 오래 남은 PENDING, 멈춘 PROCESSING, 재시도 시각이 된 FAILED(최대 횟수 미만)
      */
     @Query("""
             select new com.spoilock.backend.ai.service.ChatAnalysisTarget(
@@ -48,8 +68,11 @@ public interface ChatMessageRepository
              where m.messageType = :type
                and (
                     (m.analysisStatus = :pending    and m.createdAt < :pendingBefore)
-                 or (m.analysisStatus = :processing and m.createdAt < :processingBefore)
-                 or (m.analysisStatus = :failed     and m.createdAt > :failedAfter)
+                 or (m.analysisStatus = :processing
+                     and coalesce(m.analysisStartedAt, m.createdAt) < :processingBefore)
+                 or (m.analysisStatus = :failed
+                     and m.analysisAttempts < :maxAttempts
+                     and (m.analysisRetryAt is null or m.analysisRetryAt <= :now))
                )
              order by m.id asc
             """)
@@ -60,7 +83,8 @@ public interface ChatMessageRepository
             @Param("processing") AnalysisStatus processing,
             @Param("processingBefore") LocalDateTime processingBefore,
             @Param("failed") AnalysisStatus failed,
-            @Param("failedAfter") LocalDateTime failedAfter,
+            @Param("maxAttempts") int maxAttempts,
+            @Param("now") LocalDateTime now,
             Pageable pageable
     );
 }
