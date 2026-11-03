@@ -27,6 +27,8 @@ public class QDrama extends EntityPathBase<Drama> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 
+    public final DateTimePath<java.time.LocalDateTime> deletedAt = createDateTime("deletedAt", java.time.LocalDateTime.class);
+
     public final StringPath directors = createString("directors");
 
     public final SetPath<com.spoilock.backend.drama.domain.enums.DramaGenre, EnumPath<com.spoilock.backend.drama.domain.enums.DramaGenre>> genres = this.<com.spoilock.backend.drama.domain.enums.DramaGenre, EnumPath<com.spoilock.backend.drama.domain.enums.DramaGenre>>createSet("genres", com.spoilock.backend.drama.domain.enums.DramaGenre.class, EnumPath.class, PathInits.DIRECT2);

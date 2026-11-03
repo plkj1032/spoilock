@@ -15,6 +15,7 @@ import AdminChatPage from "../pages/AdminChatPage";
 import ChatInvitePage from "../pages/ChatInvitePage";
 import DramaWatchPage from "../pages/DramaWatchPage";
 import AdminMonitoringPage from "../pages/AdminMonitoringPage";
+import KakaoSignupPage from "../pages/KakaoSignupPage";
 
 export default function AppRouter({
   user,
@@ -25,6 +26,7 @@ export default function AppRouter({
 }) {
   return (
     <Routes>
+      <Route path="/auth/kakao/complete" element={<KakaoSignupPage />} />
       <Route
         path="/"
         element={<HomePage user={user} onLogin={onLogin} onNotice={onNotice} />}

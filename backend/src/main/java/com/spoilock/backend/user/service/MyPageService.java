@@ -26,6 +26,7 @@ public class MyPageService {
     private final UserRepository userRepository;
     private final MyPageQueryRepository myPageQueryRepository;
     private final MyRoomPageQueryRepository myRoomPageQueryRepository;
+    private final NicknamePolicy nicknamePolicy;
 
     public MyPageResponse getMyPage(
             Long userId,
@@ -67,7 +68,33 @@ public class MyPageService {
     ) {
         User user = findActiveUser(userId);
 
-        user.updateNickname(request.nickname());
+        String nickname = nicknamePolicy.normalize(
+                request.nickname()
+        );
+
+        if (!nickname.equalsIgnoreCase(user.getNickname())
+                && userRepository.existsByNicknameKey(
+                nickname.toLowerCase(java.util.Locale.ROOT)
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 사용 중인 닉네임입니다."
+            );
+        }
+
+        user.updateNickname(nickname);
+
+        try {
+            userRepository.flush();
+        } catch (
+                org.springframework.dao.DataIntegrityViolationException ex
+        ) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 사용 중인 닉네임입니다.",
+                    ex
+            );
+        }
 
         return toProfile(user);
     }
