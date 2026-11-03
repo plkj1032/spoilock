@@ -9,6 +9,8 @@ import com.spoilock.backend.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "posts")
 @Getter
@@ -59,6 +61,18 @@ public class Post extends AuditedEntity {
     // (작품 회차 수가 바뀌면 공개 회차 갱신, 새 사건이 등록되면 다시 판정)
     @Column(name = "required_until_finale", nullable = false)
     private boolean requiredUntilFinale;
+
+    // 분석 실패 재시도 (분석 서버가 살아 있을 때 실패한 횟수만 셈)
+    @Column(name = "analysis_attempts", nullable = false)
+    private int analysisAttempts = 0;
+
+    // 마지막 분석 시작 시각 (멈춘 PROCESSING 판단 기준)
+    @Column(name = "analysis_started_at")
+    private LocalDateTime analysisStartedAt;
+
+    // 이 시각 이후에 다시 시도 (실패할 때마다 간격이 2배로 늘어남)
+    @Column(name = "analysis_retry_at")
+    private LocalDateTime analysisRetryAt;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -147,6 +161,8 @@ public class Post extends AuditedEntity {
     )
     {
         this.analysisStatus = AnalysisStatus.COMPLETED;
+        this.analysisAttempts = 0;
+        this.analysisRetryAt = null;
         this.requiredEpisodeNumber = publish ? requiredEpisodeNumber : null;
         this.requiredUntilFinale = publish && untilFinale;
 
@@ -170,6 +186,14 @@ public class Post extends AuditedEntity {
         if (!isModeratedByAdmin()) {
             this.moderationStatus = ModerationStatus.PENDING;
         }
+    }
+
+    /** 분석 실패 + 다음 재시도 시각 예약 (baseDelaySeconds × 2^(실패횟수-1), 최대 1시간) */
+    public void failAnalysis(long baseDelaySeconds) {
+        failAnalysis();
+        this.analysisAttempts++;
+        this.analysisRetryAt = LocalDateTime.now().plusSeconds(
+                com.spoilock.backend.ai.service.AnalysisRetry.delaySeconds(analysisAttempts, baseDelaySeconds));
     }
 
     private boolean isModeratedByAdmin()

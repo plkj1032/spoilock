@@ -138,9 +138,13 @@ public record SpoilerApiProperties(
             @DefaultValue("180")
             long processingAfterSeconds,
 
-            // 생성 후 이 시간 안의 FAILED 메시지는 재시도 (Python 재시작·Gemini 일시 오류 대비)
-            @DefaultValue("10")
-            long retryFailedWithinMinutes,
+            // FAILED 재시도 최대 횟수. 분석 서버가 꺼져 있는 동안은 시도하지 않으므로 횟수가 줄지 않음
+            @DefaultValue("5")
+            int maxAttempts,
+
+            // 첫 재시도 간격(초). 실패할 때마다 2배 (30초 → 1분 → 2분 → 4분)
+            @DefaultValue("30")
+            long retryBaseDelaySeconds,
 
             @DefaultValue("20")
             int batchSize

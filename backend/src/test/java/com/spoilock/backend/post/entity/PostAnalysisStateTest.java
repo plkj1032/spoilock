@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDateTime;
 
 /**
  * 게시글 스포일러 분석 결과 반영 규칙 (Spring 컨텍스트·DB 불필요)
@@ -54,5 +57,23 @@ class PostAnalysisStateTest {
         assertEquals(AnalysisStatus.FAILED, post.getAnalysisStatus());
         assertEquals(ModerationStatus.PENDING, post.getModerationStatus());
         assertNull(post.getRequiredEpisodeNumber());
+    }
+
+    @Test
+    void failed_재시도_횟수와_간격이_늘어나고_성공하면_초기화() {
+        Post post = newPost();
+
+        LocalDateTime before = LocalDateTime.now();
+        post.failAnalysis(30);
+        assertEquals(1, post.getAnalysisAttempts());
+        assertTrue(!post.getAnalysisRetryAt().isBefore(before.plusSeconds(29)));
+
+        post.failAnalysis(30);
+        assertEquals(2, post.getAnalysisAttempts());
+        assertTrue(!post.getAnalysisRetryAt().isBefore(before.plusSeconds(59)));
+
+        post.completeAnalysis(true, null);
+        assertEquals(0, post.getAnalysisAttempts());
+        assertNull(post.getAnalysisRetryAt());
     }
 }
