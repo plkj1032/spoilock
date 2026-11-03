@@ -4,6 +4,8 @@ import com.spoilock.backend.common.entity.AuditedEntity;
 import com.spoilock.backend.drama.domain.enums.DramaGenre;
 import com.spoilock.backend.drama.domain.enums.DramaProvisionType;
 import com.spoilock.backend.drama.domain.enums.DramaStatus;
+
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -69,6 +71,9 @@ public class Drama extends AuditedEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "provision_type", nullable = false, length = 20)
     private DramaProvisionType provisionType = DramaProvisionType.INFO_ONLY;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     public static Drama createDraft(
             String title,
@@ -178,5 +183,15 @@ public class Drama extends AuditedEntity {
     }
     public boolean isStreamingProvided(){
         return provisionType == DramaProvisionType.STREAMING;
+    }
+    public boolean isDeleted(){
+        return status == DramaStatus.DELETED;
+    }
+    public void markDeleted(){
+        if(isDeleted()){
+            return;
+        }
+        this.status = DramaStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
     }
 }

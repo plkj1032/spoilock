@@ -64,6 +64,7 @@ export default function ChatRoomPage({ user, onNotice }) {
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState("");
   const [connected, setConnected] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [leaving, setLeaving] = useState(false);
@@ -252,6 +253,15 @@ export default function ChatRoomPage({ user, onNotice }) {
     let active = true;
     const controller = new AbortController();
 
+    let historyLoaded = false;
+    let historyCheckpoint = 0;
+    let historyRequestId = 0;
+    let historyRetryTimer = null;
+    let historyLiveIds = null;
+
+    const HISTORY_RECOVERY_ERROR =
+      "일부 대화를 불러오지 못해 자동으로 다시 확인하고 있어요.";
+
     async function getJson(path) {
       try {
         return await apiRequest(path, {
@@ -277,25 +287,138 @@ export default function ChatRoomPage({ user, onNotice }) {
     }
 
     async function loadHistory() {
-      try {
-        const data = await getJson(`/api/chat/rooms/${roomId}/messages`);
+      const requestId = ++historyRequestId;
+      const firstLoad = !historyLoaded;
+      const checkpoint = historyCheckpoint;
 
-        if (active) {
-          // 이력 조회 중 먼저 도착한 실시간 메시지도 보존
-          setMessages((current) => mergeMessages(data.messages, current));
-          setNextCursor(data.nextCursor);
-          setHasNext(data.hasNext);
-          data.messages.forEach((message) => {
-            seenMessageIdsRef.current.add(String(message.messageId));
-          });
+      const liveIds = new Set();
+      historyLiveIds = liveIds;
+
+      window.clearTimeout(historyRetryTimer);
+      historyRetryTimer = null;
+
+      const collected = [];
+      const visitedCursors = new Set();
+
+      let cursor = null;
+      let firstPage = null;
+
+      try {
+        while (active && requestId === historyRequestId) {
+          const path =
+            cursor === null
+              ? `/api/chat/rooms/${roomId}/messages`
+              : `/api/chat/rooms/${roomId}/messages?cursor=${encodeURIComponent(cursor)}`;
+
+          const data = await getJson(path);
+
+          if (!active || requestId !== historyRequestId) return;
+
+          if (firstPage === null) {
+            firstPage = data;
+          }
+
+          collected.push(...data.messages);
+
+          const reachedCheckpoint = data.messages.some(
+            (message) => Number(message.messageId) <= checkpoint,
+          );
+
+          // 첫 입장은 최근 30개만 표시.
+          // 재연결은 이전 조회 지점까지 계속 내려가며 복구.
+          if (firstLoad || reachedCheckpoint || !data.hasNext) {
+            break;
+          }
+
+          const next = data.nextCursor;
+
+          if (
+            next == null ||
+            data.messages.length === 0 ||
+            visitedCursors.has(String(next)) ||
+            (cursor !== null && Number(next) >= Number(cursor))
+          ) {
+            throw new Error("메시지 페이지 정보를 확인하지 못했습니다.");
+          }
+
+          visitedCursors.add(String(next));
+          cursor = next;
         }
+
+        if (!active || requestId !== historyRequestId || !firstPage) return;
+
+        setMessages((current) => {
+          // 이력 조회 중 실시간으로 갱신된 메시지는 최신 값을 유지
+          const currentIds = new Set(
+            current.map((message) => String(message.messageId)),
+          );
+
+          const historyMessages = collected.filter((message) => {
+            const id = String(message.messageId);
+            return !liveIds.has(id) || !currentIds.has(id);
+          });
+
+          return mergeMessages(current, historyMessages);
+        });
+
+        collected.forEach((message) => {
+          seenMessageIdsRef.current.add(String(message.messageId));
+        });
+
+        if (firstLoad) {
+          setNextCursor(firstPage.nextCursor);
+          setHasNext(firstPage.hasNext);
+        }
+
+        // 전체 복구가 성공한 경우에만 기준점을 앞으로 이동
+        historyCheckpoint = firstPage.messages.reduce(
+          (latestId, message) => Math.max(latestId, Number(message.messageId)),
+          checkpoint,
+        );
+
+        historyLoaded = true;
+
+        setError((current) =>
+          current === HISTORY_RECOVERY_ERROR ? "" : current,
+        );
       } catch (err) {
-        showError(err);
+        if (
+          !active ||
+          controller.signal.aborted ||
+          requestId !== historyRequestId
+        ) {
+          return;
+        }
+
+        const status = err.status ?? err.cause?.status;
+
+        if (status === 401 || status === 403 || status === 404) {
+          stopWithError(
+            status === 401
+              ? "로그인이 만료되었습니다. 다시 로그인해 주세요."
+              : "이 채팅방의 대화를 조회할 수 없습니다.",
+          );
+          return;
+        }
+
+        setError(HISTORY_RECOVERY_ERROR);
+
+        // 조회 실패 시 기준점은 유지하고 다시 시도
+        historyRetryTimer = window.setTimeout(() => {
+          if (active && !stopped && client.connected) {
+            void loadHistory();
+          }
+        }, 5000);
       } finally {
-        if (active) setLoading(false);
+        if (active && requestId === historyRequestId) {
+          setLoading(false);
+
+          if (historyLiveIds === liveIds) {
+            historyLiveIds = null;
+          }
+        }
       }
     }
-
     async function receiveMessage(frame) {
       try {
         const event = JSON.parse(frame.body);
@@ -333,6 +456,10 @@ export default function ChatRoomPage({ user, onNotice }) {
 
         if (active) {
           const messageId = String(message.messageId);
+
+          // 조회 중 도착한 최신 메시지 정보를 이력 데이터로 덮어쓰지 않음
+          historyLiveIds?.add(messageId);
+
           const isNew = !seenMessageIdsRef.current.has(messageId);
 
           seenMessageIdsRef.current.add(messageId);
@@ -356,101 +483,177 @@ export default function ChatRoomPage({ user, onNotice }) {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
-    // Vite의 /ws 프록시를 통해 Spring에 연결
+    let stopped = false;
+    let hasConnected = false;
+    let recoveryNoticeTimer = null;
+    let authRetryTimer = null;
+
+    function clearRecoveryNotice() {
+      window.clearTimeout(recoveryNoticeTimer);
+      recoveryNoticeTimer = null;
+    }
+
+    function beginRecovery() {
+      if (!active || stopped) return;
+
+      // 이전 연결에서 시작한 이력 조회 결과는 반영하지 않음
+      historyRequestId += 1;
+      historyLiveIds = null;
+
+      window.clearTimeout(historyRetryTimer);
+      historyRetryTimer = null;
+
+      stopPresence();
+      setConnected(false);
+      setReconnecting(true);
+
+      // 짧은 자동 복구 중에는 오류를 표시하지 않음
+      if (recoveryNoticeTimer === null) {
+        recoveryNoticeTimer = window.setTimeout(() => {
+          recoveryNoticeTimer = null;
+
+          if (!active || stopped || client.connected) return;
+
+          setLoading(false);
+          setError(
+            "채팅 연결을 복구하고 있어요. 네트워크 상태를 확인해 주세요.",
+          );
+        }, 15000);
+      }
+    }
+
+    function stopWithError(message) {
+      historyRequestId += 1;
+      historyLiveIds = null;
+      window.clearTimeout(historyRetryTimer);
+      stopped = true;
+
+      clearRecoveryNotice();
+      window.clearTimeout(authRetryTimer);
+
+      stopPresence();
+      setConnected(false);
+      setReconnecting(false);
+      setLoading(false);
+      setError(message);
+
+      void client.deactivate();
+    }
+
     const client = new Client({
       brokerURL: useSecondServer
         ? import.meta.env.VITE_WS_SECONDARY_URL
         : `${protocol}//${window.location.host}/ws`,
-      reconnectDelay: 0,
+
+      reconnectDelay: 2000,
       connectionTimeout: 5000,
 
       beforeConnect: async () => {
-        if (!active) return;
+        if (!active || stopped) {
+          void client.deactivate();
+          return;
+        }
 
-        setConnected(false);
-        setLoading(true);
-        setError("");
-        setMessages([]);
-        setNextCursor(null);
-        setHasNext(false);
-        setLoadingOlder(false);
-        initialScrollDoneRef.current = false;
-        historyAnchorRef.current = null;
-        followBottomRef.current = true;
-        seenMessageIdsRef.current.clear();
-        setIsAwayFromBottom(false);
-        setNewMessageCount(0);
+        if (!hasConnected) {
+          setLoading(true);
+        }
+
         try {
+          // 액세스 토큰이 만료됐다면 기존 refresh 흐름으로 갱신
           const me = await authApi.restore();
 
-          if (!active) {
+          if (!active || stopped) {
             void client.deactivate();
             return;
           }
 
           if (!me || String(me.id) !== String(user.id)) {
-            setConnected(false);
-            setLoading(false);
-            setError(
-              "로그인 상태가 변경되었습니다. 페이지를 새로고침해 주세요.",
+            stopWithError(
+              "로그인 상태가 변경되었습니다. 다시 로그인해 주세요.",
             );
+            return;
+          }
 
+          // 재연결 전에 강퇴·방 삭제 등 접근 권한도 확인
+          const latestRoom = await getJson(`/api/chat/rooms/${roomId}`);
+
+          if (!active || stopped) {
             void client.deactivate();
             return;
           }
-        } catch {
-          if (active) {
-            setConnected(false);
-            setLoading(false);
-            setError("로그인 상태를 확인하지 못했습니다. 다시 시도해 주세요.");
+
+          setRoom(latestRoom);
+        } catch (err) {
+          if (!active || stopped || controller.signal.aborted) return;
+
+          const status = err.status ?? err.cause?.status;
+
+          if (status === 401) {
+            stopWithError("로그인이 만료되었습니다. 다시 로그인해 주세요.");
+            return;
           }
 
-          void client.deactivate();
+          if (status === 403 || status === 404) {
+            stopWithError(
+              "이 채팅방에 접근할 수 없습니다. 참여 상태를 확인해 주세요.",
+            );
+            return;
+          }
+
+          // 인증 서버의 일시적 장애도 자동 재시도
+          beginRecovery();
+
+          void client.deactivate().then(() => {
+            if (!active || stopped) return;
+
+            window.clearTimeout(authRetryTimer);
+            authRetryTimer = window.setTimeout(() => {
+              if (active && !stopped) {
+                client.activate();
+              }
+            }, 3000);
+          });
         }
       },
+
       onConnect: () => {
-        if (!active) return;
-        void getJson(`/api/chat/rooms/${roomId}`)
-          .then((latestRoom) => {
-            if (active) setRoom(latestRoom);
-          })
-          .catch(showError);
+        if (!active || stopped) {
+          void client.deactivate();
+          return;
+        }
+
+        hasConnected = true;
+        clearRecoveryNotice();
 
         client.subscribe("/user/queue/chat", receiveMessage);
 
         setConnected(true);
+        setReconnecting(false);
         setError("");
 
         startPresence(client);
-        loadHistory();
+
+        // 연결이 끊긴 동안의 최근 대화도 다시 조회
+        void loadHistory();
       },
 
       onStompError: () => {
-        if (!active) return;
-        stopPresence();
-        setConnected(false);
-        setLoading(false);
-        setError(
-          "서버가 요청을 거절했습니다. 다시 연결 후에도 반복되면 방 이용 권한을 확인해 주세요.",
-        );
+        if (!active || stopped) return;
 
-        void client.deactivate();
+        beginRecovery();
+
+        // deactivate와 달리 자동 재연결을 유지
+        client.forceDisconnect();
       },
 
       onWebSocketError: () => {
-        if (active) {
-          setError("채팅 서버에 연결하지 못했습니다.");
-        }
+        if (!active || stopped) return;
+        beginRecovery();
       },
 
       onWebSocketClose: () => {
-        if (!active) return;
-        stopPresence();
-        setConnected(false);
-        setLoading(false);
-        setError(
-          (current) => current || "연결이 종료되었습니다. 다시 연결해 주세요.",
-        );
+        if (!active || stopped) return;
+        beginRecovery();
       },
     });
 
@@ -459,9 +662,22 @@ export default function ChatRoomPage({ user, onNotice }) {
 
     return () => {
       active = false;
+      stopped = true;
+
+      historyRequestId += 1;
+      historyLiveIds = null;
+      window.clearTimeout(historyRetryTimer);
+
+      clearRecoveryNotice();
+      window.clearTimeout(authRetryTimer);
+
       stopPresence();
       controller.abort();
-      clientRef.current = null;
+
+      if (clientRef.current === client) {
+        clientRef.current = null;
+      }
+
       void client.deactivate();
     };
   }, [
@@ -666,7 +882,11 @@ export default function ChatRoomPage({ user, onNotice }) {
     if (!text) return;
 
     if (!connected || !client?.connected) {
-      setError("채팅 서버 연결을 확인해 주세요.");
+      if (!reconnecting) {
+        setError("채팅 서버 연결을 확인해 주세요.");
+      }
+
+      // 입력한 내용은 그대로 유지
       return;
     }
 
@@ -714,7 +934,8 @@ export default function ChatRoomPage({ user, onNotice }) {
             <div>
               <h1>{room?.roomName ?? "채팅방"}</h1>
               <p>
-                {user.nickname}님 · {connected ? "연결됨" : "연결 안 됨"}
+                {user.nickname}님
+                {connected ? " · 연결됨" : reconnecting ? "" : " · 연결 안 됨"}
               </p>
             </div>
 
@@ -771,7 +992,7 @@ export default function ChatRoomPage({ user, onNotice }) {
           {loading && <p role="status">대화를 불러오는 중입니다.</p>}
           {error && <p role="alert">{error}</p>}
 
-          {!connected && !loading && (
+          {!connected && !loading && !reconnecting && (
             <Button
               variant="outline"
               onClick={() => {
@@ -1045,12 +1266,14 @@ export default function ChatRoomPage({ user, onNotice }) {
             className="chat-input"
             aria-label="채팅 메시지"
             placeholder={
-              connected ? "메시지를 입력하세요" : "채팅 연결을 확인해 주세요"
+              connected || reconnecting
+                ? "메시지를 입력하세요"
+                : "채팅 연결을 확인해 주세요"
             }
             value={content}
             onChange={(event) => setContent(event.target.value)}
             maxLength={2000}
-            disabled={!connected || leaving}
+            disabled={leaving || (!connected && !reconnecting)}
           />
 
           <Button

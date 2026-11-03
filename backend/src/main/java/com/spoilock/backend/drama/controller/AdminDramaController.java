@@ -68,5 +68,11 @@ public class AdminDramaController {
         return adminDramaService.hide(dramaId);
     }
 
+    @DeleteMapping("/{dramaId}")
+    public AdminDramaResponse delete(
+            @PathVariable("dramaId") Long dramaId
+    ){
+        return adminDramaService.delete(dramaId);
+    }
 
 }

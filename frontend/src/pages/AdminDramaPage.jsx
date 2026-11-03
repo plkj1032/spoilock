@@ -3,6 +3,7 @@ import { adminDramaApi } from "../api/adminDramaApi";
 import { Link } from "react-router-dom";
 import "../styles/AdminDramaPage.css";
 import "../styles/AdminCenter.css";
+import "../styles/AdminDramaDeletion.css";
 import AdminDramaMetadataFields from "../components/admin/AdminDramaMetadataFields";
 import AdminEpisodeUpload from "../components/admin/AdminEpisodeUpload";
 
@@ -116,6 +117,17 @@ export default function AdminDramaPage() {
 
     try {
       const detail = await adminDramaApi.getDetail(id);
+
+      if (detail.status === "DELETED") {
+        setDramas((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, status: "DELETED" } : item,
+          ),
+        );
+
+        setError("이미 삭제된 작품입니다.");
+        return;
+      }
 
       setEditingId(detail.id);
       setExistingEpisodeCount(detail.episodes.length);
@@ -299,6 +311,44 @@ export default function AdminDramaPage() {
       setMessage(`${updated.title} 작품을 숨겼습니다.`);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setProcessingId(null);
+    }
+  }
+  async function deleteDrama(drama) {
+    if (busy || processingId !== null || drama.status === "DELETED") {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `"${drama.title}" 작품을 삭제 처리할까요?\n\n` +
+        "일반 작품 목록과 영상 시청에서 제외됩니다.\n" +
+        "영상·자막·게시글·채팅·시청 기록은 보관됩니다.\n" +
+        "삭제된 작품은 현재 화면에서 다시 공개할 수 없습니다.",
+    );
+
+    if (!confirmed) return;
+
+    clearMessages();
+    setProcessingId(drama.id);
+
+    try {
+      const updated = await adminDramaApi.deleteDrama(drama.id);
+
+      setDramas((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+
+      if (editingId === updated.id) {
+        resetForm();
+      }
+
+      setActiveTab("list");
+      setMessage(
+        `"${updated.title}" 작품을 삭제 처리했습니다. 관련 데이터는 보관됩니다.`,
+      );
+    } catch (err) {
+      setError(err.message || "작품 삭제 처리에 실패했습니다.");
     } finally {
       setProcessingId(null);
     }
@@ -532,61 +582,118 @@ export default function AdminDramaPage() {
             <p className="page-subtitle">등록된 작품이 없습니다.</p>
           ) : (
             <div className="admin-drama-list">
-              {dramas.map((drama) => (
-                <div className="admin-drama-item" key={drama.id}>
-                  <div>
-                    <strong>{drama.title}</strong>
-                    <p className="page-subtitle">
-                      #{drama.id} · 총 {drama.totalEpisodeCount}화
-                    </p>
-                    <span className="admin-status">
-                      {drama.status === "DRAFT"
-                        ? "초안"
-                        : drama.status === "PUBLISHED"
-                          ? "공개"
-                          : "숨김"}
-                    </span>
-                  </div>
+              {dramas.map((drama) => {
+                const deleted = drama.status === "DELETED";
+                const processing = processingId === drama.id;
+                const actionsDisabled = busy || processingId !== null;
 
-                  <div className="admin-item-actions">
-                    <Link
-                      to={`/admin/dramas/${drama.id}/subtitles`}
-                      className="button button-outline"
-                    >
-                      자막 · AI 관리
-                    </Link>
+                const statusLabel =
+                  {
+                    DRAFT: "초안",
+                    PUBLISHED: "공개",
+                    HIDDEN: "숨김",
+                    DELETED: "삭제된 작품",
+                  }[drama.status] ?? drama.status;
 
-                    <button
-                      type="button"
-                      className="button button-outline"
-                      onClick={() => startEditing(drama.id)}
-                      disabled={busy || processingId !== null}
-                    >
-                      수정
-                    </button>
+                return (
+                  <div
+                    className={`admin-drama-item ${
+                      deleted ? "admin-drama-item--deleted" : ""
+                    }`}
+                    key={drama.id}
+                  >
+                    <div>
+                      <strong>{drama.title}</strong>
 
-                    {drama.status !== "PUBLISHED" ? (
-                      <button
-                        type="button"
-                        className="button button-primary"
-                        onClick={() => publishDrama(drama.id)}
-                        disabled={busy || processingId !== null}
+                      <p className="page-subtitle">
+                        #{drama.id} · 총 {drama.totalEpisodeCount}화
+                      </p>
+
+                      <span
+                        className={`admin-status ${
+                          deleted ? "admin-status--deleted" : ""
+                        }`}
                       >
-                        {processingId === drama.id ? "처리 중..." : "공개"}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="button button-outline"
-                        onClick={() => hideDrama(drama.id)}
-                        disabled={busy || processingId !== null}
-                      >
-                        숨기기
-                      </button>
+                        {statusLabel}
+                      </span>
+
+                      {deleted && (
+                        <p className="admin-deleted-description">
+                          관련 데이터는 보관되며, 작품 수정과 공개는 제한됩니다.
+                        </p>
+                      )}
+                    </div>
+
+                    {!deleted && (
+                      <div className="admin-item-actions">
+                        {actionsDisabled ? (
+                          <button
+                            type="button"
+                            className="button button-outline"
+                            disabled
+                          >
+                            자막 · AI 관리
+                          </button>
+                        ) : (
+                          <Link
+                            to={`/admin/dramas/${drama.id}/subtitles`}
+                            className="button button-outline"
+                          >
+                            자막 · AI 관리
+                          </Link>
+                        )}
+
+                        <button
+                          type="button"
+                          className="button button-outline"
+                          onClick={() => startEditing(drama.id)}
+                          disabled={actionsDisabled}
+                        >
+                          수정
+                        </button>
+
+                        {drama.status === "PUBLISHED" ? (
+                          <button
+                            type="button"
+                            className="button button-outline"
+                            onClick={() => hideDrama(drama.id)}
+                            disabled={actionsDisabled}
+                          >
+                            숨기기
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="button button-primary"
+                            onClick={() => publishDrama(drama.id)}
+                            disabled={actionsDisabled}
+                          >
+                            공개
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          className="button button-outline admin-drama-delete"
+                          onClick={() => deleteDrama(drama)}
+                          disabled={actionsDisabled}
+                        >
+                          삭제
+                        </button>
+
+                        {processing && (
+                          <span
+                            className="admin-drama-processing"
+                            role="status"
+                          >
+                            처리 중…
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

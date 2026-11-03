@@ -117,17 +117,13 @@ public class AdminDramaService {
         return AdminDramaResponse.from(savedDrama);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AdminDramaResponse publish(Long dramaId) {
+        Drama drama = findLockedDrama(dramaId);
+        requireNotDeleted(drama);
 
-        Drama drama = dramaRepository.findById(dramaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "드라마를 찾을 수 없습니다."
-                ));
-
-        List<Integer> numbers = episodeRepository
-                .findByDrama_IdOrderByEpisodeNumberAsc(dramaId)
+        List<Integer> numbers = dramaQueryRepository
+                .findEpisodesForEdit(dramaId)
                 .stream()
                 .map(Episode::getEpisodeNumber)
                 .toList();
@@ -189,11 +185,8 @@ public class AdminDramaService {
             Long dramaId,
             CreateDramaRequest request
     ) {
-        Drama drama = dramaQueryRepository.findLockedForEdit(dramaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "드라마를 찾을 수 없습니다."
-                ));
+        Drama drama = findLockedDrama(dramaId);
+        requireNotDeleted(drama);
 
         String title = request.title().trim();
 
@@ -272,9 +265,10 @@ public class AdminDramaService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AdminDramaResponse hide(Long dramaId) {
-        Drama drama = findDrama(dramaId);
+        Drama drama = findLockedDrama(dramaId);
+        requireNotDeleted(drama);
 
         if (drama.getStatus() != DramaStatus.PUBLISHED) {
             throw new ResponseStatusException(
@@ -294,5 +288,27 @@ public class AdminDramaService {
                         HttpStatus.NOT_FOUND,
                         "드라마를 찾을 수 없습니다."
                 ));
+    }
+    private Drama findLockedDrama(Long dramaId) {
+        return dramaQueryRepository.findLockedForEdit(dramaId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "드라마를 찾을 수가 없습니다."
+                ));
+    }
+    private void requireNotDeleted(Drama drama) {
+        if(drama.isDeleted()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "삭제된 작품은 수정하거나 다시 공개할 수 없습니다."
+            );
+        }
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public AdminDramaResponse delete(Long dramaId) {
+        Drama drama = findLockedDrama(dramaId);
+        drama.markDeleted();
+        return AdminDramaResponse.from(drama);
     }
 }

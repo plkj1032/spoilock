@@ -57,6 +57,13 @@ export const adminSubtitleApi = {
     });
   },
 
+  deleteSubtitle(episodeId) {
+    return apiRequest(`/api/admin/episodes/${episodeId}/subtitles`, {
+      method: "DELETE",
+      retryOn401: true,
+    });
+  },
+
   // verificationStatus: VERIFIED(승인, firstRevealEpisode 필수) / REJECTED(반려) / PENDING(대기로)
   reviewEvent(eventId, verificationStatus, firstRevealEpisode = null) {
     return apiRequest(

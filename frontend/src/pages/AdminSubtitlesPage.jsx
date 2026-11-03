@@ -357,31 +357,34 @@ function AdminSubtitlesContent({ dramaId }) {
     }
   }
 
-  // ==========================================
-  // 14-1. 등록된 자막 삭제 (교체용)
-  //      분석 서버와 무관하게 동작. 이미 등록된 사건은 그대로 유지
-  // ==========================================
   async function deleteSubtitle() {
-    if (!episodeId || busy || loadingDetails || !analysis?.subtitleFilename) {
+    if (
+      !episodeId ||
+      busy ||
+      loadingDetails ||
+      analysisActive ||
+      !analysis?.subtitleFilename
+    ) {
       return;
     }
 
     const confirmed = window.confirm(
-      "등록된 자막을 삭제하시겠습니까?\n" +
-        "이미 분석으로 등록된 사건은 그대로 남습니다. " +
-        "새 자막으로 다시 분석하려면 업로드 후 '기존 사건 교체'를 선택해 주세요.",
+      "등록된 자막을 삭제할까요?\n\n" +
+        "삭제 후 새 자막을 업로드할 수 있습니다.\n" +
+        "기존 분석 사건은 삭제되지 않습니다.",
     );
 
     if (!confirmed) return;
 
     const result = await perform(
       () => adminSubtitleApi.deleteSubtitle(episodeId),
-      "등록된 자막을 삭제했습니다. 새 자막 파일을 업로드할 수 있습니다.",
+      "자막을 삭제했습니다. 새 파일을 선택해서 업로드해 주세요.",
     );
 
     if (result) {
       setAnalysis(result);
       resetFileInput();
+      setReplaceExisting(events.length > 0);
     }
   }
 
@@ -494,6 +497,7 @@ function AdminSubtitlesContent({ dramaId }) {
   const canChooseFile =
     !busy &&
     !loadingDetails &&
+    !analysisActive &&
     Boolean(analysis) &&
     !analysis?.subtitleFilename;
 
@@ -709,20 +713,25 @@ function AdminSubtitlesContent({ dramaId }) {
                   SRT 형식 · UTF-8 · 최대 2MB
                 </span>
 
-                {!loadingDetails && analysis?.subtitleFilename && (
-                  <button
-                    type="button"
-                    className="admin-subtitles__button admin-subtitles__button--danger"
-                    disabled={!canDeleteSubtitle}
-                    onClick={deleteSubtitle}
-                    title={
-                      analysisActive
-                        ? "분석이 진행 중일 때는 삭제할 수 없습니다."
-                        : undefined
-                    }
-                  >
-                    자막 삭제
-                  </button>
+                {analysis?.subtitleFilename && (
+                  <>
+                    <div className="admin-subtitles__actions">
+                      <button
+                        type="button"
+                        className="admin-subtitles__button admin-subtitles__button--outline"
+                        disabled={busy || loadingDetails || analysisActive}
+                        onClick={deleteSubtitle}
+                      >
+                        {busy ? "처리 중..." : "자막 삭제"}
+                      </button>
+                    </div>
+
+                    <span className="admin-subtitles__muted">
+                      {analysisActive
+                        ? "분석이 진행 중일 때는 자막을 삭제하거나 교체할 수 없습니다."
+                        : "재업로드하려면 기존 자막을 삭제한 뒤 새 파일을 첨부해 주세요."}
+                    </span>
+                  </>
                 )}
               </div>
 
