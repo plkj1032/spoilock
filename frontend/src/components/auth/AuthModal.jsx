@@ -8,6 +8,7 @@ import Button from "../common/Button";
 
 import "../../styles/AuthModal.css";
 import "../../styles/Modal.css";
+import Modal from "../common/Modal";
 
 function normalizeEmail(value) {
   return value.trim().toLowerCase();
@@ -488,12 +489,11 @@ export default function AuthModal({
   // 18. JSX
   // ==========================================
   return (
-    <div
+    <Modal
+      as="div"
       className="modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !actionBusy) {
-          onClose();
-        }
+      onDismiss={() => {
+        if (!actionBusy) onClose();
       }}
     >
       <section
@@ -915,6 +915,6 @@ export default function AuthModal({
           </button>
         </p>
       </section>
-    </div>
+    </Modal>
   );
 }

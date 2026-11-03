@@ -127,6 +127,22 @@
   font-size: 18px;
   line-height: 10px;
 }
+/* 모든 카드의 포스터 영역을 세로 2:3으로 통일 */
+.drama-card .drama-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
+}
+
+.drama-card .drama-cover .drama-poster {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
 
 @media (max-width: 570px) {
   .drama-cover {

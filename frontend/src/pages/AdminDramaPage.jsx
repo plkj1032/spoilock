@@ -6,6 +6,7 @@ import "../styles/AdminCenter.css";
 import "../styles/AdminDramaDeletion.css";
 import AdminDramaMetadataFields from "../components/admin/AdminDramaMetadataFields";
 import AdminEpisodeUpload from "../components/admin/AdminEpisodeUpload";
+import PosterPreview from "../components/admin/PosterPreview";
 
 const pioneerEpisodes = Array.from({ length: 6 }, (_, i) => ({
   episodeNumber: i + 1,
@@ -446,18 +447,23 @@ export default function AdminDramaPage() {
 
           <div className="admin-field">
             <label htmlFor="drama-poster">포스터 URL (선택)</label>
+
             <input
               id="drama-poster"
               type="url"
               maxLength={1000}
               value={posterUrl}
-              onChange={(e) => setPosterUrl(e.target.value)}
+              onChange={(event) => setPosterUrl(event.target.value)}
               placeholder="https://..."
+              disabled={busy}
             />
+
             <small>
-              이미지 사용권한을 확인한 경우에만 입력하세요. 비워두면 기본 카드
-              이미지가 표시됩니다.
+              세로 2:3 비율의 이미지를 권장합니다. 이미지 사용권한을 확인한
+              경우에만 입력하세요. 비워두면 기본 카드 이미지가 표시됩니다.
             </small>
+
+            <PosterPreview url={posterUrl} title={title} />
           </div>
 
           <AdminDramaMetadataFields

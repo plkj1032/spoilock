@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,8 +68,10 @@ public class FeedSocialService {
                         )
                 );
 
+        // 삭제·숨김 처리된 작품의 피드는 목록에 나오지 않으므로, URL 로 직접 좋아요·댓글을 달 수 없게 막음
         if (post.getParentPost() != null
-                || !ALLOWED.contains(post.getModerationStatus())) {
+                || !ALLOWED.contains(post.getModerationStatus())
+                || post.getDrama().getStatus() != DramaStatus.PUBLISHED) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
                     "피드를 찾을 수 없습니다."

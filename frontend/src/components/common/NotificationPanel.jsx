@@ -5,6 +5,7 @@ import ChatReportReviewModal from "../chat/ChatReportReviewModal";
 import { useNavigate } from "react-router-dom";
 import { chatInvitationApi } from "../../api/chatInvitationApi";
 import "../../styles/NotificationInvitation.css";
+import Modal from "./Modal";
 
 const notificationTitles = {
   CHAT_REPORT_RECEIVED: "🚨 신고 접수 안내",
@@ -312,7 +313,7 @@ export default function NotificationPanel({ onClose, onRead }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="notification-dialog"
       aria-labelledby={titleId}
@@ -520,7 +521,7 @@ export default function NotificationPanel({ onClose, onRead }) {
           }}
         />
       )}
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

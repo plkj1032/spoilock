@@ -6,6 +6,7 @@ import FollowButton from "../common/FollowButton";
 import "../../styles/ChatMemberPanel.css";
 import "../../styles/ChatMemberActions.css";
 import "../../styles/ChatMemberOwner.css";
+import Modal from "../common/Modal";
 
 export default function ChatMemberPanel({
   roomType,
@@ -183,7 +184,7 @@ export default function ChatMemberPanel({
   // 참여자 모달
   // =============================================
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="chat-member-dialog"
       aria-labelledby={titleId}
@@ -284,7 +285,7 @@ export default function ChatMemberPanel({
           </p>
         )}
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

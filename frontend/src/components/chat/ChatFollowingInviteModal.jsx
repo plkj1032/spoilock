@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { chatInvitationApi } from "../../api/chatInvitationApi";
 import "../../styles/ChatFollowingInviteModal.css";
 import ChatInviteLinkPanel from "./ChatInviteLinkPanel";
+import Modal from "../common/Modal";
 
 const STATUS_LABELS = {
   AVAILABLE: "초대 보내기",
@@ -149,7 +150,7 @@ export default function ChatFollowingInviteModal({
 
   const busy = sendingId !== null || linkBusy;
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="following-invite-dialog"
       aria-labelledby={titleId}
@@ -301,7 +302,7 @@ export default function ChatFollowingInviteModal({
           {onEnter ? "채팅방 입장" : "완료"}
         </button>
       </footer>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

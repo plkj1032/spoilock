@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { chatApi } from "../../api/chatApi";
 
 import "../../styles/ChatOwnershipModal.css";
+import Modal from "../common/Modal";
 
 export default function ChatOwnershipModal({
   roomId,
@@ -132,7 +133,7 @@ export default function ChatOwnershipModal({
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="chat-owner-dialog"
       aria-labelledby={titleId}
@@ -260,7 +261,7 @@ export default function ChatOwnershipModal({
               : "위임하고 나가기"}
         </button>
       </footer>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

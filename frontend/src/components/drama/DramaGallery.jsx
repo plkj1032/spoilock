@@ -5,6 +5,7 @@ import Button from "../common/Button";
 
 import "../../styles/DramaGallery.css";
 import "../../styles/Modal.css";
+import Modal from "../common/Modal";
 
 export default function DramaGallery({
   user,
@@ -197,7 +198,7 @@ export default function DramaGallery({
       )}
 
       {selectedDrama && (
-        <div className="modal-backdrop">
+        <Modal as="div" className="modal-backdrop" onDismiss={closeProgress}>
           <section
             className="auth-dialog progress-dialog"
             role="dialog"
@@ -283,7 +284,7 @@ export default function DramaGallery({
               </>
             )}
           </section>
-        </div>
+        </Modal>
       )}
     </>
   );

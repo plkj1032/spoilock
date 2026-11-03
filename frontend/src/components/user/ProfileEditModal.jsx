@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import "../../styles/ProfileEditModal.css";
+import Modal from "../common/Modal";
 
 export default function ProfileEditModal({
   email,
@@ -34,7 +35,7 @@ export default function ProfileEditModal({
   }, []);
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="profile-edit-dialog"
       aria-labelledby={titleId}
@@ -123,7 +124,7 @@ export default function ProfileEditModal({
           </button>
         </footer>
       </form>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }
