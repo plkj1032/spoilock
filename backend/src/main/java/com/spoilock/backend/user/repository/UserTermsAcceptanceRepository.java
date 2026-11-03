@@ -5,4 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserTermsAcceptanceRepository
     extends JpaRepository<UserTermsAcceptance, Long> {
+
+    boolean existsByUser_IdAndTermsDocument_Id(
+            Long userId,
+            Long termsDocumentId
+    );
+
 }

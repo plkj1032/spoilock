@@ -35,6 +35,9 @@ public class AuthService {
     // 신규: 이메일 인증 서비스
     private final EmailVerificationService emailVerificationService;
 
+    // 닉네임 욕설 방지
+    private final NicknamePolicy nicknamePolicy;
+
     // ==============================================
     // 1. 회원가입
     // ==============================================
@@ -129,24 +132,7 @@ public class AuthService {
     }
 
     private String normalizeNickname(String nickname) {
-
-        if (nickname == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "닉네임을 입력해주세요."
-            );
-        }
-
-        String result = nickname.trim();
-
-        if (result.length() < 2 || result.length() > 20) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "닉네임은 2~20자로 입력해주세요."
-            );
-        }
-
-        return result;
+        return nicknamePolicy.normalize(nickname);
     }
 
     // ==============================================

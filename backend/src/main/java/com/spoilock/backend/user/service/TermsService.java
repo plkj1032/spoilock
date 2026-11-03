@@ -224,24 +224,74 @@ public class TermsService {
     }
 
     // ==========================================
-    // 6. 회원가입 필수 약관 검증 + 동의 저장
-    // AuthService.signUp 트랜잭션에서 호출
+    // 6. 기존 일반 회원가입 약관 동의
     // ==========================================
     @Transactional
     public void recordSignupAcceptances(
             User user,
             List<Long> acceptedIds
     ) {
+        recordAcceptances(user, acceptedIds, "LOCAL");
+    }
+
+    // ==========================================
+    // 7. 카카오 회원 약관 동의
+    // ==========================================
+    @Transactional
+    public void recordKakaoAcceptances(
+            User user,
+            List<Long> acceptedIds
+    ) {
+        recordAcceptances(user, acceptedIds, "KAKAO");
+    }
+
+    // ==========================================
+    // 8. 현재 필수 약관 동의 여부
+    // ==========================================
+    @Transactional(readOnly = true)
+    public boolean hasAcceptedRequiredTerms(User user) {
+
         List<TermsDocument> current = currentDocuments();
 
-        // 이용약관 자체가 아직 게시되지 않았다면
-        // 회원가입을 진행하지 않음
-        boolean hasTerms = current.stream()
+        boolean hasServiceTerms = current.stream()
                 .anyMatch(doc ->
                         "TERMS".equals(doc.getTermsType())
                 );
 
-        if (!hasTerms) {
+        if (!hasServiceTerms) {
+            return false;
+        }
+
+        return current.stream()
+                .filter(doc -> doc.isRequired()
+                        && !"PRIVACY_NOTICE".equals(
+                        doc.getTermsType()
+                ))
+                .allMatch(doc ->
+                        acceptanceRepository
+                                .existsByUser_IdAndTermsDocument_Id(
+                                        user.getId(),
+                                        doc.getId()
+                                )
+                );
+    }
+
+    // ==========================================
+    // 9. 공통 약관 검증 + 동의 기록
+    // ==========================================
+    private void recordAcceptances(
+            User user,
+            List<Long> acceptedIds,
+            String source
+    ) {
+        List<TermsDocument> current = currentDocuments();
+
+        boolean hasServiceTerms = current.stream()
+                .anyMatch(doc ->
+                        "TERMS".equals(doc.getTermsType())
+                );
+
+        if (!hasServiceTerms) {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "이용약관이 아직 게시되지 않았습니다."
@@ -256,20 +306,19 @@ public class TermsService {
                 .filter(doc ->
                         !"PRIVACY_NOTICE".equals(
                                 doc.getTermsType()
-                        )
-                )
+                        ))
                 .map(TermsDocument::getId)
                 .collect(Collectors.toSet());
 
-        // 임의 약관 ID, 과거 버전 동의 차단
         if (!allowedIds.containsAll(selected)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "약관이 변경되었습니다. 다시 확인해주세요."
+                    "약관이 변경되었습니다. 다시 확인해 주세요."
             );
         }
 
         for (TermsDocument document : current) {
+
             if ("PRIVACY_NOTICE".equals(
                     document.getTermsType()
             )) {
@@ -280,16 +329,26 @@ public class TermsService {
                     && !selected.contains(document.getId())) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "필수 이용약관에 동의해주세요."
+                        "필수 이용약관에 동의해 주세요."
                 );
             }
 
-            if (selected.contains(document.getId())) {
+            if (!selected.contains(document.getId())) {
+                continue;
+            }
+
+            boolean alreadyAccepted = acceptanceRepository
+                    .existsByUser_IdAndTermsDocument_Id(
+                            user.getId(),
+                            document.getId()
+                    );
+
+            if (!alreadyAccepted) {
                 acceptanceRepository.save(
                         UserTermsAcceptance.create(
                                 user,
                                 document,
-                                "LOCAL"
+                                source
                         )
                 );
             }

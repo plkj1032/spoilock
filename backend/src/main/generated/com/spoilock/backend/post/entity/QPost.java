@@ -24,6 +24,12 @@ public class QPost extends EntityPathBase<Post> {
 
     public final com.spoilock.backend.common.entity.QAuditedEntity _super = new com.spoilock.backend.common.entity.QAuditedEntity(this);
 
+    public final NumberPath<Integer> analysisAttempts = createNumber("analysisAttempts", Integer.class);
+
+    public final DateTimePath<java.time.LocalDateTime> analysisRetryAt = createDateTime("analysisRetryAt", java.time.LocalDateTime.class);
+
+    public final DateTimePath<java.time.LocalDateTime> analysisStartedAt = createDateTime("analysisStartedAt", java.time.LocalDateTime.class);
+
     public final EnumPath<com.spoilock.backend.common.enums.AnalysisStatus> analysisStatus = createEnum("analysisStatus", com.spoilock.backend.common.enums.AnalysisStatus.class);
 
     public final StringPath content = createString("content");
@@ -40,6 +46,8 @@ public class QPost extends EntityPathBase<Post> {
     public final QPost parentPost;
 
     public final NumberPath<Integer> requiredEpisodeNumber = createNumber("requiredEpisodeNumber", Integer.class);
+
+    public final BooleanPath requiredUntilFinale = createBoolean("requiredUntilFinale");
 
     public final StringPath title = createString("title");
 
