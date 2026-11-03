@@ -58,6 +58,11 @@ public class ChatMessage extends CreatedAtEntity {
     @Column(name = "required_episode_number")
     private Integer requiredEpisodeNumber;
 
+    // 메시지를 작성한 시점의 진도.
+    // 기존 메시지와 시스템 메시지는 null일 수 있음.
+    @Column(name = "author_watched_episode_number")
+    private Integer authorWatchedEpisodeNumber;
+
     // 마지막 회차 기준 공개 여부
     @Column(name = "required_until_finale", nullable = false)
     private boolean requiredUntilFinale = false;
@@ -131,12 +136,21 @@ public class ChatMessage extends CreatedAtEntity {
     public static ChatMessage createChat(
             ChatRoom room,
             User user,
-            String content){
+            String content,
+            int authorWatchedEpisodeNumber
+    ) {
+        if (authorWatchedEpisodeNumber < 0) {
+            throw new IllegalArgumentException(
+                    "작성자 시청 진도는 0 이상이어야 합니다."
+            );
+        }
+
         ChatMessage message = new ChatMessage();
 
         message.room = room;
         message.user = user;
         message.content = content;
+        message.authorWatchedEpisodeNumber = authorWatchedEpisodeNumber;
         message.messageType = MessageType.CHAT;
         message.analysisStatus = AnalysisStatus.PENDING;
 

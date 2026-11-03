@@ -1,14 +1,18 @@
 package com.spoilock.backend.ai.service;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.spoilock.backend.chat.domain.entity.QChatMessage.chatMessage;
 
 /**
  * 글 작성자의 시청 진도 (추측성 글 판단용).
@@ -21,20 +25,27 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthorProgressService {
+
+    private final JPAQueryFactory queryFactory;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public Integer forChatMessage(Long messageId, Long dramaId) {
-        return find("""
-                select up.watchedEpisodeNumber
-                  from ChatMessage m, UserProgress up
-                 where m.id = :id
-                   and up.user = m.user
-                   and up.drama.id = :dramaId
-                """, messageId, dramaId);
+        if (messageId == null || dramaId == null) {
+        return null;
+        }
+        return queryFactory
+                .select(chatMessage.authorWatchedEpisodeNumber)
+                .from(chatMessage)
+                .where(
+                        chatMessage.id.eq(messageId),
+                        chatMessage.room.drama.id.eq(dramaId)
+                )
+                .fetchOne();
     }
 
     /** 게시글·댓글 (댓글의 dramaId 는 원글의 작품) */

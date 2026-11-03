@@ -54,7 +54,10 @@ public record SpoilerJudgeResponse(
 
         // VERIFIED_FIRST_REVEAL / UNVERIFIED_SOURCE_EPISODE_FOR_DEMO_ONLY / null
         @JsonProperty("guess_basis")
-        String guessBasis
+        String guessBasis,
+
+        @JsonProperty("matched_episodes")
+        List<Integer> matchedEpisodes
 ) {
 
     /** 추측 정보가 없는 응답 (이전 버전 Python 서버·테스트용) */
@@ -63,6 +66,26 @@ public record SpoilerJudgeResponse(
             String episodeBasis, Boolean needsReview, String reason, String error, Boolean aboutStory
     ) {
         this(messageId, verdict, matchedEventId, requiredEpisodeNumber, episodeBasis, needsReview,
-                reason, error, aboutStory, null, null, null);
+                reason, error, aboutStory, null, null, null, null);
+    }
+    public SpoilerJudgeResponse(
+            Long messageId,
+            String verdict,
+            String matchedEventId,
+            Integer requiredEpisodeNumber,
+            String episodeBasis,
+            Boolean needsReview,
+            String reason,
+            String error,
+            Boolean aboutStory,
+            List<String> guessEventIds,
+            List<Integer> guessEpisodes,
+            String guessBasis
+    ) {
+        this(
+                messageId, verdict, matchedEventId, requiredEpisodeNumber,
+                episodeBasis, needsReview, reason, error, aboutStory,
+                guessEventIds, guessEpisodes, guessBasis, null
+        );
     }
 }

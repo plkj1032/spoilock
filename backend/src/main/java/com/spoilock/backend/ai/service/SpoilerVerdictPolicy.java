@@ -2,6 +2,7 @@ package com.spoilock.backend.ai.service;
 
 import com.spoilock.backend.ai.client.SpoilerJudgeResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,6 +32,108 @@ public final class SpoilerVerdictPolicy {
         this.publishSkippedUnrelated = publishSkippedUnrelated;
         this.publishNoMatch = publishNoMatch;
         this.publishOffTopic = publishOffTopic;
+    }
+
+    public AnalysisDecision decideChat(
+            SpoilerJudgeResponse response,
+            List<Integer> indexedEpisodes,
+            Integer authorWatchedEpisode
+    ) {
+        if (response == null || response.verdict() == null) {
+            return AnalysisDecision.failed("빈 판정");
+        }
+
+        if ("ERROR".equals(response.verdict())) {
+            return AnalysisDecision.failed(
+                    "분석 서버 오류: " + nullToEmpty(response.error())
+            );
+        }
+
+        // 기존 메시지는 작성 당시 진도를 알 수 없음.
+        // 현재 진도를 대신 넣어서 판단하지 않음.
+        if (authorWatchedEpisode == null || authorWatchedEpisode < 0) {
+            return AnalysisDecision.hold("작성 당시 시청 진도 확인 필요");
+        }
+
+        String verdict = response.verdict();
+
+        // 회차 일치 여부 자체가 불확실한 경우는 기존 보류 정책 유지
+        if (!"MATCH".equals(verdict) && !"NO_MATCH".equals(verdict)) {
+            return decideVerdict(response, indexedEpisodes);
+        }
+
+        List<Integer> contentEpisodes = new ArrayList<>();
+
+        if ("MATCH".equals(verdict)) {
+            // 사건 ID, 검증 상태, 필요 회차가 유효한지 기존 검사 사용
+            AnalysisDecision matched = decideMatch(response, indexedEpisodes);
+
+            if (matched.failed() || !matched.publish()) {
+                return matched;
+            }
+
+            if (response.matchedEpisodes() != null
+                    && !response.matchedEpisodes().isEmpty()) {
+                contentEpisodes.addAll(response.matchedEpisodes());
+            } else {
+                // 이전 FastAPI 응답과 호환
+                contentEpisodes.add(response.requiredEpisodeNumber());
+            }
+
+            // 대표 필요 회차도 누락되지 않게 포함
+            contentEpisodes.add(response.requiredEpisodeNumber());
+        }
+
+        // 추측형이라는 이유로 제외하지 않고 같은 사건 회차로 취급
+        if (response.guessEpisodes() != null
+                && !response.guessEpisodes().isEmpty()) {
+
+            boolean unverified = response.guessBasis() == null
+                    || response.guessBasis()
+                    .startsWith(UNVERIFIED_BASIS_PREFIX);
+
+            if (unverified && !allowUnverifiedDemo) {
+                return AnalysisDecision.hold("일치 사건의 회차 검증 필요");
+            }
+
+            contentEpisodes.addAll(response.guessEpisodes());
+        }
+
+        // 일치하는 사건 회차가 없는 대화는 기존 NO_MATCH 정책 사용
+        if (contentEpisodes.isEmpty()) {
+            return decideVerdict(response, indexedEpisodes);
+        }
+
+        // 잘못된 회차를 버린 뒤 전체 공개해버리지 않도록 검사
+        if (indexedEpisodes == null
+                || contentEpisodes.stream().anyMatch(
+                episode -> episode == null
+                        || episode <= 0
+                        || !indexedEpisodes.contains(episode)
+        )) {
+            return AnalysisDecision.hold("일치 사건 회차가 유효하지 않음");
+        }
+
+        // a보다 뒤의 내용은 차단 대상에서 제외.
+        // 남은 회차 중 최대값만 저장하면 수신자 b와 비교할 수 있음.
+        Integer requiredEpisode = contentEpisodes.stream()
+                .filter(episode -> episode <= authorWatchedEpisode)
+                .max(Integer::compareTo)
+                .orElse(null);
+
+        if (requiredEpisode == null) {
+            return AnalysisDecision.publishAll(
+                    "작성 당시 진도 이후 내용: 작성자 "
+                            + authorWatchedEpisode + "화"
+            );
+        }
+
+        return AnalysisDecision.publishFrom(
+                requiredEpisode,
+                "작성 당시 진도 기준: 작성자 "
+                        + authorWatchedEpisode + "화, 공개 기준 "
+                        + requiredEpisode + "화"
+        );
     }
 
     public AnalysisDecision decide(

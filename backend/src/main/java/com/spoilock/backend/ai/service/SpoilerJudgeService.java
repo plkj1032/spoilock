@@ -114,4 +114,56 @@ public class SpoilerJudgeService {
             return AnalysisDecision.failed("호출 실패: " + e.getClass().getSimpleName());
         }
     }
+
+    public AnalysisDecision judgeChat(
+            Long messageId,
+            Long dramaId,
+            String content,
+            Integer authorWatchedEpisode
+    ) {
+        SpoilerKbService.KbLookup lookup = kbService.lookup(dramaId);
+        SpoilerApiProperties.DramaKb kb = lookup.kb();
+
+        if (lookup.noEvents()) {
+            return publishUnindexedDrama
+                    ? AnalysisDecision.publishAll(
+                    "사건 미등록 작품: 판정 대상 없음 dramaId=" + dramaId
+            )
+                    : AnalysisDecision.hold(
+                    "사건 미등록 작품 dramaId=" + dramaId
+            );
+        }
+
+        if (kb == null || kb.kbDramaId() == null
+                || kb.episodes() == null || kb.episodes().isEmpty()) {
+            return AnalysisDecision.failed(
+                    "사건 DB 조회 실패 dramaId=" + dramaId
+            );
+        }
+
+        try {
+            SpoilerJudgeResponse response = spoilerApiClient.judge(
+                    messageId,
+                    kb.kbDramaId(),
+                    content,
+                    kb.episodes()
+            );
+
+            return policy.decideChat(
+                    response,
+                    kb.episodes(),
+                    authorWatchedEpisode
+            );
+        } catch (Exception e) {
+            log.warn(
+                    "[spoiler] 채팅 분석 실패 messageId={}: {}",
+                    messageId,
+                    e.toString()
+            );
+
+            return AnalysisDecision.failed(
+                    "호출 실패: " + e.getClass().getSimpleName()
+            );
+        }
+    }
 }

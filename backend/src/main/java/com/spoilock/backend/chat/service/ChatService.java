@@ -35,6 +35,7 @@ public class ChatService {
     private final ChatRoomBanRepository chatRoomBanRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ChatOwnershipQueryRepository chatOwnershipQueryRepository;
+    private final ChatProgressQueryRepository chatProgressQueryRepository;
 
 
     @Transactional
@@ -69,11 +70,16 @@ public class ChatService {
             );
         }
 
+        int authorWatchedEpisode = chatProgressQueryRepository
+                .findWatchedEpisodeNumber(userId,room.getDrama().getId())
+                .orElse(0);
+
         ChatMessage message =
                 ChatMessage.createChat(
                         room,
                         user,
-                        content
+                        content,
+                        authorWatchedEpisode
                 );
 
         ChatMessage savedMessage =
