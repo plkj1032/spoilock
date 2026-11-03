@@ -50,11 +50,13 @@ public class ChatAnalysisStateService {
     /**
      * 분석 상태 + 정책 코드 + 처리시간 저장
      */
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean apply(
             Long messageId,
             AnalysisDecision decision,
-            long durationMs
+            long durationMs,
+            String rawVerdict
     ) {
         ChatMessage message =
                 chatMessageRepository.findById(messageId)
@@ -69,13 +71,10 @@ public class ChatAnalysisStateService {
         String outcome;
 
         if (decision.failed()) {
-
             message.failAnalysis(retryBaseDelaySeconds());
             outcome = "FAILED";
-
         } else {
 
-            // 기존 시청 진도 및 마지막 회차 공개 정책 유지
             message.completeAnalysis(
                     decision.publish(),
                     decision.requiredEpisode(),
@@ -91,20 +90,20 @@ public class ChatAnalysisStateService {
             }
         }
 
-        // 정책 사유 코드
         String policyCode =
                 AnalysisPolicyCode.from(decision).name();
 
-        // 모니터링 데이터 저장
         message.recordAnalysisMetrics(
                 outcome,
                 durationMs,
                 policyCode,
-                AnalysisPolicyDetail.from(decision)
+                AnalysisPolicyDetail.from(decision),
+                rawVerdict
         );
 
         return true;
     }
+
 
     private long retryBaseDelaySeconds() {
         SpoilerApiProperties.Recovery recovery = properties.recovery();
