@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { adminVideoApi } from "../../api/adminVideoApi";
 import FileDropInput from "../common/FileDropInput";
+import FileUploadStatus from "../common/FileUploadStatus";
+import OperationLoading from "../common/OperationLoading";
 import "../../styles/AdminEpisodeUpload.css";
 
 const MAX_SIZE = 400 * 1024 * 1024;
@@ -98,6 +100,12 @@ export default function AdminEpisodeUpload({
 
   return (
     <div className="episode-upload">
+      {uploading && (
+        <OperationLoading
+          title="회차 영상을 업로드하고 있어요"
+          description="서버 저장 결과를 확인하고 있습니다. 완료될 때까지 이 화면을 유지해 주세요."
+        />
+      )}
       {loading ? (
         <p role="status">영상 정보를 확인하고 있어요…</p>
       ) : loadError ? (
@@ -115,13 +123,12 @@ export default function AdminEpisodeUpload({
           </button>
         </>
       ) : video?.registered ? (
-        <div className="episode-upload-ready">
-          <span>✓ 영상 등록 완료</span>
-          <strong>{video.filename}</strong>
-          <small>
-            {((video.sizeBytes ?? 0) / (1024 * 1024)).toFixed(1)} MB
-          </small>
-        </div>
+        <FileUploadStatus
+          completed
+          label="영상"
+          filename={video.filename}
+          sizeBytes={video.sizeBytes}
+        />
       ) : (
         <>
           <FileDropInput

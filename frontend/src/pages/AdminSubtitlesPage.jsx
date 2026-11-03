@@ -3,8 +3,11 @@ import { Link, useParams } from "react-router-dom";
 
 import { adminDramaApi } from "../api/adminDramaApi";
 import { adminSubtitleApi } from "../api/adminSubtitleApi";
+
 import AdminEpisodeVideoPanel from "../components/admin/AdminEpisodeVideoPanel";
 import FileDropInput from "../components/common/FileDropInput";
+import FileUploadStatus from "../components/common/FileUploadStatus";
+import OperationLoading from "../components/common/OperationLoading";
 import "../styles/AdminSubtitlesPage.css";
 
 // SRT 최대 크기: 2MB
@@ -117,6 +120,8 @@ function AdminSubtitlesContent({ dramaId }) {
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [operationLabel, setOperationLabel] = useState("");
+  const [analysisPollError, setAnalysisPollError] = useState("");
 
   // 새로고침 시 재조회
   const [reloadKey, setReloadKey] = useState(0);
@@ -142,7 +147,9 @@ function AdminSubtitlesContent({ dramaId }) {
         });
 
         // 첫 번째 회차 선택
-        setEpisodeId(episodes[0]?.id ?? null);
+        setEpisodeId(
+          data.status === "DELETED" ? null : (episodes[0]?.id ?? null),
+        );
       })
       .catch((err) => {
         if (active) {
@@ -181,7 +188,8 @@ function AdminSubtitlesContent({ dramaId }) {
           setAnalysis(analysisResult.value);
         } else {
           setError(
-            analysisResult.reason?.message || "분석 정보를 불러오지 못했습니다.",
+            analysisResult.reason?.message ||
+              "분석 정보를 불러오지 못했습니다.",
           );
         }
 
@@ -221,9 +229,56 @@ function AdminSubtitlesContent({ dramaId }) {
 
   // 분석 작업이 대기·진행 중인지
   const analysisActive =
-    Boolean(analysis?.requestedAt) &&
-    (analysis?.analysisStatus === "PENDING" ||
-      analysis?.analysisStatus === "PROCESSING");
+    Boolean(analysis?.uploading) ||
+    (Boolean(analysis?.requestedAt) &&
+      (analysis?.analysisStatus === "PENDING" ||
+        analysis?.analysisStatus === "PROCESSING"));
+
+  useEffect(() => {
+    if (!episodeId || !analysisActive || busy || loadingDetails) return;
+
+    let active = true;
+    let timer = null;
+
+    async function poll() {
+      try {
+        const latest = await adminSubtitleApi.getAnalysis(episodeId);
+
+        if (!active) return;
+
+        setAnalysisPollError("");
+        setAnalysis(latest);
+
+        const stillRunning =
+          Boolean(latest.uploading) ||
+          (Boolean(latest.requestedAt) &&
+            ["PENDING", "PROCESSING"].includes(latest.analysisStatus));
+
+        if (!stillRunning) {
+          // 분석 종료 후 사건 목록도 기존 조회 흐름으로 갱신
+          setReloadKey((value) => value + 1);
+          return;
+        }
+      } catch {
+        if (!active) return;
+
+        setAnalysisPollError(
+          "최신 분석 상태를 확인하지 못했습니다. 연결을 다시 확인하고 있어요.",
+        );
+      }
+
+      if (active) {
+        timer = window.setTimeout(poll, 5000);
+      }
+    }
+
+    timer = window.setTimeout(poll, 1000);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [episodeId, analysisActive, busy, loadingDetails]);
 
   function getAnalysisLabel() {
     if (!analysis?.subtitleFilename && !analyzedByVideo) {
@@ -300,6 +355,7 @@ function AdminSubtitlesContent({ dramaId }) {
     }
 
     clearMessages();
+    setAnalysisPollError("");
 
     // 회차 선택 이벤트에서 로딩 시작
     setLoadingDetails(true);
@@ -316,26 +372,29 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 13. 공통 API 작업 처리
   // ==========================================
-  async function perform(task, successMessage) {
+  async function perform(
+    task,
+    successMessage,
+    loadingLabel = "요청을 처리하고 있어요",
+  ) {
     if (busy) return null;
 
     setBusy(true);
+    setOperationLabel(loadingLabel);
     clearMessages();
 
     try {
       const result = await task();
-
       setMessage(successMessage);
-
       return result;
     } catch (err) {
       setError(err.message);
       return null;
     } finally {
       setBusy(false);
+      setOperationLabel("");
     }
   }
-
   // ==========================================
   // 14. SRT 업로드
   // ==========================================
@@ -349,6 +408,7 @@ function AdminSubtitlesContent({ dramaId }) {
     const result = await perform(
       () => adminSubtitleApi.upload(episodeId, file),
       "자막 파일이 정상적으로 등록되었습니다.",
+      "자막을 업로드하고 있어요",
     );
 
     if (result) {
@@ -379,6 +439,7 @@ function AdminSubtitlesContent({ dramaId }) {
     const result = await perform(
       () => adminSubtitleApi.deleteSubtitle(episodeId),
       "자막을 삭제했습니다. 새 파일을 선택해서 업로드해 주세요.",
+      "자막을 삭제하고 있어요",
     );
 
     if (result) {
@@ -405,8 +466,9 @@ function AdminSubtitlesContent({ dramaId }) {
           withVideo: useVideo,
         }),
       useVideo
-        ? "자막 + 영상 분석 요청을 접수했습니다. 영상을 분석 서버로 보내는 데 몇 분 걸릴 수 있으니 새로고침으로 진행 상황을 확인해 주세요."
-        : "자막 분석을 시작했습니다. 새로고침으로 진행 상황을 확인해 주세요.",
+        ? "자막 + 영상 분석 요청을 접수했습니다."
+        : "자막 분석 요청을 접수했습니다.",
+      "분석 요청을 전달하고 있어요",
     );
 
     if (result) {
@@ -503,12 +565,12 @@ function AdminSubtitlesContent({ dramaId }) {
 
   const canUpload = canChooseFile && Boolean(file);
 
-  // 분석 대기·진행 중에는 삭제 불가 (서버도 같은 규칙)
-  const canDeleteSubtitle =
-    !busy &&
-    !loadingDetails &&
-    Boolean(analysis?.subtitleFilename) &&
-    !analysisActive;
+  // // 분석 대기·진행 중에는 삭제 불가 (서버도 같은 규칙)
+  // const canDeleteSubtitle =
+  //   !busy &&
+  //   !loadingDetails &&
+  //   Boolean(analysis?.subtitleFilename) &&
+  //   !analysisActive;
 
   // 분석 전 / 실패 / '기존 사건 교체'(재분석) 선택 시 요청 가능
   const canRequest =
@@ -530,6 +592,29 @@ function AdminSubtitlesContent({ dramaId }) {
           <p className="admin-subtitles__muted">
             작품 정보를 불러오는 중입니다...
           </p>
+        </section>
+      </main>
+    );
+  }
+  if (drama?.status === "DELETED") {
+    return (
+      <main className="container main-content admin-subtitles-page">
+        <section className="admin-subtitles__card">
+          <span className="admin-subtitles__eyebrow">DELETED CONTENT</span>
+
+          <h1>삭제된 작품입니다</h1>
+
+          <p className="admin-subtitles__muted">
+            {drama.title}의 기존 데이터는 보관되어 있습니다. 삭제된 작품의
+            영상·자막 등록과 분석 요청은 사용할 수 없습니다.
+          </p>
+
+          <Link
+            to="/admin/dramas"
+            className="admin-subtitles__button admin-subtitles__button--outline"
+          >
+            작품 목록으로 돌아가기
+          </Link>
         </section>
       </main>
     );
@@ -657,13 +742,50 @@ function AdminSubtitlesContent({ dramaId }) {
       =================================== */}
       {selectedEpisode ? (
         <>
+          {busy && operationLabel && (
+            <OperationLoading
+              title={operationLabel}
+              description="서버 응답을 기다리고 있습니다. 작업이 끝날 때까지 잠시 기다려 주세요."
+            />
+          )}
+
+          {analysisActive && !busy && (
+            <OperationLoading
+              title={
+                analysisPollError
+                  ? "분석 상태 연결을 확인하고 있어요"
+                  : analysis?.uploading
+                    ? "영상을 분석 서버로 전달하고 있어요"
+                    : analysis?.analysisStatus === "PENDING"
+                      ? "AI 분석 대기 중이에요"
+                      : "AI가 분석하고 있어요"
+              }
+              description={
+                analysisPollError ||
+                `${selectedEpisode.episodeNumber}화 · 진행 상태를 자동으로 확인합니다. 영상 길이에 따라 시간이 걸릴 수 있어요.`
+              }
+              progress={
+                analysisPollError || analysis?.uploading
+                  ? null
+                  : analysis?.progress
+              }
+            />
+          )}
           {/* ==================================
               MP4 영상 관리
           =================================== */}
           <AdminEpisodeVideoPanel
             key={selectedEpisode.id}
             episodeId={selectedEpisode.id}
-            onAnalysisRequested={() => setReloadKey((prev) => prev + 1)}
+            onAnalysisRequested={(result) => {
+              setAnalysisPollError("");
+
+              if (result) {
+                setAnalysis(result);
+              } else {
+                setReloadKey((value) => value + 1);
+              }
+            }}
             onVideoChange={setVideoRegistered}
           />
 
@@ -698,20 +820,27 @@ function AdminSubtitlesContent({ dramaId }) {
 
               {/* 등록 자막 정보 */}
               <div className="admin-subtitles__info-box">
-                <span className="admin-subtitles__field-label">
-                  등록된 자막
-                </span>
+                {loadingDetails ? (
+                  <p className="admin-subtitles__muted" role="status">
+                    자막 등록 상태를 확인하고 있어요…
+                  </p>
+                ) : analysis?.subtitleFilename ? (
+                  <FileUploadStatus
+                    completed
+                    label="자막"
+                    filename={analysis.subtitleFilename}
+                  />
+                ) : (
+                  <>
+                    <span className="admin-subtitles__field-label">
+                      자막 미등록
+                    </span>
 
-                <strong className="admin-subtitles__filename">
-                  {loadingDetails
-                    ? "조회 중..."
-                    : (analysis?.subtitleFilename ??
-                      "아직 등록된 자막이 없습니다.")}
-                </strong>
-
-                <span className="admin-subtitles__muted">
-                  SRT 형식 · UTF-8 · 최대 2MB
-                </span>
+                    <p className="admin-subtitles__muted">
+                      아래에서 SRT 파일을 선택하고 자막 업로드를 눌러 주세요.
+                    </p>
+                  </>
+                )}
 
                 {analysis?.subtitleFilename && (
                   <>

@@ -4,6 +4,7 @@ import com.spoilock.backend.ai.client.KbEvent;
 import com.spoilock.backend.ai.client.SpoilerAdminClient;
 import com.spoilock.backend.ai.service.SpoilerFinaleService;
 import com.spoilock.backend.ai.service.SpoilerKbService;
+import com.spoilock.backend.drama.service.DramaAdminAccessService;
 import com.spoilock.backend.spoiler.dto.AdminSpoilerEventResponse;
 import com.spoilock.backend.spoiler.dto.CreateManualEventRequest;
 import com.spoilock.backend.spoiler.dto.ReviewSpoilerEventRequest;
@@ -37,8 +38,11 @@ public class SpoilerEventAdminService {
     private final SpoilerAdminClient adminClient;
     private final SpoilerKbService kbService;
     private final SpoilerFinaleService finaleService;
+    private final DramaAdminAccessService  dramaAdminAccessService;
 
     private EpisodeKbRef findEpisode(Long episodeId) {
+        dramaAdminAccessService.requireManageableEpisode(episodeId);
+
         return analysisRepository.findKbRef(episodeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

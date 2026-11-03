@@ -1,0 +1,111 @@
+.operation-loading {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 18px 0;
+  padding: 24px;
+  border: 1px solid #698bf0;
+  border-left: 5px solid #91adff;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #21385d, #17253e);
+  text-align: left;
+}
+
+.operation-loading__spinner {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  margin-top: 3px;
+  border: 3px solid #52688e;
+  border-top-color: #d9e5ff;
+  border-radius: 50%;
+  animation: operation-loading-spin 0.9s linear infinite;
+}
+
+.operation-loading__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.operation-loading .operation-loading__title {
+  display: block;
+  color: #f1f5ff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.operation-loading .operation-loading__description {
+  margin: 8px 0 0;
+  color: #bdcdeb;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.operation-loading__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.operation-loading__progress progress {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  height: 9px;
+  overflow: hidden;
+  border: none;
+  border-radius: 999px;
+  background: #34496a;
+  accent-color: #94b0ff;
+}
+
+.operation-loading__progress progress::-webkit-progress-bar {
+  background: #34496a;
+  border-radius: 999px;
+}
+
+.operation-loading__progress progress::-webkit-progress-value {
+  background: #94b0ff;
+  border-radius: 999px;
+}
+
+.operation-loading__progress progress::-moz-progress-bar {
+  background: #94b0ff;
+  border-radius: 999px;
+}
+
+.operation-loading__progress span {
+  color: #dce7ff;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes operation-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operation-loading__spinner {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .operation-loading {
+    gap: 12px;
+    padding: 18px 14px;
+  }
+
+  .operation-loading .operation-loading__title {
+    font-size: 16px;
+  }
+}

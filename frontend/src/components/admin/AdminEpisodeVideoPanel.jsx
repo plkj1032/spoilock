@@ -2,21 +2,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { adminVideoApi } from "../../api/adminVideoApi";
 import FileDropInput from "../common/FileDropInput";
+import FileUploadStatus from "../common/FileUploadStatus";
+import OperationLoading from "../common/OperationLoading";
 import "../../styles/AdminEpisodeVideoPanel.css";
 
 const MAX_VIDEO_SIZE = 400 * 1024 * 1024;
-
-function formatSize(bytes) {
-  if (bytes == null) return "-";
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(value) {
-  if (!value) return "-";
-
-  return String(value).slice(0, 19).replace("T", " ");
-}
 
 export default function AdminEpisodeVideoPanel({
   episodeId,
@@ -30,6 +20,7 @@ export default function AdminEpisodeVideoPanel({
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState("");
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -97,6 +88,7 @@ export default function AdminEpisodeVideoPanel({
     if (!file || !episodeId || busy) return;
 
     setBusy(true);
+    setOperation("upload");
     setError("");
     setMessage("");
 
@@ -111,6 +103,7 @@ export default function AdminEpisodeVideoPanel({
       setError(err.message);
     } finally {
       setBusy(false);
+      setOperation("");
     }
   }
 
@@ -121,17 +114,15 @@ export default function AdminEpisodeVideoPanel({
     if (busy || !video?.registered) return;
 
     setBusy(true);
+    setOperation("analysis");
     setError("");
     setMessage("");
 
     try {
-      await adminVideoApi.requestAnalysis(episodeId, replace);
+      const result = await adminVideoApi.requestAnalysis(episodeId, replace);
 
-      setMessage(
-        "영상 분석 요청을 접수했습니다. 영상을 분석 서버로 보내고 음성 인식을 하는 데 " +
-          "시간이 걸리니 아래 AI 분석 상태에서 새로고침으로 진행 상황을 확인해 주세요.",
-      );
-      onAnalysisRequested?.();
+      setMessage("영상 분석 요청을 접수했습니다.");
+      onAnalysisRequested?.(result);
     } catch (err) {
       setError(
         err.status === 409
@@ -141,6 +132,7 @@ export default function AdminEpisodeVideoPanel({
       );
     } finally {
       setBusy(false);
+      setOperation("");
     }
   }
 
@@ -157,6 +149,7 @@ export default function AdminEpisodeVideoPanel({
     if (!confirmed) return;
 
     setBusy(true);
+    setOperation("delete");
     setError("");
     setMessage("");
 
@@ -177,6 +170,7 @@ export default function AdminEpisodeVideoPanel({
       setError(err.message);
     } finally {
       setBusy(false);
+      setOperation("");
     }
   }
 
@@ -205,6 +199,25 @@ export default function AdminEpisodeVideoPanel({
         </span>
       </div>
 
+      {busy && (
+        <OperationLoading
+          title={
+            operation === "upload"
+              ? "영상을 업로드하고 있어요"
+              : operation === "analysis"
+                ? "영상 분석 요청을 전달하고 있어요"
+                : "영상을 삭제하고 있어요"
+          }
+          description={
+            operation === "upload"
+              ? `${file?.name ?? "선택한 영상"} · 서버 응답을 기다리고 있습니다. 완료될 때까지 이 화면을 유지해 주세요.`
+              : operation === "analysis"
+                ? "요청 접수 후에도 실제 분석은 계속 진행됩니다."
+                : "서버에서 파일을 정리하고 있습니다."
+          }
+        />
+      )}
+
       {error && (
         <p
           className="admin-video__alert admin-video__alert--error"
@@ -229,23 +242,12 @@ export default function AdminEpisodeVideoPanel({
         </p>
       ) : hasVideo ? (
         <div className="admin-video__registered">
-          <div className="admin-video__file-icon">
-            <span aria-hidden="true">▶</span>
-          </div>
-
-          <div className="admin-video__file-info">
-            <strong>{video.filename}</strong>
-
-            <p>
-              {formatSize(video.sizeBytes)}
-              {" · "}
-              {formatDate(video.uploadedAt)}
-            </p>
-
-            <span className="admin-video__file-note">
-              서버에 저장된 MP4 파일입니다.
-            </span>
-          </div>
+          <FileUploadStatus
+            completed
+            label="영상"
+            filename={video.filename}
+            sizeBytes={video.sizeBytes}
+          />
 
           <div className="admin-video__actions">
             <button
@@ -312,8 +314,7 @@ export default function AdminEpisodeVideoPanel({
       )}
 
       <p className="admin-video__help">
-        영상 등록과 AI 분석은 별개의 단계입니다. FastAPI 연동 전까지는 영상 저장
-        상태만 관리합니다.
+        영상 업로드 완료 후 AI 분석을 별도로 요청할 수 있습니다.
       </p>
     </section>
   );
