@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { notificationApi } from "../../api/notificationApi";
 import "../../styles/ChatReportReviewModal.css";
+import Modal from "../common/Modal";
 
 export default function ChatReportReviewModal({
   notificationId,
@@ -157,7 +158,7 @@ export default function ChatReportReviewModal({
     !result;
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="report-review-dialog"
       aria-labelledby={titleId}
@@ -326,7 +327,7 @@ export default function ChatReportReviewModal({
           )
         )}
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

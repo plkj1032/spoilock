@@ -9,6 +9,7 @@ import FollowButton from "../common/FollowButton";
 import "../../styles/MySocialStats.css";
 import UserFollowDialog from "./UserFollowDialog";
 import "../../styles/SocialProfileButton.css";
+import Modal from "../common/Modal";
 
 const TITLES = {
   posts: "내 게시글",
@@ -223,7 +224,7 @@ function SocialPanel({ type, currentUser, onClose, onChanged }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="my-social-dialog"
       aria-labelledby={titleId}
@@ -290,7 +291,7 @@ function SocialPanel({ type, currentUser, onClose, onChanged }) {
           }}
         />
       )}
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

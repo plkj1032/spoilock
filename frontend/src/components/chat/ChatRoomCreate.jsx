@@ -5,6 +5,7 @@ import ChatFollowingInviteModal from "./ChatFollowingInviteModal";
 import { chatApi } from "../../api/chatApi";
 import { dramaApi } from "../../api/dramaApi";
 import Button from "../common/Button";
+import Modal from "../common/Modal";
 
 export default function ChatRoomCreate({ onClose }) {
   const navigate = useNavigate();
@@ -89,11 +90,6 @@ export default function ChatRoomCreate({ onClose }) {
     }
   }
 
-  function handleBackdropClick(event) {
-    if (event.target === event.currentTarget && !submitting) {
-      onClose();
-    }
-  }
   if (createdPrivateRoom) {
     return (
       <ChatFollowingInviteModal
@@ -110,7 +106,13 @@ export default function ChatRoomCreate({ onClose }) {
   }
 
   return (
-    <div className="chat-create-backdrop" onMouseDown={handleBackdropClick}>
+    <Modal
+      as="div"
+      className="chat-create-backdrop"
+      onDismiss={() => {
+        if (!submitting) onClose();
+      }}
+    >
       <section
         className="chat-create-modal"
         role="dialog"
@@ -237,6 +239,6 @@ export default function ChatRoomCreate({ onClose }) {
           </form>
         )}
       </section>
-    </div>
+    </Modal>
   );
 }

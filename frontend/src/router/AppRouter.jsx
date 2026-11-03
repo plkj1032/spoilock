@@ -15,6 +15,7 @@ import AdminChatPage from "../pages/AdminChatPage";
 import ChatInvitePage from "../pages/ChatInvitePage";
 import DramaWatchPage from "../pages/DramaWatchPage";
 import AdminMonitoringPage from "../pages/AdminMonitoringPage";
+import RequireLogin from "../components/auth/RequireLogin";
 
 export default function AppRouter({
   user,
@@ -39,26 +40,9 @@ export default function AppRouter({
       <Route
         path="/dramas/:dramaId/watch"
         element={
-          pending ? (
-            <main className="container main-content">로그인 확인 중…</main>
-          ) : user ? (
-            <DramaWatchPage key={user.id} />
-          ) : (
-            <main className="container main-content">
-              <h1>로그인 후 시청할 수 있어요</h1>
-              <p className="page-subtitle">
-                SPOILOCK에서 제공하는 웹드라마를 만나보세요.
-              </p>
-
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={onLogin}
-              >
-                로그인
-              </button>
-            </main>
-          )
+          <RequireLogin user={user} pending={pending}>
+            <DramaWatchPage key={user?.id} />
+          </RequireLogin>
         }
       />
 
@@ -70,39 +54,27 @@ export default function AppRouter({
       <Route
         path="/chat/invite/:code"
         element={
-          <ChatInvitePage
-            key={user?.id ?? "guest"}
-            user={user}
-            pending={pending}
-            onLogin={onLogin}
-          />
+          <RequireLogin user={user} pending={pending}>
+            <ChatInvitePage
+              key={user?.id ?? "guest"}
+              user={user}
+              pending={pending}
+              onLogin={onLogin}
+            />
+          </RequireLogin>
         }
       />
 
       <Route
         path="/chat/:roomId"
         element={
-          pending ? (
-            <main className="container main-content">로그인 확인 중...</main>
-          ) : user ? (
+          <RequireLogin user={user} pending={pending}>
             <ChatRoomPage
-              key={`${user.id}:${window.location.pathname}`}
+              key={`${user?.id}:${window.location.pathname}`}
               user={user}
               onNotice={onNotice}
             />
-          ) : (
-            <main className="container main-content">
-              <p>로그인 후 채팅방을 이용할 수 있습니다.</p>
-
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={onLogin}
-              >
-                로그인
-              </button>
-            </main>
-          )
+          </RequireLogin>
         }
       />
 
@@ -184,22 +156,9 @@ export default function AppRouter({
       <Route
         path="/mypage"
         element={
-          pending ? (
-            <main className="container main-content">로그인 확인 중...</main>
-          ) : user ? (
-            <MyPage key={user.id} onProfileUpdated={onProfileUpdated} />
-          ) : (
-            <main className="container main-content">
-              <p>로그인 후 마이페이지를 이용할 수 있습니다.</p>
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={onLogin}
-              >
-                로그인
-              </button>
-            </main>
-          )
+          <RequireLogin user={user} pending={pending}>
+            <MyPage key={user?.id} onProfileUpdated={onProfileUpdated} />
+          </RequireLogin>
         }
       />
       <Route

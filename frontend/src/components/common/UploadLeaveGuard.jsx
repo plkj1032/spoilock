@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useBlocker } from "react-router-dom";
 
 import "../../styles/UploadLeaveGuard.css";
+import Modal from "./Modal";
 
 export default function UploadLeaveGuard({ uploadCount }) {
   const dialogRef = useRef(null);
@@ -66,7 +67,7 @@ export default function UploadLeaveGuard({ uploadCount }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="upload-leave-dialog"
       aria-labelledby="upload-leave-title"
@@ -108,7 +109,7 @@ export default function UploadLeaveGuard({ uploadCount }) {
           그래도 이동
         </button>
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

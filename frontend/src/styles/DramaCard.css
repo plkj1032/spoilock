@@ -128,6 +128,20 @@
   line-height: 10px;
 }
 
+/* 포스터가 있으면 원본 비율에 맞춰 높이 자동 조절 */
+.drama-card .drama-cover:has(.drama-poster) {
+  height: auto;
+}
+
+.drama-card .drama-cover .drama-poster {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: auto;
+  z-index: 1;
+}
+
 @media (max-width: 570px) {
   .drama-cover {
     height: 145px;

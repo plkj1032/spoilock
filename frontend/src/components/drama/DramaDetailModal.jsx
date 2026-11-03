@@ -5,6 +5,7 @@ import { dramaApi } from "../../api/dramaApi";
 import "../../styles/DramaDetailLayout.css";
 import "../../styles/DramaDetailModal.css";
 import "../../styles/DramaWatchPage.css";
+import Modal from "../common/Modal";
 
 export default function DramaDetailModal({ dramaId, onClose }) {
   const dialogRef = useRef(null);
@@ -75,7 +76,7 @@ export default function DramaDetailModal({ dramaId, onClose }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="drama-detail-dialog"
       aria-labelledby={titleId}
@@ -223,7 +224,7 @@ export default function DramaDetailModal({ dramaId, onClose }) {
           </footer>
         </>
       )}
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

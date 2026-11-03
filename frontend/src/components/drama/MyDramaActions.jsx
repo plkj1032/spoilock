@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { dramaApi } from "../../api/dramaApi";
 import { chatApi } from "../../api/chatApi";
 import "../../styles/MyDramaActions.css";
+import Modal from "../common/Modal";
 
 function ProgressDialog({ drama, onClose, onSaved }) {
   const dialogRef = useRef(null);
@@ -107,7 +108,7 @@ function ProgressDialog({ drama, onClose, onSaved }) {
   }
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="my-drama-dialog"
       aria-labelledby="my-drama-dialog-title"
@@ -194,7 +195,7 @@ function ProgressDialog({ drama, onClose, onSaved }) {
           {saving ? "저장 중…" : "진도 저장"}
         </button>
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

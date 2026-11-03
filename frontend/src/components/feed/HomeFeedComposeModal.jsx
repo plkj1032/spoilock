@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { FeedComposer } from "../../pages/CommunityPage";
 
 import "../../styles/HomeFeedComposeModal.css";
+import Modal from "../common/Modal";
 
 export default function HomeFeedComposeModal({
   user,
@@ -32,7 +33,7 @@ export default function HomeFeedComposeModal({
   }, []);
 
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="home-feed-compose-dialog"
       aria-labelledby={titleId}
@@ -68,7 +69,7 @@ export default function HomeFeedComposeModal({
           onCreated={onCreated}
         />
       </div>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }

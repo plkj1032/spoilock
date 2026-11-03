@@ -8,6 +8,7 @@ import ChatInvitationSender from "../chat/ChatInvitationSender";
 import FollowButton from "../common/FollowButton";
 
 import "../../styles/UserFollowDialog.css";
+import Modal from "../common/Modal";
 
 export default function UserFollowDialog({
   target,
@@ -146,7 +147,7 @@ export default function UserFollowDialog({
   // 8. 프로필 화면
   // ============================================
   return createPortal(
-    <dialog
+    <Modal
       ref={dialogRef}
       className="user-follow-dialog"
       aria-label={`${nickname}님의 프로필`}
@@ -154,12 +155,6 @@ export default function UserFollowDialog({
         event.preventDefault();
         event.stopPropagation();
         onClose();
-      }}
-      onClick={(event) => {
-        // 팝업 바깥 영역 클릭 시 닫기
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
       }}
     >
       {/* ======================================
@@ -312,7 +307,7 @@ export default function UserFollowDialog({
           모든 피드 보기 →
         </Link>
       </section>
-    </dialog>,
+    </Modal>,
     document.body,
   );
 }
