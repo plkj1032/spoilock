@@ -173,11 +173,6 @@ function AdminSubtitlesContent({ dramaId }) {
   const [message, setMessage] = useState("");
   const [operationLabel, setOperationLabel] = useState("");
   const [analysisPollError, setAnalysisPollError] = useState("");
-  const [videoUploads, setVideoUploads] = useState({});
-
-  const activeVideoUploadCount = Object.values(videoUploads).filter(
-    (upload) => upload.status === "uploading",
-  ).length;
 
   // 새로고침 시 재조회
   const [reloadKey, setReloadKey] = useState(0);
