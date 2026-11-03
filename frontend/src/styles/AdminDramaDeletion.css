@@ -1,0 +1,37 @@
+.admin-page .admin-drama-item--deleted {
+  border-color: #3b4557;
+  background: #151e2d;
+}
+
+.admin-page .admin-drama-item--deleted strong {
+  color: #a3afc3;
+}
+
+.admin-page .admin-status--deleted {
+  border-color: #65505c;
+  background: #342631;
+  color: #e0b1be;
+}
+
+.admin-page .admin-deleted-description {
+  margin: 12px 0 0;
+  color: #91a0b8;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.admin-page .admin-drama-delete {
+  border-color: #81505f;
+  background: #352331;
+  color: #ffc1cc;
+}
+
+.admin-page .admin-drama-delete:hover:not(:disabled) {
+  border-color: #bb7186;
+  background: #4a2c3b;
+}
+
+.admin-page .admin-drama-processing {
+  color: #9fb2d4;
+  font-size: 12px;
+}

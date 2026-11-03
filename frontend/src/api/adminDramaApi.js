@@ -36,4 +36,9 @@ export const adminDramaApi = {
       method: "PATCH",
       retryOn401: true,
     }),
+  deleteDrama: (id) =>
+    apiRequest(`/api/admin/dramas/${id}`, {
+      method: "DELETE",
+      retryOn401: true,
+    }),
 };

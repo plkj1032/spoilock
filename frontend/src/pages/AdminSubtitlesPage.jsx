@@ -337,6 +337,37 @@ function AdminSubtitlesContent({ dramaId }) {
     }
   }
 
+  async function deleteSubtitle() {
+    if (
+      !episodeId ||
+      busy ||
+      loadingDetails ||
+      analysisActive ||
+      !analysis?.subtitleFilename
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "등록된 자막을 삭제할까요?\n\n" +
+        "삭제 후 새 자막을 업로드할 수 있습니다.\n" +
+        "기존 분석 사건은 삭제되지 않습니다.",
+    );
+
+    if (!confirmed) return;
+
+    const result = await perform(
+      () => adminSubtitleApi.deleteSubtitle(episodeId),
+      "자막을 삭제했습니다. 새 파일을 선택해서 업로드해 주세요.",
+    );
+
+    if (result) {
+      setAnalysis(result);
+      resetFileInput();
+      setReplaceExisting(events.length > 0);
+    }
+  }
+
   // ==========================================
   // 15. AI 분석 요청
   // ==========================================
@@ -446,6 +477,7 @@ function AdminSubtitlesContent({ dramaId }) {
   const canChooseFile =
     !busy &&
     !loadingDetails &&
+    !analysisActive &&
     Boolean(analysis) &&
     !analysis?.subtitleFilename;
 
@@ -653,6 +685,27 @@ function AdminSubtitlesContent({ dramaId }) {
                 <span className="admin-subtitles__muted">
                   SRT 형식 · UTF-8 · 최대 2MB
                 </span>
+
+                {analysis?.subtitleFilename && (
+                  <>
+                    <div className="admin-subtitles__actions">
+                      <button
+                        type="button"
+                        className="admin-subtitles__button admin-subtitles__button--outline"
+                        disabled={busy || loadingDetails || analysisActive}
+                        onClick={deleteSubtitle}
+                      >
+                        {busy ? "처리 중..." : "자막 삭제"}
+                      </button>
+                    </div>
+
+                    <span className="admin-subtitles__muted">
+                      {analysisActive
+                        ? "분석이 진행 중일 때는 자막을 삭제하거나 교체할 수 없습니다."
+                        : "재업로드하려면 기존 자막을 삭제한 뒤 새 파일을 첨부해 주세요."}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* 자막 업로드 */}
