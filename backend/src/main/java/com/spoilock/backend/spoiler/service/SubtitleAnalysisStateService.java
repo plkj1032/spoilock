@@ -4,6 +4,7 @@ import com.spoilock.backend.ai.client.KbIngestJob;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
+import com.spoilock.backend.drama.service.DramaAdminAccessService;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
 import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
@@ -34,6 +35,7 @@ public class SubtitleAnalysisStateService {
     private final EpisodeRepository episodeRepository;
     private final EpisodeAnalysisRepository analysisRepository;
     private final EpisodeVideoRepository videoRepository;
+    private final DramaAdminAccessService dramaAdminAccessService;
 
     /** 분석 요청 전 확인 결과 */
     public record Target(
@@ -55,6 +57,7 @@ public class SubtitleAnalysisStateService {
     // ============================================
     @Transactional(readOnly = true)
     public Target prepare(Long episodeId) {
+        dramaAdminAccessService.requireManageableEpisode(episodeId);
 
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -91,6 +94,7 @@ public class SubtitleAnalysisStateService {
     // ============================================
     @Transactional
     public Target prepareVideo(Long episodeId) {
+        dramaAdminAccessService.requireManageableEpisode(episodeId);
 
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResponseStatusException(

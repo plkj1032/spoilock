@@ -5,6 +5,7 @@ import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.common.storage.S3StorageService;
 import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
+import com.spoilock.backend.drama.service.DramaAdminAccessService;
 import com.spoilock.backend.spoiler.dto.*;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
 import com.spoilock.backend.spoiler.repository.*;
@@ -40,8 +41,8 @@ public class AdminEpisodeAiService {
             2L * 1024 * 1024;
 
     private final EpisodeRepository episodeRepository;
-
     private final EpisodeAnalysisRepository analysisRepository;
+    private final DramaAdminAccessService  dramaAdminAccessService;
 
     @Value("${app.subtitle-storage-dir:./private/subtitles}")
     private String subtitleStorageDir;
@@ -51,6 +52,7 @@ public class AdminEpisodeAiService {
     // 공통: 회차 조회
     // ============================================
     private Episode findEpisode(Long episodeId) {
+        dramaAdminAccessService.requireManageableEpisode(episodeId);
 
         return episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResponseStatusException(

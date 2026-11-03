@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from "react";
+import FileUploadStatus from "./FileUploadStatus";
 import "../../styles/FileDropInput.css";
 
 export default function FileDropInput({
@@ -124,14 +125,18 @@ export default function FileDropInput({
         aria-describedby={`${id}-description`}
         onClick={() => actualInputRef.current?.click()}
       >
-        파일 선택
+        {file ? "다른 파일 선택" : "파일 선택"}
       </button>
 
-      <span className="file-dropzone__filename" role="status">
-        {file
-          ? `${file.name} · ${(file.size / (1024 * 1024)).toFixed(2)} MB`
-          : "선택된 파일이 없습니다."}
-      </span>
+      {file ? (
+        <FileUploadStatus
+          filename={file.name}
+          sizeBytes={file.size}
+          label={extension === ".mp4" ? "영상" : "자막"}
+        />
+      ) : (
+        <span className="file-dropzone__filename">선택된 파일이 없습니다.</span>
+      )}
     </div>
   );
 }

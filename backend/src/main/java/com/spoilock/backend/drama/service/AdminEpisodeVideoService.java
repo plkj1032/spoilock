@@ -42,8 +42,11 @@ public class AdminEpisodeVideoService {
     private final EpisodeRepository episodeRepository;
     private final EpisodeVideoRepository videoRepository;
     private final S3StorageService s3StorageService;
+    private final DramaAdminAccessService dramaAdminAccessService;
 
     private Episode findEpisode(Long episodeId) {
+        dramaAdminAccessService.requireManageableEpisode((episodeId));
+
         return episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,

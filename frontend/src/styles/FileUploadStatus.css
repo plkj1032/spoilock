@@ -1,0 +1,117 @@
+.upload-status-card {
+  --status-color: #ffce83;
+  --status-border: #87633c;
+  --status-background: #30291f;
+  --status-icon-background: #4b3923;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--status-border);
+  border-left: 5px solid var(--status-color);
+  border-radius: 12px;
+  background: var(--status-background);
+  text-align: left;
+}
+
+.upload-status-card.is-completed {
+  --status-color: #8de7bc;
+  --status-border: #3b7a65;
+  --status-background: #142e29;
+  --status-icon-background: #224d3e;
+}
+
+.upload-status-card .upload-status-card__icon {
+  display: grid;
+  flex: 0 0 46px;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--status-icon-background);
+  color: var(--status-color);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.upload-status-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-status-card__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.upload-status-card .upload-status-card__heading strong {
+  color: var(--status-color);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.upload-status-card .upload-status-card__badge {
+  padding: 4px 9px;
+  border: 1px solid var(--status-border);
+  border-radius: 6px;
+  color: var(--status-color);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.upload-status-card .upload-status-card__filename {
+  display: block;
+  color: #f5f7fc;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.upload-status-card .upload-status-card__size {
+  display: block;
+  margin-top: 4px;
+  color: #c5cfdf;
+  font-size: 12px;
+}
+
+.upload-status-card .upload-status-card__description {
+  margin: 12px 0 0;
+  color: #c5cfdf;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.file-dropzone > .upload-status-card {
+  margin-top: 8px;
+}
+
+@media (max-width: 520px) {
+  .upload-status-card {
+    gap: 12px;
+    padding: 17px 14px;
+  }
+
+  .upload-status-card .upload-status-card__icon {
+    flex-basis: 36px;
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+  }
+
+  .upload-status-card .upload-status-card__heading strong {
+    font-size: 16px;
+  }
+
+  .upload-status-card .upload-status-card__filename {
+    font-size: 15px;
+  }
+}

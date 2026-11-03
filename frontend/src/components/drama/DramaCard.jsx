@@ -20,7 +20,7 @@ export default function DramaCard({
       : watched == null
         ? "진도 조회 실패"
         : watched === 0
-          ? "진도 미설정"
+          ? "미시청"
           : `${watched}화 시청`;
 
   return (
