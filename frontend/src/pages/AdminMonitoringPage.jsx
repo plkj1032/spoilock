@@ -45,7 +45,7 @@ const POLICY_LABELS = {
 
   GUESS_KNOWN: "본 회차 내용을 추측처럼 · 회차 제한",
   GUESS_UNKNOWN: "안 본 회차 추측 · 전체 공개",
-  FINALE_ONLY: "판정 애매 · 마지막 회차부터 공개",
+  FINALE_ONLY: "검토 보류 · 마지막 회차부터 공개",
   GUESS_UNVERIFIED: "본 회차 추측 · 미검증 사건 보류",
 
   NO_MATCH_PUBLISHED: "일치 사건 없음 · 정책 공개",
@@ -74,6 +74,7 @@ function policyTone(code) {
   if (!code) return "neutral";
 
   if (code === "GUESS_UNKNOWN") return "good";
+  if (code === "FINALE_ONLY") return "warn";
 
   if (/FAILED|ERROR|INVALID|EMPTY|UNKNOWN_VERDICT/.test(code)) {
     return "danger";
@@ -157,6 +158,62 @@ function PolicyTag({ code, detail }) {
     >
       {detail || policyLabel(code)}
     </span>
+  );
+}
+
+const RAW_VERDICT_LABELS = {
+  MATCH: "MATCH · 사건 일치",
+  NO_MATCH: "NO_MATCH · 일치 없음",
+  UNCERTAIN: "UNCERTAIN · 판정 불확실",
+  ERROR: "ERROR · AI 오류",
+  SKIPPED_GENERAL: "일반 대화 · 1차 필터",
+  SKIPPED_UNRELATED: "사건 무관 · 1차 필터",
+  UNKNOWN_VERDICT: "인식되지 않은 판정",
+};
+
+function RawVerdictTag({ value }) {
+  if (!value) {
+    return <span className="monitor-tag monitor-tag-neutral">기록 없음</span>;
+  }
+
+  const tagTone =
+    value === "UNCERTAIN"
+      ? "warn"
+      : value === "ERROR" || value === "UNKNOWN_VERDICT"
+        ? "danger"
+        : "neutral";
+
+  return (
+    <span className={`monitor-tag monitor-tag-${tagTone}`}>
+      {RAW_VERDICT_LABELS[value] ?? "알 수 없는 판정"}
+    </span>
+  );
+}
+
+function FinalPolicyTag({ outcome, status, episode, untilFinale }) {
+  const result = outcome || status;
+  const validEpisode = Number.isInteger(episode) && episode > 0;
+
+  let label = stateText(result);
+
+  if (result === "EPISODE_GATED") {
+    if (validEpisode && untilFinale) {
+      label = `마지막 ${episode}화부터 공개`;
+    } else if (validEpisode) {
+      label = `${episode}화부터 공개`;
+    } else {
+      label = "시청 진도 제한";
+    }
+  } else if (result === "PUBLIC") {
+    label = "전체 공개";
+  } else if (result === "HELD") {
+    label = "검토 대기 · 비공개";
+  } else if (result === "FAILED") {
+    label = "분석 실패 · 비공개";
+  }
+
+  return (
+    <span className={`monitor-tag monitor-tag-${tone(result)}`}>{label}</span>
   );
 }
 
@@ -696,8 +753,9 @@ export default function AdminMonitoringPage() {
         </h2>
 
         <p className="monitor-note">
-          채팅 원문, AI 판정 결과, 상세 정책 사유 및 처리시간을 확인합니다. 기존
-          기록에는 정책 상세 정보가 없을 수 있습니다.
+          채팅 원문, FastAPI 원본 판정, Spring 최종 공개 정책과 처리시간을
+          확인합니다. 기존 기록에는 원본 판정 또는 정책 상세 정보가 없을 수
+          있습니다.
         </p>
 
         <div className="monitor-table-wrap">
@@ -707,7 +765,8 @@ export default function AdminMonitoringPage() {
                 <th>메시지 ID</th>
                 <th>작품</th>
                 <th>채팅 내용</th>
-                <th>판정</th>
+                <th>AI 원본 판정</th>
+                <th>최종 공개 정책</th>
                 <th>정책 사유</th>
                 <th>처리시간</th>
                 <th>등록시각</th>
@@ -728,8 +787,15 @@ export default function AdminMonitoringPage() {
                     </td>
 
                     <td>
-                      <StatusTag
-                        value={row.analysisOutcome || row.analysisStatus}
+                      <RawVerdictTag value={row.rawVerdict} />
+                    </td>
+
+                    <td>
+                      <FinalPolicyTag
+                        outcome={row.analysisOutcome}
+                        status={row.analysisStatus}
+                        episode={row.requiredEpisodeNumber}
+                        untilFinale={row.requiredUntilFinale}
                       />
                     </td>
 
@@ -757,7 +823,7 @@ export default function AdminMonitoringPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="monitor-empty">
+                  <td colSpan={9} className="monitor-empty">
                     조회할 채팅 기록이 없습니다.
                   </td>
                 </tr>
@@ -936,6 +1002,24 @@ export default function AdminMonitoringPage() {
                 }
               />
             </div>
+
+            <small>
+              AI 원본 판정:{" "}
+              {selectedTraceRow.rawVerdict
+                ? (RAW_VERDICT_LABELS[selectedTraceRow.rawVerdict] ??
+                  "알 수 없는 판정")
+                : "기록 없음"}
+            </small>
+
+            <small>
+              최종 공개 정책:{" "}
+              <FinalPolicyTag
+                outcome={selectedTraceRow.analysisOutcome}
+                status={selectedTraceRow.analysisStatus}
+                episode={selectedTraceRow.requiredEpisodeNumber}
+                untilFinale={selectedTraceRow.requiredUntilFinale}
+              />
+            </small>
 
             <small>
               정책 사유:{" "}

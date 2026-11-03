@@ -74,7 +74,9 @@ public class ChatAnalysisService {
         // ========================================
         // 3. 작성자 시청 진도 + AI 스포일러 판정
         // ========================================
-        AnalysisDecision decision = judge(event);
+        SpoilerJudgeService.ChatJudgeResult judgeResult = judge(event);
+
+        AnalysisDecision decision = judgeResult.decision();
 
         // AI 판정 처리시간(ms)
         long durationMs = TimeUnit.NANOSECONDS.toMillis(
@@ -99,7 +101,8 @@ public class ChatAnalysisService {
             applied = stateService.apply(
                     messageId,
                     decision,
-                    durationMs
+                    durationMs,
+                    judgeResult.rawVerdict()
             );
 
         } catch (Exception e) {
@@ -188,21 +191,22 @@ public class ChatAnalysisService {
      * 작성자가 이미 본 회차에 대한 추측인지,
      * 아직 보지 않은 회차에 대한 추측인지 구분한다.
      */
-    private AnalysisDecision judge(ChatAnalysisRequested event) {
 
-        // 작성자의 현재 시청 회차 조회
+    private SpoilerJudgeService.ChatJudgeResult judge(
+            ChatAnalysisRequested event
+    ) {
         Integer authorWatched =
                 authorProgressService.forChatMessage(
                         event.messageId(),
                         event.dramaId()
                 );
 
-        // 시청 진도를 포함하여 AI 판정
-        return judgeService.judgeChat(
+        return judgeService.judgeChatWithVerdict(
                 event.messageId(),
                 event.dramaId(),
                 event.content(),
                 authorWatched
         );
     }
+
 }

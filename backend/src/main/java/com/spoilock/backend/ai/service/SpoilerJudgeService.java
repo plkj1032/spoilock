@@ -115,45 +115,92 @@ public class SpoilerJudgeService {
         }
     }
 
+    // FastAPI 원본 판정 + Spring 최종 공개 결정
+    public record ChatJudgeResult(
+            AnalysisDecision decision,
+            String rawVerdict
+    ){}
+
+    // 기준 호출과의 호환성 유지
     public AnalysisDecision judgeChat(
             Long messageId,
             Long dramaId,
             String content,
             Integer authorWatchedEpisode
+    )
+    {
+        return judgeChatWithVerdict(
+                messageId,
+                dramaId,
+                content,
+                authorWatchedEpisode
+        ).decision();
+    }
+
+    // 관리자 모니터링을 위한 원본 판정 수집
+    public ChatJudgeResult judgeChatWithVerdict(
+            Long messageId,
+            Long dramaId,
+            String content,
+            Integer authorWatchedEpisode
     ) {
-        SpoilerKbService.KbLookup lookup = kbService.lookup(dramaId);
+        SpoilerKbService.KbLookup lookup =
+                kbService.lookup(dramaId);
+
         SpoilerApiProperties.DramaKb kb = lookup.kb();
 
         if (lookup.noEvents()) {
-            return publishUnindexedDrama
+            AnalysisDecision decision = publishUnindexedDrama
                     ? AnalysisDecision.publishAll(
-                    "사건 미등록 작품: 판정 대상 없음 dramaId=" + dramaId
+                    "사건 미등록 작품: 판정 대상 없음 dramaId="
+                    + dramaId
             )
                     : AnalysisDecision.hold(
                     "사건 미등록 작품 dramaId=" + dramaId
             );
+
+            // FastAPI /judge 자체를 호출하지 않았음
+            return new ChatJudgeResult(decision, null);
         }
 
-        if (kb == null || kb.kbDramaId() == null
-                || kb.episodes() == null || kb.episodes().isEmpty()) {
-            return AnalysisDecision.failed(
-                    "사건 DB 조회 실패 dramaId=" + dramaId
+        if (kb == null
+                || kb.kbDramaId() == null
+                || kb.episodes() == null
+                || kb.episodes().isEmpty()) {
+
+            return new ChatJudgeResult(
+                    AnalysisDecision.failed(
+                            "사건 DB 조회 실패 dramaId=" + dramaId
+                    ),
+                    null
             );
         }
 
         try {
-            SpoilerJudgeResponse response = spoilerApiClient.judge(
-                    messageId,
-                    kb.kbDramaId(),
-                    content,
-                    kb.episodes()
+            SpoilerJudgeResponse response =
+                    spoilerApiClient.judge(
+                            messageId,
+                            kb.kbDramaId(),
+                            content,
+                            kb.episodes()
+                    );
+
+            AnalysisDecision decision =
+                    policy.decideChat(
+                            response,
+                            kb.episodes(),
+                            authorWatchedEpisode
+                    );
+
+            String rawVerdict = response == null
+                    ? null
+                    : normalizeVerdict(response.verdict());
+
+            return new ChatJudgeResult(
+                    decision,
+                    rawVerdict
             );
 
-            return policy.decideChat(
-                    response,
-                    kb.episodes(),
-                    authorWatchedEpisode
-            );
         } catch (Exception e) {
             log.warn(
                     "[spoiler] 채팅 분석 실패 messageId={}: {}",
@@ -161,9 +208,31 @@ public class SpoilerJudgeService {
                     e.toString()
             );
 
-            return AnalysisDecision.failed(
-                    "호출 실패: " + e.getClass().getSimpleName()
+            return new ChatJudgeResult(
+                    AnalysisDecision.failed(
+                            "호출 실패: "
+                                    + e.getClass().getSimpleName()
+                    ),
+                    null
             );
         }
+    }
+
+    // 관리자 DB에는 허용된 판정 코드만 저장
+    private String normalizeVerdict(String verdict) {
+        if (verdict == null) {
+            return null;
+        }
+
+        return switch (verdict) {
+            case "MATCH",
+                 "NO_MATCH",
+                 "UNCERTAIN",
+                 "ERROR",
+                 "SKIPPED_GENERAL",
+                 "SKIPPED_UNRELATED" -> verdict;
+
+            default -> "UNKNOWN_VERDICT";
+        };
     }
 }
