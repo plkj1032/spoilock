@@ -1,0 +1,83 @@
+.upload-leave-dialog {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+
+  border: 1px solid #3c5273;
+  border-radius: 20px;
+  background: #142137;
+  color: #edf3ff;
+
+  box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+}
+
+.upload-leave-dialog::backdrop {
+  background: rgb(3 8 18 / 75%);
+}
+
+.upload-leave-dialog__eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #94b2ff;
+}
+
+.upload-leave-dialog h2 {
+  margin: 14px 0;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.upload-leave-dialog p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #c6d3e9;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.upload-leave-dialog .upload-leave-dialog__hint {
+  margin-top: 14px;
+  color: #96b6ff;
+}
+
+.upload-leave-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.upload-leave-dialog__actions button {
+  flex: 1;
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upload-leave-dialog__stay {
+  border: 1px solid #527cf0;
+  background: #426ee6;
+  color: #fff;
+}
+
+.upload-leave-dialog__leave {
+  border: 1px solid #435875;
+  background: #1b2a42;
+  color: #d6e1f4;
+}
+
+.upload-leave-dialog__actions button:focus-visible {
+  outline: 2px solid #adc4ff;
+  outline-offset: 3px;
+}

@@ -9,7 +9,7 @@ import AdminEpisodeVideoPanel from "../components/admin/AdminEpisodeVideoPanel";
 import FileDropInput from "../components/common/FileDropInput";
 import FileUploadStatus from "../components/common/FileUploadStatus";
 import OperationLoading from "../components/common/OperationLoading";
-
+import UploadLeaveGuard from "../components/common/UploadLeaveGuard";
 import "../styles/AdminSubtitlesPage.css";
 
 // SRT 최대 크기: 2MB
@@ -87,6 +87,9 @@ function AdminSubtitlesContent({ dramaId }) {
   // 회차를 바꿔도 부모 페이지에서 업로드를 계속 관리
   const videoUploadsRef = useRef(new Set());
   const [videoUploads, setVideoUploads] = useState({});
+  const activeVideoUploadCount = Object.values(videoUploads).filter(
+    (upload) => upload.status === "uploading",
+  ).length;
 
   async function uploadEpisodeVideo(targetEpisodeId, selectedFile) {
     // 같은 회차에 중복 업로드만 방지
@@ -170,6 +173,11 @@ function AdminSubtitlesContent({ dramaId }) {
   const [message, setMessage] = useState("");
   const [operationLabel, setOperationLabel] = useState("");
   const [analysisPollError, setAnalysisPollError] = useState("");
+  const [videoUploads, setVideoUploads] = useState({});
+
+  const activeVideoUploadCount = Object.values(videoUploads).filter(
+    (upload) => upload.status === "uploading",
+  ).length;
 
   // 새로고침 시 재조회
   const [reloadKey, setReloadKey] = useState(0);
@@ -700,6 +708,7 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   return (
     <main className="container main-content admin-subtitles-page">
+      <UploadLeaveGuard uploadCount={activeVideoUploadCount} />
       {/* ==================================
           상단 헤더
       =================================== */}
