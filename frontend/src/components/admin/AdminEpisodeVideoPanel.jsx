@@ -12,6 +12,8 @@ export default function AdminEpisodeVideoPanel({
   episodeId,
   onAnalysisRequested,
   onVideoChange,
+  uploadState,
+  onUpload,
 }) {
   const fileInputRef = useRef(null);
 
@@ -19,7 +21,10 @@ export default function AdminEpisodeVideoPanel({
   const [file, setFile] = useState(null);
 
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [operationBusy, setBusy] = useState(false);
+
+  const uploading = uploadState?.status === "uploading";
+  const busy = operationBusy || uploading;
   const [operation, setOperation] = useState("");
 
   const [error, setError] = useState("");
@@ -82,29 +87,16 @@ export default function AdminEpisodeVideoPanel({
   // =========================================
   // MP4 업로드
   // =========================================
-  async function uploadVideo(event) {
+  function uploadVideo(event) {
     event.preventDefault();
 
     if (!file || !episodeId || busy) return;
 
-    setBusy(true);
-    setOperation("upload");
     setError("");
     setMessage("");
 
-    try {
-      const result = await adminVideoApi.upload(episodeId, file);
-
-      setVideo(result);
-      resetFile();
-
-      setMessage("MP4 영상이 등록되었습니다.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-      setOperation("");
-    }
+    // 실제 요청과 결과는 부모가 관리하므로 회차를 바꿔도 유지됨
+    onUpload(episodeId, file);
   }
 
   // =========================================
@@ -198,8 +190,23 @@ export default function AdminEpisodeVideoPanel({
           {loading ? "조회 중" : hasVideo ? "등록 완료" : "미등록"}
         </span>
       </div>
+      {uploading && (
+        <OperationLoading
+          title="영상을 업로드하고 있어요"
+          description={`${uploadState.filename} · 다른 회차로 이동해 추가 영상을 업로드할 수 있습니다.`}
+        />
+      )}
 
-      {busy && (
+      {uploadState?.status === "failed" && (
+        <p
+          className="admin-video__alert admin-video__alert--error"
+          role="alert"
+        >
+          {uploadState.filename} · {uploadState.error}
+        </p>
+      )}
+
+      {operationBusy && (
         <OperationLoading
           title={
             operation === "upload"

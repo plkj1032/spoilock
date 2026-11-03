@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import { adminDramaApi } from "../api/adminDramaApi";
 import { adminSubtitleApi } from "../api/adminSubtitleApi";
+import { adminVideoApi } from "../api/adminVideoApi";
 
 import AdminEpisodeVideoPanel from "../components/admin/AdminEpisodeVideoPanel";
 import FileDropInput from "../components/common/FileDropInput";
 import FileUploadStatus from "../components/common/FileUploadStatus";
 import OperationLoading from "../components/common/OperationLoading";
+
 import "../styles/AdminSubtitlesPage.css";
 
 // SRT 최대 크기: 2MB
@@ -81,6 +83,52 @@ export default function AdminSubtitlesPage() {
 
 function AdminSubtitlesContent({ dramaId }) {
   const fileInputRef = useRef(null);
+
+  // 회차를 바꿔도 부모 페이지에서 업로드를 계속 관리
+  const videoUploadsRef = useRef(new Set());
+  const [videoUploads, setVideoUploads] = useState({});
+
+  async function uploadEpisodeVideo(targetEpisodeId, selectedFile) {
+    // 같은 회차에 중복 업로드만 방지
+    if (videoUploadsRef.current.has(targetEpisodeId)) return;
+
+    videoUploadsRef.current.add(targetEpisodeId);
+
+    setVideoUploads((previous) => ({
+      ...previous,
+      [targetEpisodeId]: {
+        ...previous[targetEpisodeId],
+        status: "uploading",
+        filename: selectedFile.name,
+        error: "",
+      },
+    }));
+
+    try {
+      await adminVideoApi.upload(targetEpisodeId, selectedFile);
+
+      setVideoUploads((previous) => ({
+        ...previous,
+        [targetEpisodeId]: {
+          ...previous[targetEpisodeId],
+          status: "completed",
+          // 현재 보고 있는 회차라면 패널을 새로 조회
+          revision: (previous[targetEpisodeId]?.revision ?? 0) + 1,
+        },
+      }));
+    } catch (error) {
+      setVideoUploads((previous) => ({
+        ...previous,
+        [targetEpisodeId]: {
+          ...previous[targetEpisodeId],
+          status: "failed",
+          error: error.message || "영상 업로드에 실패했습니다.",
+        },
+      }));
+    } finally {
+      videoUploadsRef.current.delete(targetEpisodeId);
+    }
+  }
 
   // ==========================================
   // 1. 드라마 및 선택 회차
@@ -732,6 +780,12 @@ function AdminSubtitlesContent({ dramaId }) {
               aria-pressed={episode.id === episodeId}
             >
               {episode.episodeNumber}화
+              {videoUploads[episode.id]?.status === "uploading" &&
+                " · 업로드 중"}
+              {videoUploads[episode.id]?.status === "completed" &&
+                " · 등록 완료"}
+              {videoUploads[episode.id]?.status === "failed" &&
+                " · 업로드 실패"}
             </button>
           ))}
         </div>
@@ -775,8 +829,10 @@ function AdminSubtitlesContent({ dramaId }) {
               MP4 영상 관리
           =================================== */}
           <AdminEpisodeVideoPanel
-            key={selectedEpisode.id}
+            key={`${selectedEpisode.id}:${videoUploads[selectedEpisode.id]?.revision ?? 0}`}
             episodeId={selectedEpisode.id}
+            uploadState={videoUploads[selectedEpisode.id]}
+            onUpload={uploadEpisodeVideo}
             onAnalysisRequested={(result) => {
               setAnalysisPollError("");
 
