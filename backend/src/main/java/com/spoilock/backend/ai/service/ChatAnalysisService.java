@@ -198,7 +198,7 @@ public class ChatAnalysisService {
                 );
 
         // 시청 진도를 포함하여 AI 판정
-        return judgeService.judge(
+        return judgeService.judgeChat(
                 event.messageId(),
                 event.dramaId(),
                 event.content(),
