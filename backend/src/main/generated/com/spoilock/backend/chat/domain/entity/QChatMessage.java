@@ -24,7 +24,23 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
 
     public final com.spoilock.backend.common.entity.QCreatedAtEntity _super = new com.spoilock.backend.common.entity.QCreatedAtEntity(this);
 
+    public final NumberPath<Integer> analysisAttempts = createNumber("analysisAttempts", Integer.class);
+
+    public final NumberPath<Long> analysisDurationMs = createNumber("analysisDurationMs", Long.class);
+
+    public final StringPath analysisOutcome = createString("analysisOutcome");
+
+    public final StringPath analysisPolicyCode = createString("analysisPolicyCode");
+
+    public final StringPath analysisPolicyDetail = createString("analysisPolicyDetail");
+
+    public final DateTimePath<java.time.LocalDateTime> analysisRetryAt = createDateTime("analysisRetryAt", java.time.LocalDateTime.class);
+
+    public final DateTimePath<java.time.LocalDateTime> analysisStartedAt = createDateTime("analysisStartedAt", java.time.LocalDateTime.class);
+
     public final EnumPath<com.spoilock.backend.common.enums.AnalysisStatus> analysisStatus = createEnum("analysisStatus", com.spoilock.backend.common.enums.AnalysisStatus.class);
+
+    public final DateTimePath<java.time.LocalDateTime> analyzedAt = createDateTime("analyzedAt", java.time.LocalDateTime.class);
 
     public final StringPath content = createString("content");
 
@@ -38,6 +54,8 @@ public class QChatMessage extends EntityPathBase<ChatMessage> {
     public final EnumPath<com.spoilock.backend.common.enums.ModerationStatus> moderationStatus = createEnum("moderationStatus", com.spoilock.backend.common.enums.ModerationStatus.class);
 
     public final NumberPath<Integer> requiredEpisodeNumber = createNumber("requiredEpisodeNumber", Integer.class);
+
+    public final BooleanPath requiredUntilFinale = createBoolean("requiredUntilFinale");
 
     public final QChatRoom room;
 

@@ -24,6 +24,14 @@ public class QPostMedia extends EntityPathBase<PostMedia> {
 
     public final com.spoilock.backend.common.entity.QCreatedAtEntity _super = new com.spoilock.backend.common.entity.QCreatedAtEntity(this);
 
+    public final NumberPath<Integer> analysisAttempts = createNumber("analysisAttempts", Integer.class);
+
+    public final StringPath analysisNote = createString("analysisNote");
+
+    public final EnumPath<com.spoilock.backend.common.enums.AnalysisStatus> analysisStatus = createEnum("analysisStatus", com.spoilock.backend.common.enums.AnalysisStatus.class);
+
+    public final DateTimePath<java.time.LocalDateTime> analysisUpdatedAt = createDateTime("analysisUpdatedAt", java.time.LocalDateTime.class);
+
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
 

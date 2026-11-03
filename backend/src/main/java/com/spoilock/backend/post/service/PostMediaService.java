@@ -13,6 +13,7 @@ import com.spoilock.backend.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationEventPublisher;
+import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -243,7 +244,8 @@ public class PostMediaService {
         }
 
         if (post.getModerationStatus() == ModerationStatus.HIDDEN
-                || post.getModerationStatus() == ModerationStatus.REMOVED) {
+                || post.getModerationStatus() == ModerationStatus.REMOVED
+                || post.getDrama().getStatus() != DramaStatus.PUBLISHED) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "이 피드에는 이미지를 추가할 수 없습니다."
