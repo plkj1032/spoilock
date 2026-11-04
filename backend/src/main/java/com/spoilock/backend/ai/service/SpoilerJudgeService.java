@@ -3,7 +3,8 @@ package com.spoilock.backend.ai.service;
 import com.spoilock.backend.ai.client.SpoilerApiClient;
 import com.spoilock.backend.ai.client.SpoilerApiProperties;
 import com.spoilock.backend.ai.client.SpoilerJudgeResponse;
-
+import com.spoilock.backend.ai.client.SpoilerJudgeRequest;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -159,12 +160,25 @@ public class SpoilerJudgeService {
         ).decision();
     }
 
-    // 관리자 모니터링을 위한 원본 판정 수집
+    // 관리자 모니터링을 위한 원본 판정 수집 (직전 대화 없이)
     public ChatJudgeResult judgeChatWithVerdict(
             Long messageId,
             Long dramaId,
             String content,
             Integer authorWatchedEpisode
+    ) {
+        return judgeChatWithVerdict(messageId, dramaId, content, authorWatchedEpisode, List.of());
+    }
+
+    /**
+     * @param context 같은 채팅방 직전 대화 (질문→답, 나눠 보낸 문장 판정용). 비어 있으면 메시지만 판정
+     */
+    public ChatJudgeResult judgeChatWithVerdict(
+            Long messageId,
+            Long dramaId,
+            String content,
+            Integer authorWatchedEpisode,
+            List<SpoilerJudgeRequest.ContextLine> context
     ) {
         SpoilerKbService.KbLookup lookup =
                 kbService.lookup(dramaId);
@@ -204,7 +218,8 @@ public class SpoilerJudgeService {
                             messageId,
                             kb.kbDramaId(),
                             content,
-                            kb.episodes()
+                            kb.episodes(),
+                            context
                     );
 
             AnalysisDecision decision =

@@ -31,6 +31,19 @@ public class SpoilerApiClient {
             String content,
             List<Integer> episodes
     ) {
+        return judge(messageId, kbDramaId, content, episodes, null);
+    }
+
+    /**
+     * @param context 채팅 직전 대화 (게시글·댓글은 null)
+     */
+    public SpoilerJudgeResponse judge(
+            Long messageId,
+            Long kbDramaId,
+            String content,
+            List<Integer> episodes,
+            List<SpoilerJudgeRequest.ContextLine> context
+    ) {
         String prefilterMode =
                 properties.prefilterMode() == null || properties.prefilterMode().isBlank()
                         ? null
@@ -47,7 +60,8 @@ public class SpoilerApiClient {
                 properties.includeEvidence(),
                 properties.reasonMode(),
                 prefilterMode,
-                false
+                false,
+                context == null || context.isEmpty() ? null : context
         );
 
         // 연결 실패·시간 초과·4xx/5xx 는 RestClientException 으로 던져진다 → 호출 측에서 FAILED 처리

@@ -38,18 +38,23 @@ public class ChatAnalysisService {
     // 관리자 모니터링 단계별 기록
     private final MonitoringTraceService traceService;
 
+    // 같은 채팅방 직전 대화 조회 (질문→답, 나눠 보낸 문장)
+    private final ChatContextService contextService;
+
     public ChatAnalysisService(
             ChatAnalysisStateService stateService,
             ChatRedisPublisher chatRedisPublisher,
             SpoilerJudgeService judgeService,
             AuthorProgressService authorProgressService,
-            MonitoringTraceService traceService
+            MonitoringTraceService traceService,
+            ChatContextService contextService
     ) {
         this.stateService = stateService;
         this.chatRedisPublisher = chatRedisPublisher;
         this.judgeService = judgeService;
         this.authorProgressService = authorProgressService;
         this.traceService = traceService;
+        this.contextService = contextService;
     }
 
     /**
@@ -206,7 +211,8 @@ public class ChatAnalysisService {
                 event.messageId(),
                 event.dramaId(),
                 event.content(),
-                authorWatched
+                authorWatched,
+                contextService.forMessage(event.roomId(), event.messageId())
         );
     }
 
