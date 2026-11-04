@@ -63,7 +63,8 @@ export default function MonitoringAiEvidence({ json, rawVerdict }) {
   return (
     <section className="monitor-detail__decision">
       <h4>
-        AI 원본 분석 결과 : {data.reason || "응답에 판정 이유가 없습니다."}
+        AI 원본 분석 결과 :
+        <strong>{data?.reason || "응답에 판정 이유가 없습니다."}</strong>
       </h4>
 
       <dl className="monitor-detail__grid">

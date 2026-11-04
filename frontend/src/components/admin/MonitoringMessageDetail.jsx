@@ -109,9 +109,11 @@ export default function MonitoringMessageDetail({ message }) {
       <section className="monitor-detail__decision">
         <h4>
           판정 근거 :
-          {message.policyDetail ||
-            message.policyCode ||
-            "저장된 정책 사유가 없습니다."}
+          <strong>
+            {message?.policyDetail ||
+              message?.policyCode ||
+              "저장된 정책 사유가 없습니다."}
+          </strong>
         </h4>
 
         <dl className="monitor-detail__grid">
