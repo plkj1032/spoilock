@@ -46,6 +46,27 @@ public record SpoilerJudgeRequest(
 
         // 사건 설명(스포일러) 응답 금지
         @JsonProperty("debug")
-        Boolean debug
+        Boolean debug,
+
+        // 직전 대화 (채팅만, 오래된 것 → 최근 순). null 이면 생략 → 메시지 한 줄만 판정
+        @JsonProperty("context")
+        List<ContextLine> context
 ) {
+
+        /**
+         * 같은 채팅방의 직전 메시지 1개. 판정 대상이 아니라 질문→답, 나눠 보낸 문장 해석용.
+         */
+        public record ContextLine(
+                @JsonProperty("text")
+                String text,
+
+                // 지금 메시지 작성자와 같은 사람인지 (나눠 보낸 문장 판단)
+                @JsonProperty("same_author")
+                boolean sameAuthor,
+
+                // 지금 메시지보다 몇 초 전에 보냈는지
+                @JsonProperty("seconds_before")
+                long secondsBefore
+        ) {
+        }
 }
