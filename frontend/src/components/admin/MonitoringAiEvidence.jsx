@@ -62,7 +62,9 @@ export default function MonitoringAiEvidence({ json, rawVerdict }) {
 
   return (
     <section className="monitor-detail__decision">
-      <h4>AI 원본 분석 결과</h4>
+      <h4>
+        AI 원본 분석 결과 : {data.reason || "응답에 판정 이유가 없습니다."}
+      </h4>
 
       <dl className="monitor-detail__grid">
         <Field label="AI 원본 판정">
@@ -73,39 +75,15 @@ export default function MonitoringAiEvidence({ json, rawVerdict }) {
 
         {status === "ready" && (
           <>
-            <Field label="AI 검토 필요 표시">
-              {data.needs_review === true
-                ? "있음"
-                : data.needs_review === false
-                  ? "없음"
-                  : "기록 없음"}
-            </Field>
-
-            <Field label="일반 표현 매칭 회차">
+            <Field label="매칭 회차">
               {episodeList(data.matched_episodes)}
             </Field>
 
-            <Field label="추측형 표현 매칭 회차">
-              {episodeList(data.guess_episodes)}
-            </Field>
-
-            <Field label="일반 표현 대표 사건 ID">
+            <Field label="대표 사건 ID">
               {data.matched_event_id || "없음"}
             </Field>
 
-            <Field label="추측형 표현 사건 ID">
-              {Array.isArray(data.guess_event_ids)
-                ? data.guess_event_ids.join(", ") || "없음"
-                : "응답에 목록 없음"}
-            </Field>
-
-            <Field label="일반 표현 회차 근거">
-              {basisLabel(data.episode_basis)}
-            </Field>
-
-            <Field label="추측형 표현 회차 근거">
-              {basisLabel(data.guess_basis)}
-            </Field>
+            <Field label="회차 근거">{basisLabel(data.episode_basis)}</Field>
           </>
         )}
       </dl>
@@ -126,11 +104,6 @@ export default function MonitoringAiEvidence({ json, rawVerdict }) {
 
       {status === "ready" && (
         <>
-          <div className="monitor-detail__reason">
-            <strong>AI 판정 이유</strong>
-            <p>{data.reason || "응답에 판정 이유가 없습니다."}</p>
-          </div>
-
           {data.error && (
             <div className="monitor-detail__reason">
               <strong>AI 오류 내용</strong>
@@ -138,11 +111,7 @@ export default function MonitoringAiEvidence({ json, rawVerdict }) {
             </div>
           )}
 
-          <p className="monitor-detail__note">
-            일반 표현과 추측형 표현은 FastAPI의 응답 분류입니다. 최종 공개
-            정책은 말투와 관계없이 매칭 회차와 작성 당시 시청 진도를 비교합니다.
-            사건 ID 목록과 회차 목록은 같은 순서로 대응하는 목록이 아닙니다.
-          </p>
+          <p className="monitor-detail__note"></p>
         </>
       )}
     </section>
