@@ -34,7 +34,7 @@ public class SpoilerJudgeService {
             SpoilerApiProperties properties,
             SpoilerKbService kbService,
             SpoilerFinaleService finaleService,
-            @Value("${app.spoiler.hold-as-finale:true}") boolean holdAsFinale
+            @Value("${app.spoiler.hold-as-finale:true}") boolean holdAsFinale,
             @Value("${app.spoiler.publish-held:true}") boolean publishHeld
     ) {
         this.spoilerApiClient = spoilerApiClient;
