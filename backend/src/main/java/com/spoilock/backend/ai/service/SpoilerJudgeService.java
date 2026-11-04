@@ -26,18 +26,22 @@ public class SpoilerJudgeService {
     private final SpoilerFinaleService finaleService;
     // 보류 대신 '드라마 마지막 회차부터 공개' (false 면 이전처럼 관리자 검토 대기)
     private final boolean holdAsFinale;
+    // 모든 보류를 당분간 전체 공개 (회의 결정 11/3). false 면 holdAsFinale 규칙
+    private final boolean publishHeld;
 
     public SpoilerJudgeService(
             SpoilerApiClient spoilerApiClient,
             SpoilerApiProperties properties,
             SpoilerKbService kbService,
             SpoilerFinaleService finaleService,
-            @Value("${app.spoiler.hold-as-finale:true}") boolean holdAsFinale
+            @Value("${app.spoiler.hold-as-finale:true}") boolean holdAsFinale,
+            @Value("${app.spoiler.publish-held:true}") boolean publishHeld
     ) {
         this.spoilerApiClient = spoilerApiClient;
         this.kbService = kbService;
         this.finaleService = finaleService;
         this.holdAsFinale = holdAsFinale;
+        this.publishHeld = publishHeld;
         this.publishUnindexedDrama = properties.publishUnindexedDrama();
         this.policy = new SpoilerVerdictPolicy(
                 properties.allowUnverifiedDemo(),
@@ -60,9 +64,25 @@ public class SpoilerJudgeService {
      * @param authorWatchedEpisode 작성자의 이 작품 시청 회차 (추측성 글 판단용, 모르면 null)
      */
     public AnalysisDecision judge(Long logId, Long dramaId, String content, Integer authorWatchedEpisode) {
-        AnalysisDecision decision = judgeOnce(logId, dramaId, content, authorWatchedEpisode);
+        return resolveHold(judgeOnce(logId, dramaId, content, authorWatchedEpisode), dramaId);
+    }
 
-        if (!holdAsFinale || decision.failed() || decision.publish()) {
+    /**
+     * 보류 처리 (채팅·게시글 공통)
+     *  1. publishHeld=true (기본, 회의 결정 11/3): 모든 보류를 전체 공개
+     *  2. publishHeld=false 이고 holdAsFinale=true: 마지막 회차부터 공개
+     *  3. 그 외: 보류 유지 (작성자만 보임)
+     */
+    private AnalysisDecision resolveHold(AnalysisDecision decision, Long dramaId) {
+        if (decision == null || decision.failed() || decision.publish()) {
+            return decision;
+        }
+
+        if (publishHeld) {
+            return AnalysisDecision.publishAll(HoldRules.HELD_PUBLISHED_PREFIX + decision.note());
+        }
+
+        if (!holdAsFinale) {
             return decision;
         }
 
@@ -79,6 +99,8 @@ public class SpoilerJudgeService {
             return decision;   // 보류 유지
         }
     }
+
+
 
     private AnalysisDecision judgeOnce(Long logId, Long dramaId, String content, Integer authorWatchedEpisode) {
 
@@ -160,7 +182,7 @@ public class SpoilerJudgeService {
             );
 
             // FastAPI /judge 자체를 호출하지 않았음
-            return new ChatJudgeResult(decision, null);
+            return new ChatJudgeResult(resolveHold(decision, dramaId), null);
         }
 
         if (kb == null
@@ -197,7 +219,7 @@ public class SpoilerJudgeService {
                     : normalizeVerdict(response.verdict());
 
             return new ChatJudgeResult(
-                    decision,
+                    resolveHold(decision, dramaId),
                     rawVerdict
             );
 
