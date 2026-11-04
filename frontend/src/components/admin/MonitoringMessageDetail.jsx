@@ -108,10 +108,15 @@ export default function MonitoringMessageDetail({ message }) {
       />
 
       <section className="monitor-detail__decision">
-        <h4>판정 근거</h4>
+        <h4>
+          판정 근거 :
+          {message.policyDetail ||
+            message.policyCode ||
+            "저장된 정책 사유가 없습니다."}
+        </h4>
 
         <dl className="monitor-detail__grid">
-          <Info label="작성 당시 시청 진도 a">
+          <Info label="작성 당시 시청 진도">
             {message.authorWatchedEpisode == null
               ? "기록 없음 · 이전 메시지"
               : message.authorWatchedEpisode === 0
@@ -132,20 +137,7 @@ export default function MonitoringMessageDetail({ message }) {
           </Info>
         </dl>
 
-        <div className="monitor-detail__reason">
-          <strong>정책 사유</strong>
-          <p>
-            {message.policyDetail ||
-              message.policyCode ||
-              "저장된 정책 사유가 없습니다."}
-          </p>
-        </div>
-
-        <p className="monitor-detail__note">
-          AI 매칭 회차는 채팅 내용에 대한 분석 결과입니다. 최종 공개 기준은 작성
-          당시 시청 진도를 반영하므로 AI 매칭 회차와 다를 수 있습니다. 수신자는
-          자신의 시청 진도에 따라 메시지를 볼 수 있습니다.
-        </p>
+        <p className="monitor-detail__note"></p>
       </section>
     </article>
   );
