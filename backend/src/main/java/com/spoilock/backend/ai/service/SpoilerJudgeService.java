@@ -41,6 +41,7 @@ public class SpoilerJudgeService {
         this.kbService = kbService;
         this.finaleService = finaleService;
         this.holdAsFinale = holdAsFinale;
+        this.publishHeld = publishHeld;
         this.publishUnindexedDrama = properties.publishUnindexedDrama();
         this.policy = new SpoilerVerdictPolicy(
                 properties.allowUnverifiedDemo(),
