@@ -31,6 +31,7 @@ public class ChatAnalysisService {
     private final ChatRedisPublisher chatRedisPublisher;
     private final SpoilerJudgeService judgeService;
 
+
     // 작성자의 드라마 시청 진도 조회
     private final AuthorProgressService authorProgressService;
 

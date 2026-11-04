@@ -122,6 +122,9 @@ public class ChatMessage extends CreatedAtEntity {
     @Column(name = "analysis_raw_verdict", length = 30)
     private String analysisRawVerdict;
 
+    @Column(name = "ai_response_json", columnDefinition = "LONGTEXT")
+    private String aiResponseJson;
+
 
     public void recordAnalysisMetrics(
             String outcome,
@@ -136,6 +139,10 @@ public class ChatMessage extends CreatedAtEntity {
         this.analysisPolicyDetail = policyDetail;
         this.analysisRawVerdict = rawVerdict;
         this.analyzedAt = LocalDateTime.now();
+    }
+
+    public void recordAiResponse(String aiResponseJson) {
+        this.aiResponseJson = aiResponseJson;
     }
 
 

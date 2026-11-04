@@ -1,4 +1,5 @@
 import "../../styles/MonitoringMessageDetail.css";
+import MonitoringAiEvidence from "./MonitoringAiEvidence";
 
 const ROOM_LABELS = {
   DEFAULT: "기본 토론방",
@@ -101,6 +102,11 @@ export default function MonitoringMessageDetail({ message }) {
         <p>{message.content || "(내용 없음)"}</p>
       </section>
 
+      <MonitoringAiEvidence
+        json={message.aiResponseJson}
+        rawVerdict={message.rawVerdict}
+      />
+
       <section className="monitor-detail__decision">
         <h4>판정 근거</h4>
 
@@ -136,9 +142,9 @@ export default function MonitoringMessageDetail({ message }) {
         </div>
 
         <p className="monitor-detail__note">
-          공개 기준은 작성자 진도를 반영한 결과이며, AI가 찾은 원본 사건 회차와
-          다를 수 있습니다. 원본 매칭 회차 목록은 별도 저장 기능 연결 후
-          표시됩니다.
+          AI 매칭 회차는 채팅 내용에 대한 분석 결과입니다. 최종 공개 기준은 작성
+          당시 시청 진도를 반영하므로 AI 매칭 회차와 다를 수 있습니다. 수신자는
+          자신의 시청 진도에 따라 메시지를 볼 수 있습니다.
         </p>
       </section>
     </article>

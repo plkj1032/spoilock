@@ -38,7 +38,9 @@ public class MonitoringMessageDetailService {
             String policyDetail,
             Long durationMs,
             LocalDateTime createdAt,
-            LocalDateTime analyzedAt
+            LocalDateTime analyzedAt,
+            String rawVerdict,
+            String aiResponseJson
     ){}
 
     public Detail find(Long messageId){
@@ -78,7 +80,9 @@ public class MonitoringMessageDetailService {
                 found.getAnalysisPolicyDetail(),
                 found.getAnalysisDurationMs(),
                 found.getCreatedAt(),
-                found.getAnalyzedAt()
+                found.getAnalyzedAt(),
+                found.getAnalysisRawVerdict(),
+                found.getAiResponseJson()
         );
     }
 }
