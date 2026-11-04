@@ -1,5 +1,7 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.controller;
 
+import com.spoilock.backend.monitoring.domain.dto.ChatMonitoringResponse;
+import com.spoilock.backend.monitoring.service.ChatMonitoringService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

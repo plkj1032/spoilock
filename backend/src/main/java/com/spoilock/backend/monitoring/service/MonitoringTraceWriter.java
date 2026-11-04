@@ -1,5 +1,6 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.service;
 
+import com.spoilock.backend.monitoring.domain.entity.ChatAnalysisTrace;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

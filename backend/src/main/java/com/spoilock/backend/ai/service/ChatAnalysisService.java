@@ -1,7 +1,7 @@
 
 package com.spoilock.backend.ai.service;
 
-import com.spoilock.backend.admin.monitoring.MonitoringTraceService;
+import com.spoilock.backend.monitoring.service.MonitoringTraceService;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.redis.ChatRedisPublisher;
 

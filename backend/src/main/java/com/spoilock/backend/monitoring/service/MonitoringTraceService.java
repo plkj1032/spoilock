@@ -1,4 +1,4 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

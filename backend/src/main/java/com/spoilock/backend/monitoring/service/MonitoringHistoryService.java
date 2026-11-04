@@ -1,5 +1,5 @@
 
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.service;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -8,6 +8,7 @@ import com.spoilock.backend.chat.domain.entity.QChatRoom;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.drama.domain.entity.QDrama;
 import com.spoilock.backend.drama.domain.entity.QEpisode;
+import com.spoilock.backend.monitoring.domain.dto.MonitoringPage;
 import com.spoilock.backend.spoiler.entity.QEpisodeAnalysis;
 
 import lombok.RequiredArgsConstructor;

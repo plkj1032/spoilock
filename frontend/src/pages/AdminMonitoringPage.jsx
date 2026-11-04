@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { adminMonitoringApi } from "../api/adminMonitoringApi";
+import MonitoringMessageDetail from "../components/admin/MonitoringMessageDetail";
 import "../styles/AdminCenter.css";
 import "../styles/AdminMonitoring.css";
 
@@ -305,7 +306,6 @@ export default function AdminMonitoringPage() {
   const [traceLoadedId, setTraceLoadedId] = useState("");
   const [traceErrorId, setTraceErrorId] = useState("");
   const [traceInputError, setTraceInputError] = useState("");
-  const [selectedTraceRow, setSelectedTraceRow] = useState(null);
 
   const traceSectionRef = useRef(null);
 
@@ -462,7 +462,6 @@ export default function AdminMonitoringPage() {
 
     setTraceInputError("");
     setMessageInput(id);
-    setSelectedTraceRow(row);
     setTargetMessageId(id);
     setTraceLoadedId("");
     setTraceErrorId("");
@@ -908,7 +907,6 @@ export default function AdminMonitoringPage() {
             onClick={() => {
               setMessageInput("");
               setTargetMessageId("");
-              setSelectedTraceRow(null);
               setTraceLoadedId("");
               setTraceErrorId("");
               setTraceInputError("");
@@ -924,28 +922,19 @@ export default function AdminMonitoringPage() {
           </p>
         )}
 
-        {targetMessageId && selectedTraceRow && (
-          <div className="monitor-health-item" style={{ marginBottom: 14 }}>
-            <div>
-              <strong>메시지 #{selectedTraceRow.messageId}</strong>
-
-              <StatusTag
-                value={
-                  selectedTraceRow.analysisOutcome ||
-                  selectedTraceRow.analysisStatus
-                }
-              />
-            </div>
-
-            <small>
-              정책 사유:{" "}
-              {selectedTraceRow.policyDetail ||
-                policyLabel(selectedTraceRow.policyCode)}
-            </small>
-
-            <small>처리시간: {duration(selectedTraceRow.durationMs)}</small>
-          </div>
-        )}
+        {targetMessageId &&
+          traceLoadedId === targetMessageId &&
+          traceErrorId !== targetMessageId &&
+          advanced &&
+          (advanced.messageDetail &&
+          String(advanced.messageDetail.messageId) === targetMessageId ? (
+            <MonitoringMessageDetail message={advanced.messageDetail} />
+          ) : (
+            <p className="monitor-empty">
+              해당 메시지를 찾을 수 없습니다. 메시지가 삭제되었거나 상세 조회
+              기능이 서버에 아직 반영되지 않았을 수 있습니다.
+            </p>
+          ))}
 
         {!targetMessageId ? (
           <p className="monitor-empty">

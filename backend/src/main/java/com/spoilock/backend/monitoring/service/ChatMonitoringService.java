@@ -1,4 +1,4 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.service;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -10,6 +10,7 @@ import com.spoilock.backend.chat.domain.entity.QChatRoom;
 import com.spoilock.backend.chat.domain.type.MessageType;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.domain.entity.QDrama;
+import com.spoilock.backend.monitoring.domain.dto.ChatMonitoringResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

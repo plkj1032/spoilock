@@ -1,10 +1,11 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.service;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.spoilock.backend.monitoring.domain.entity.QChatAnalysisTrace;
 import com.spoilock.backend.ai.client.SpoilerApiProperties;
 import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.domain.entity.QDrama;
@@ -30,15 +31,23 @@ public class AdvancedMonitoringService {
     private final JPAQueryFactory queryFactory;
     private final RedisConnectionFactory redisFactory;
     private final SpoilerApiProperties spoilerProperties;
+    private final MonitoringMessageDetailService messageDetailService;
 
     public record ServiceStatus(String name, String status, String detail) {}
     public record JobSummary(long total, long pending, long processing, long completed, long failed) {}
     public record JobRow(Long episodeId, String dramaTitle, String source,
                          String status, Integer progress, Integer eventCount, LocalDateTime requestedAt) {}
     public record TraceRow(String stage, Long durationMs, LocalDateTime recordedAt) {}
-    public record AdvancedResponse(String nodeName, Long heapUsedMb, Long heapMaxMb,
-                                   List<ServiceStatus> services, JobSummary jobs,
-                                   List<JobRow> recentJobs, List<TraceRow> trace) {}
+    public record AdvancedResponse(
+            String nodeName,
+            Long heapUsedMb,
+            Long heapMaxMb,
+            List<ServiceStatus> services,
+            JobSummary jobs,
+            List<JobRow> recentJobs,
+            List<TraceRow> trace,
+            MonitoringMessageDetailService.Detail messageDetail
+    ) {}
 
     private static NumberExpression<Long> countIf(BooleanExpression condition) {
         return new CaseBuilder().when(condition).then(1L).otherwise(0L).sum();
@@ -109,9 +118,15 @@ public class AdvancedMonitoringService {
         services.add(checkFastApiTcp());
 
         return new AdvancedResponse(
-                nodeName(), heap.getUsed() / mb,
+                nodeName(),
+                heap.getUsed() / mb,
                 heap.getMax() < 0 ? null : heap.getMax() / mb,
-                services, summary, jobs, trace);
+                services,
+                summary,
+                jobs,
+                trace,
+                messageDetailService.find(messageId)
+        );
     }
 
     private ServiceStatus checkRedis() {

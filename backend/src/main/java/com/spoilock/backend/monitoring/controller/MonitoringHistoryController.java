@@ -1,5 +1,7 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.controller;
 
+import com.spoilock.backend.monitoring.service.MonitoringHistoryService;
+import com.spoilock.backend.monitoring.domain.dto.MonitoringPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

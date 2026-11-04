@@ -1,4 +1,4 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
