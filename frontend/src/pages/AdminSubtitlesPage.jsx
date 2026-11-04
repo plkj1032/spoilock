@@ -607,6 +607,8 @@ function AdminSubtitlesContent({ dramaId }) {
   // ==========================================
   // 19. 버튼 활성화 조건
   // ==========================================
+  const hasSubtitle = Boolean(analysis?.subtitleFilename);
+
   const canChooseFile =
     !busy &&
     !loadingDetails &&
@@ -925,41 +927,48 @@ function AdminSubtitlesContent({ dramaId }) {
               </div>
 
               {/* 자막 업로드 */}
+              {/* 자막 업로드 / AI 분석 요청 */}
               <form
                 className="admin-subtitles__upload-form"
                 onSubmit={uploadSubtitle}
               >
-                <h3>자막 파일 등록</h3>
+                {!hasSubtitle && (
+                  <>
+                    <h3>자막 파일 등록</h3>
 
-                <div className="admin-subtitles__file-picker">
-                  <FileDropInput
-                    file={file}
-                    inputRef={fileInputRef}
-                    accept=".srt"
-                    extension=".srt"
-                    maxBytes={MAX_SRT_SIZE}
-                    description="SRT 자막 · 최대 2MB · 선택 후 자막 업로드를 눌러 주세요."
-                    disabled={!canChooseFile}
-                    onSelect={(selected) => {
-                      clearMessages();
-                      setFile(selected);
-                    }}
-                    onError={(text) => {
-                      resetFileInput();
-                      setMessage("");
-                      setError(text);
-                    }}
-                  />
-                </div>
+                    <div className="admin-subtitles__file-picker">
+                      <FileDropInput
+                        file={file}
+                        inputRef={fileInputRef}
+                        accept=".srt"
+                        extension=".srt"
+                        maxBytes={MAX_SRT_SIZE}
+                        description="SRT 자막 · 최대 2MB · 선택 후 자막 업로드를 눌러 주세요."
+                        disabled={!canChooseFile}
+                        onSelect={(selected) => {
+                          clearMessages();
+                          setFile(selected);
+                        }}
+                        onError={(text) => {
+                          resetFileInput();
+                          setMessage("");
+                          setError(text);
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="admin-subtitles__actions">
-                  <button
-                    type="submit"
-                    className="admin-subtitles__button admin-subtitles__button--outline"
-                    disabled={!canUpload}
-                  >
-                    {busy ? "처리 중..." : "자막 업로드"}
-                  </button>
+                  {!hasSubtitle && (
+                    <button
+                      type="submit"
+                      className="admin-subtitles__button admin-subtitles__button--outline"
+                      disabled={!canUpload}
+                    >
+                      {busy ? "처리 중..." : "자막 업로드"}
+                    </button>
+                  )}
 
                   <button
                     type="button"
