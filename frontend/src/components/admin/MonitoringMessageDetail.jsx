@@ -76,6 +76,10 @@ export default function MonitoringMessageDetail({ message }) {
           {publicationLabel(message)}
         </span>
       </header>
+      <section className="monitor-detail__content">
+        <h4>채팅 원문</h4>
+        <p>{message.content || "(내용 없음)"}</p>
+      </section>
 
       <dl className="monitor-detail__grid">
         <Info label="보낸 사람">
@@ -96,11 +100,6 @@ export default function MonitoringMessageDetail({ message }) {
 
         <Info label="분석 완료 시각">{formatTime(message.analyzedAt)}</Info>
       </dl>
-
-      <section className="monitor-detail__content">
-        <h4>채팅 원문</h4>
-        <p>{message.content || "(내용 없음)"}</p>
-      </section>
 
       <MonitoringAiEvidence
         json={message.aiResponseJson}

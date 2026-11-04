@@ -374,3 +374,180 @@
   max-width: 340px;
   overflow-wrap: anywhere;
 }
+/* ========================================
+   채팅 분석 흐름 모달
+======================================== */
+
+.monitor-trace-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 28px;
+
+  background: rgba(5, 11, 22, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.monitor-trace-modal {
+  display: flex;
+  flex-direction: column;
+
+  width: min(960px, 100%);
+  max-height: calc(100vh - 56px);
+
+  border: 1px solid #344c70;
+  border-radius: 20px;
+
+  background: #101c2f;
+  color: #edf3ff;
+
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(108, 156, 251, 0.05);
+
+  overflow: hidden;
+}
+
+.monitor-trace-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+
+  flex-shrink: 0;
+
+  padding: 24px 26px 20px;
+
+  border-bottom: 1px solid #294266;
+  background: #142238;
+}
+
+.monitor-trace-modal-header > div {
+  min-width: 0;
+}
+
+.monitor-trace-modal-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #91b0ff;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.monitor-trace-modal-header h2 {
+  margin: 0;
+
+  color: #f5f8ff;
+
+  font-size: 21px;
+}
+
+.monitor-trace-modal-header p {
+  margin: 8px 0 0;
+
+  color: #9fb4d0;
+
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.monitor-trace-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  width: 38px;
+  height: 38px;
+
+  border: 1px solid #3c5274;
+  border-radius: 10px;
+
+  background: #1a2b45;
+  color: #b9c9e2;
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.monitor-trace-modal-close:hover {
+  border-color: #6585bb;
+  background: #243a5c;
+  color: #ffffff;
+}
+
+.monitor-trace-modal-body {
+  min-height: 0;
+
+  padding: 24px 26px 28px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.monitor-trace-modal-body .monitor-detail {
+  margin: 0;
+}
+
+.monitor-trace-result {
+  margin-top: 22px;
+  padding-top: 22px;
+
+  border-top: 1px solid #304461;
+}
+
+.monitor-trace-result h3 {
+  margin: 0 0 14px;
+
+  color: #edf3ff;
+
+  font-size: 15px;
+}
+
+@media (max-width: 700px) {
+  .monitor-trace-modal-backdrop {
+    align-items: flex-end;
+
+    padding: 0;
+  }
+
+  .monitor-trace-modal {
+    width: 100%;
+    max-height: 92vh;
+
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+
+    border-radius: 20px 20px 0 0;
+  }
+
+  .monitor-trace-modal-header {
+    padding: 20px 18px 16px;
+  }
+
+  .monitor-trace-modal-header h2 {
+    font-size: 18px;
+  }
+
+  .monitor-trace-modal-body {
+    padding: 18px;
+  }
+}
