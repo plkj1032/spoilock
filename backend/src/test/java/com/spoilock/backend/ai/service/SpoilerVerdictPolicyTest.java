@@ -207,13 +207,13 @@ class SpoilerVerdictPolicyTest {
     @Test
     void guess_is_ignored_when_progress_unknown_or_episode_out_of_range() {
         assertNull(demoPolicy.decide(
-                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, null)
+                        guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, null)
                 .requiredEpisode());
         assertNull(demoPolicy.decide(
-                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 0)
+                        guess("NO_MATCH", null, DEMO_BASIS, false, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 0)
                 .requiredEpisode());
         assertNull(demoPolicy.decide(
-                guess("NO_MATCH", null, DEMO_BASIS, false, List.of(9), "VERIFIED_FIRST_REVEAL"), EPISODES, 9)
+                        guess("NO_MATCH", null, DEMO_BASIS, false, List.of(9), "VERIFIED_FIRST_REVEAL"), EPISODES, 9)
                 .requiredEpisode());
     }
 
@@ -247,7 +247,7 @@ class SpoilerVerdictPolicyTest {
         assertTrue(d.publish());
         assertTrue(d.untilFinale());
         assertEquals(16, d.requiredEpisode());
-        assertEquals(AnalysisPolicyCode.FINALE_ONLY, AnalysisPolicyCode.from(d));
+        assertEquals(AnalysisPolicyCode.HELD, AnalysisPolicyCode.from(d));
     }
 
     @Test
@@ -279,7 +279,8 @@ class SpoilerVerdictPolicyTest {
 
         assertTrue(d.publish());
         assertNull(d.requiredEpisode());
-        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+        assertEquals(AnalysisPolicyCode.NOT_SPOILER, AnalysisPolicyCode.from(d));
+        assertTrue(AnalysisPolicyDetail.from(d).equals(AnalysisPolicyDetail.AUTHOR_NOT_WATCHED));
     }
 
     @Test
@@ -291,9 +292,9 @@ class SpoilerVerdictPolicyTest {
 
         assertTrue(uncertain.publish());
         assertNull(uncertain.requiredEpisode());
-        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(uncertain));
+        assertEquals(AnalysisPolicyCode.NOT_SPOILER, AnalysisPolicyCode.from(uncertain));
         assertTrue(aboutStory.publish());
-        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(aboutStory));
+        assertEquals(AnalysisPolicyCode.NOT_SPOILER, AnalysisPolicyCode.from(aboutStory));
     }
 
     @Test
@@ -302,7 +303,7 @@ class SpoilerVerdictPolicyTest {
         AnalysisDecision d = openNoMatch.decide(
                 guess("NO_MATCH", null, DEMO_BASIS, false, List.of(2), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
 
-        assertEquals(AnalysisPolicyCode.GUESS_UNKNOWN, AnalysisPolicyCode.from(d));
+        assertTrue(AnalysisPolicyDetail.from(d).equals(AnalysisPolicyDetail.AUTHOR_NOT_WATCHED));
     }
 
     @Test
@@ -311,6 +312,7 @@ class SpoilerVerdictPolicyTest {
                 guess("MATCH", 1, "VERIFIED_FIRST_REVEAL", true, List.of(3), "VERIFIED_FIRST_REVEAL"), EPISODES, 1);
 
         assertEquals(1, d.requiredEpisode());
-        assertEquals(AnalysisPolicyCode.EVENT_MATCH, AnalysisPolicyCode.from(d));
+        assertEquals(AnalysisPolicyCode.SPOILER, AnalysisPolicyCode.from(d));
+        assertTrue(AnalysisPolicyDetail.from(d).equals(AnalysisPolicyDetail.EVENT_MATCH));
     }
 }
