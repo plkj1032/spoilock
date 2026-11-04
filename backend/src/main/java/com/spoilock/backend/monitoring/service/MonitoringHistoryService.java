@@ -27,6 +27,7 @@ public class MonitoringHistoryService {
     private final JPAQueryFactory queryFactory;
     private static final int PAGE_SIZE = 20;
 
+
     public record ChatRow(
             Long messageId,
             Long dramaId,
@@ -34,12 +35,21 @@ public class MonitoringHistoryService {
             String content,
             String analysisStatus,
             String analysisOutcome,
+
+            // FastAPI 원본 판정
+            String rawVerdict,
+
+            // Spring 최종 정책
+            Integer requiredEpisodeNumber,
+            Boolean requiredUntilFinale,
+
             String policyCode,
             String policyDetail,
             Long durationMs,
             LocalDateTime createdAt,
             LocalDateTime analyzedAt
     ) {}
+
 
     public record JobRow(
             Long episodeId,
@@ -96,6 +106,11 @@ public class MonitoringHistoryService {
                         cm.content,
                         cm.analysisStatus,
                         cm.analysisOutcome,
+
+                        cm.analysisRawVerdict,
+                        cm.requiredEpisodeNumber,
+                        cm.requiredUntilFinale,
+
                         cm.analysisPolicyCode,
                         cm.analysisPolicyDetail,
                         cm.analysisDurationMs,
@@ -111,20 +126,30 @@ public class MonitoringHistoryService {
                 .limit(PAGE_SIZE)
                 .fetch()
                 .stream()
+
                 .map(row -> new ChatRow(
                         row.get(cm.id),
                         row.get(drama.id),
                         row.get(drama.title),
                         row.get(cm.content),
+
                         row.get(cm.analysisStatus) == null
-                                ? null : row.get(cm.analysisStatus).name(),
+                                ? null
+                                : row.get(cm.analysisStatus).name(),
+
                         row.get(cm.analysisOutcome),
+
+                        row.get(cm.analysisRawVerdict),
+                        row.get(cm.requiredEpisodeNumber),
+                        row.get(cm.requiredUntilFinale),
+
                         row.get(cm.analysisPolicyCode),
                         row.get(cm.analysisPolicyDetail),
                         row.get(cm.analysisDurationMs),
                         row.get(cm.createdAt),
                         row.get(cm.analyzedAt)
                 ))
+
                 .toList();
 
         return MonitoringPage.of(
