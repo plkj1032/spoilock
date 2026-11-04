@@ -4,53 +4,48 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 관리자 모니터링용 안전한 정책 상세 설명,
+ * 관리자 모니터링용 판정 사유 (정해진 5가지 문구만 저장).
  * 사건 원문, Python reason, 예외 메세지는 저장하지 않는다.
+ *
+ *  결과        | 사유
+ *  스포        | 사건 일치
+ *  스포 아님   | 일반 대화 / 작성자 미시청 회차
+ *  보류        | 판정 보류
+ *  실패        | 분석 실패
+ * 공개 회차·작성자 진도 같은 숫자는 '최종 공개 정책' 열(required_episode_number)에서 본다.
  */
 public class AnalysisPolicyDetail {
+    public static final String EVENT_MATCH = "사건 일치";
+    public static final String GENERAL = "일반 대화";
+    public static final String AUTHOR_NOT_WATCHED = "작성자 미시청 회차";
+    public static final String HELD = "판정 보류";
+    public static final String FAILED = "분석 실패";
 
-    private static final Pattern UNKNOWN_GUESS = Pattern.compile(
-            "^안 본 회차 추측: 작성자 ([0-9]{1,4})화, 추측 내용 ([0-9]{1,4})화 이후$"
-    );
-
-    private static final Pattern KNOWN_GUESS = Pattern.compile(
-            "^추측이지만 작성자가 이미 본 ([0-9]{1,4})화 내용 \\(작성자 ([0-9]{1,4})화\\)$"
-    );
-
-    private AnalysisPolicyDetail() {}
-
-    public static String from(AnalysisDecision decision)
-    {
-        if(decision == null || decision.note() == null)
-        {
-            return null;
-        }
-
-        String note = decision.note().trim();
-
-        // 완전히 일치하는 안전한 형식만 저장
-        Matcher unknown = UNKNOWN_GUESS.matcher(note);
-        if(unknown.matches())
-        {
-            return "안 본 회차 추측: 작성자 "
-                    + unknown.group(1)
-                    + "화, 추측 내용 "
-                    + unknown.group(2)
-                    + "화 이후";
-        }
-
-        Matcher known = KNOWN_GUESS.matcher(note);
-        if(known.matches())
-        {
-            return "본 회차 추측: 작성자 "
-                    + known.group(2)
-                    + "화, 추측 내용 "
-                    + known.group(1)
-                    + "화";
-        }
-
-        // 나머지는 기존 안전한 정책 코드로 표시
-        return null;
+    private AnalysisPolicyDetail() {
     }
 
+    public static String from(AnalysisDecision decision) {
+        if (decision == null) {
+            return null;
+        }
+        String note = decision.note() == null ? "" : decision.note().trim();
+
+        switch (AnalysisPolicyCode.from(decision)) {
+            case FAILED:
+                return FAILED;
+            case HELD:
+                return HELD;
+            case SPOILER:
+                return EVENT_MATCH;
+            case NOT_SPOILER:
+            default:
+                break;
+        }
+
+        // 스포 아님: 왜 공개했는지
+        if (note.startsWith("작성 당시 진도 이후 내용") || note.startsWith("안 본 회차 추측")) {
+            return AUTHOR_NOT_WATCHED;
+        }
+        return GENERAL;   // 1차 필터, 감상·질문·잡담·다른 작품
+    }
 }
