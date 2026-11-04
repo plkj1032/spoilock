@@ -1,4 +1,4 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.domain.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;

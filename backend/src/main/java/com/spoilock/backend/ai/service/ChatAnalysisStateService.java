@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,7 @@ public class ChatAnalysisStateService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final SpoilerApiProperties properties;
+    private final ObjectMapper objectMapper;
 
     // 분석 작업 선점
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -67,6 +69,11 @@ public class ChatAnalysisStateService {
                 != AnalysisStatus.PROCESSING) {
             return false;
         }
+        message.recordAiResponse(
+                decision.aiResponse() == null
+                ? null
+                        : objectMapper.writeValueAsString(decision.aiResponse())
+        );
 
         String outcome;
 

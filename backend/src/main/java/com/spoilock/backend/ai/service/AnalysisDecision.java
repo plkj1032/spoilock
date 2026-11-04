@@ -24,46 +24,70 @@ package com.spoilock.backend.ai.service;
  * untilFinale=true
  *  → 드라마 마지막 회차까지 시청한 사용자에게만 공개
  */
+import com.spoilock.backend.ai.client.SpoilerJudgeResponse;
+
 public record AnalysisDecision(
         boolean failed,
         boolean publish,
         Integer requiredEpisode,
         String note,
-        boolean untilFinale
+        boolean untilFinale,
+        SpoilerJudgeResponse aiResponse
 ) {
 
-    // 기존 4개 인자 생성자와의 호환성 유지
+    // 기존 5개 인자 호출 유지
+    public AnalysisDecision(
+            boolean failed,
+            boolean publish,
+            Integer requiredEpisode,
+            String note,
+            boolean untilFinale
+    ) {
+        this(
+                failed, publish, requiredEpisode,
+                note, untilFinale, null
+        );
+    }
+
+    // 기존 4개 인자 호출 유지
     public AnalysisDecision(
             boolean failed,
             boolean publish,
             Integer requiredEpisode,
             String note
     ) {
-        this(failed, publish, requiredEpisode, note, false);
+        this(failed, publish, requiredEpisode, note, false, null);
     }
 
-    // AI 분석 실패
+    public AnalysisDecision withAiResponse(SpoilerJudgeResponse response) {
+        return new AnalysisDecision(
+                failed,
+                publish,
+                requiredEpisode,
+                note,
+                untilFinale,
+                response
+        );
+    }
+
     public static AnalysisDecision failed(String note) {
         return new AnalysisDecision(
                 true, false, null, note, false
         );
     }
 
-    // 관리자 검토 대기
     public static AnalysisDecision hold(String note) {
         return new AnalysisDecision(
                 false, false, null, note, false
         );
     }
 
-    // 전체 공개
     public static AnalysisDecision publishAll(String note) {
         return new AnalysisDecision(
                 false, true, null, note, false
         );
     }
 
-    // 특정 회차 이상 시청자에게 공개
     public static AnalysisDecision publishFrom(
             int episode,
             String note
@@ -73,7 +97,6 @@ public record AnalysisDecision(
         );
     }
 
-    // 마지막 회차까지 시청한 사용자에게만 공개
     public static AnalysisDecision publishUntilFinale(
             int finaleEpisode,
             String note

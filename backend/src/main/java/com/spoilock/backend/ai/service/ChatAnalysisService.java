@@ -1,7 +1,7 @@
 
 package com.spoilock.backend.ai.service;
 
-import com.spoilock.backend.admin.monitoring.MonitoringTraceService;
+import com.spoilock.backend.monitoring.service.MonitoringTraceService;
 import com.spoilock.backend.chat.domain.dto.ChatRedisEvent;
 import com.spoilock.backend.chat.redis.ChatRedisPublisher;
 
@@ -30,6 +30,7 @@ public class ChatAnalysisService {
     private final ChatAnalysisStateService stateService;
     private final ChatRedisPublisher chatRedisPublisher;
     private final SpoilerJudgeService judgeService;
+
 
     // 작성자의 드라마 시청 진도 조회
     private final AuthorProgressService authorProgressService;

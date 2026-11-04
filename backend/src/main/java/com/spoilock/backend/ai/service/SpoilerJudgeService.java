@@ -212,7 +212,7 @@ public class SpoilerJudgeService {
                             response,
                             kb.episodes(),
                             authorWatchedEpisode
-                    );
+                    ).withAiResponse(response);
 
             String rawVerdict = response == null
                     ? null

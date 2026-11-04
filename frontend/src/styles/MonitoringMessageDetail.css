@@ -1,0 +1,125 @@
+.monitor-detail {
+  margin: 18px 0;
+  padding: 24px;
+  border: 1px solid #354c6d;
+  border-radius: 16px;
+  background: #111e33;
+  color: #edf3ff;
+}
+
+.monitor-detail__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.monitor-detail__eyebrow {
+  color: #91b0ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.monitor-detail__header h3 {
+  margin: 7px 0 0;
+  font-size: 20px;
+}
+
+.monitor-detail__badge {
+  padding: 7px 12px;
+  border: 1px solid #49628b;
+  border-radius: 20px;
+  background: #213653;
+  color: #d3e2ff;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.monitor-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin: 0;
+}
+
+.monitor-detail__field {
+  min-width: 0;
+}
+
+.monitor-detail__field dt {
+  margin-bottom: 6px;
+  color: #91a8ca;
+  font-size: 12px;
+}
+
+.monitor-detail__field dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.monitor-detail__content,
+.monitor-detail__decision {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #304461;
+}
+
+.monitor-detail h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+
+.monitor-detail__content > p {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: #0b1628;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.monitor-detail__reason {
+  margin-top: 20px;
+  padding: 15px;
+  border-left: 3px solid #759cff;
+  border-radius: 6px;
+  background: #192a44;
+}
+
+.monitor-detail__reason strong {
+  font-size: 13px;
+}
+
+.monitor-detail__reason p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.monitor-detail__note {
+  margin: 14px 0 0;
+  color: #93a9c9;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .monitor-detail {
+    padding: 18px;
+  }
+
+  .monitor-detail__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
