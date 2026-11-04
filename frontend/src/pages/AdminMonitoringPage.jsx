@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { adminMonitoringApi } from "../api/adminMonitoringApi";
 import MonitoringMessageDetail from "../components/admin/MonitoringMessageDetail";
@@ -358,13 +358,11 @@ export default function AdminMonitoringPage() {
   const [jobHistory, setJobHistory] = useState(null);
 
   // 메시지 추적
-  const [messageInput, setMessageInput] = useState("");
+
   const [targetMessageId, setTargetMessageId] = useState("");
   const [traceLoadedId, setTraceLoadedId] = useState("");
   const [traceErrorId, setTraceErrorId] = useState("");
-  const [traceInputError, setTraceInputError] = useState("");
-
-  const traceSectionRef = useRef(null);
+  const [traceModalOpen, setTraceModalOpen] = useState(false);
 
   // 화면 상태
   const [error, setError] = useState("");
@@ -513,26 +511,44 @@ export default function AdminMonitoringPage() {
     const id = String(row ? row.messageId : (value ?? "")).trim();
 
     if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
-      setTraceInputError("메시지 ID에 1 이상의 정수를 입력해 주세요.");
       return;
     }
-
-    setTraceInputError("");
-    setMessageInput(id);
     setTargetMessageId(id);
     setTraceLoadedId("");
     setTraceErrorId("");
+    setTraceModalOpen(true);
 
     // 같은 메시지를 눌러도 재조회
     setReloadKey((key) => key + 1);
-
-    window.requestAnimationFrame(() => {
-      traceSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
   }
+  function closeTrace() {
+    setTraceModalOpen(false);
+    setTargetMessageId("");
+    setTraceLoadedId("");
+    setTraceErrorId("");
+  }
+  useEffect(() => {
+    if (!traceModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        closeTrace();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [traceModalOpen]);
 
   // ========================================
   // 11. 공통 파생 데이터
@@ -924,122 +940,105 @@ export default function AdminMonitoringPage() {
           label="자막 영상 분석"
         />
       </section>
-
       {/* ========================================
-          18. 채팅 분석 흐름 추적
-      ======================================== */}
-      <section
-        ref={traceSectionRef}
-        className="monitor-panel"
-        style={{ scrollMarginTop: "110px" }}
-        aria-label="채팅 메시지 분석 흐름 추적"
-      >
-        <h2>채팅 메시지 분석 흐름 추적</h2>
-
-        <p className="monitor-note">
-          메시지별 AI 판정 → DB 반영 → Redis 알림을 확인합니다. 단계 기록이
-          저장되지 않은 이전 메시지에는 이력이 없을 수 있습니다.
-        </p>
-
-        <form
-          className="monitor-trace-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            openTrace(messageInput);
+          18. 채팅 분석 흐름 추적 모달
+          ======================================== */}
+      {traceModalOpen && (
+        <div
+          className="monitor-trace-modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeTrace();
+            }
           }}
         >
-          <label htmlFor="trace-message-id">메시지 ID</label>
-
-          <input
-            id="trace-message-id"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="예: 458"
-            value={messageInput}
-            onChange={(e) => {
-              setMessageInput(e.target.value);
-              setTraceInputError("");
-            }}
-          />
-
-          <button type="submit" className="button button-outline">
-            조회
-          </button>
-
-          <button
-            type="button"
-            className="button button-outline"
-            onClick={() => {
-              setMessageInput("");
-              setTargetMessageId("");
-              setTraceLoadedId("");
-              setTraceErrorId("");
-              setTraceInputError("");
-            }}
+          <section
+            className="monitor-trace-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="monitor-trace-modal-title"
           >
-            초기화
-          </button>
-        </form>
+            <header className="monitor-trace-modal-header">
+              <div>
+                <span className="monitor-trace-modal-eyebrow">
+                  MESSAGE TRACE
+                </span>
 
-        {traceInputError && (
-          <p className="monitor-alert" role="alert">
-            {traceInputError}
-          </p>
-        )}
+                <h2 id="monitor-trace-modal-title">채팅 메시지 분석 흐름</h2>
 
-        {targetMessageId &&
-          traceLoadedId === targetMessageId &&
-          traceErrorId !== targetMessageId &&
-          advanced &&
-          (advanced.messageDetail &&
-          String(advanced.messageDetail.messageId) === targetMessageId ? (
-            <MonitoringMessageDetail message={advanced.messageDetail} />
-          ) : (
-            <p className="monitor-empty">
-              해당 메시지를 찾을 수 없습니다. 메시지가 삭제되었거나 상세 조회
-              기능이 서버에 아직 반영되지 않았을 수 있습니다.
-            </p>
-          ))}
+                <p>
+                  메시지 #{targetMessageId}의 AI 판정부터 DB 반영, Redis
+                  알림까지의 처리 흐름을 확인합니다.
+                </p>
+              </div>
 
-        {!targetMessageId ? (
-          <p className="monitor-empty">
-            메시지 ID를 입력하거나 채팅 판정 이력에서 '흐름 보기'를 클릭하세요.
-          </p>
-        ) : traceLoadedId !== targetMessageId ? (
-          <p className="monitor-empty" role="status">
-            메시지 #{targetMessageId} 분석 흐름 조회 중…
-          </p>
-        ) : traceErrorId === targetMessageId || !advanced ? (
-          <p className="monitor-alert" role="alert">
-            흐름 조회에 실패했습니다.
-          </p>
-        ) : (advanced.trace || []).length > 0 ? (
-          <ol className="monitor-trace-list">
-            {advanced.trace.map((item, index) => (
-              <li key={`${item.stage}-${index}`}>
-                <div>
-                  <strong>{stateText(item.stage)}</strong>
-                  <StatusTag value={item.stage} />
-                </div>
+              <button
+                type="button"
+                className="monitor-trace-modal-close"
+                onClick={closeTrace}
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </header>
 
-                <small>
-                  {date(item.recordedAt)}
+            <div className="monitor-trace-modal-body">
+              {targetMessageId &&
+              traceLoadedId === targetMessageId &&
+              traceErrorId !== targetMessageId &&
+              advanced &&
+              advanced.messageDetail &&
+              String(advanced.messageDetail.messageId) === targetMessageId ? (
+                <MonitoringMessageDetail message={advanced.messageDetail} />
+              ) : traceLoadedId === targetMessageId &&
+                traceErrorId !== targetMessageId &&
+                advanced ? (
+                <p className="monitor-empty">
+                  해당 메시지를 찾을 수 없습니다. 메시지가 삭제되었거나 상세
+                  조회 기능이 서버에 아직 반영되지 않았을 수 있습니다.
+                </p>
+              ) : null}
 
-                  {item.durationMs != null
-                    ? ` · ${duration(item.durationMs)}`
-                    : ""}
-                </small>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="monitor-empty">
-            해당 메시지에 저장된 단계별 처리 기록이 없습니다. V24 백엔드의
-            MonitoringTraceService 기록 연결이 적용되었는지 확인해 주세요.
-          </p>
-        )}
-      </section>
+              {traceLoadedId !== targetMessageId ? (
+                <p className="monitor-empty" role="status">
+                  메시지 #{targetMessageId} 분석 흐름 조회 중…
+                </p>
+              ) : traceErrorId === targetMessageId || !advanced ? (
+                <p className="monitor-alert" role="alert">
+                  흐름 조회에 실패했습니다.
+                </p>
+              ) : (advanced.trace || []).length > 0 ? (
+                <section className="monitor-trace-result">
+                  <h3>처리 단계</h3>
+
+                  <ol className="monitor-trace-list">
+                    {advanced.trace.map((item, index) => (
+                      <li key={`${item.stage}-${index}`}>
+                        <div>
+                          <strong>{stateText(item.stage)}</strong>
+                          <StatusTag value={item.stage} />
+                        </div>
+
+                        <small>
+                          {date(item.recordedAt)}
+
+                          {item.durationMs != null
+                            ? ` · ${duration(item.durationMs)}`
+                            : ""}
+                        </small>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : (
+                <p className="monitor-empty">
+                  해당 메시지에 저장된 단계별 처리 기록이 없습니다.
+                </p>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* ========================================
           19. 안내
