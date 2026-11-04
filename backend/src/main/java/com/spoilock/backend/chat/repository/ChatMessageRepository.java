@@ -9,7 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.spoilock.backend.ai.service.ChatContextRow;
+import com.spoilock.backend.common.enums.ModerationStatus;
 
+import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -85,6 +88,40 @@ public interface ChatMessageRepository
             @Param("failed") AnalysisStatus failed,
             @Param("maxAttempts") int maxAttempts,
             @Param("now") LocalDateTime now,
+            Pageable pageable
+    );
+
+    /**
+     * 스포 판정 맥락용: 메시지 1건의 작성자·작성 시각
+     */
+    @Query("""
+            select new com.spoilock.backend.ai.service.ChatContextRow(
+                       m.id, m.user.id, m.content, m.createdAt)
+              from ChatMessage m
+             where m.id = :messageId
+            """)
+    Optional<ChatContextRow> findContextAnchor(@Param("messageId") Long messageId);
+
+    /**
+     * 스포 판정 맥락용: 같은 방에서 이 메시지보다 앞선 채팅 (최근 것부터). 삭제된 메시지는 제외
+     */
+    @Query("""
+            select new com.spoilock.backend.ai.service.ChatContextRow(
+                       m.id, m.user.id, m.content, m.createdAt)
+              from ChatMessage m
+             where m.room.id = :roomId
+               and m.id < :beforeId
+               and m.messageType = :type
+               and m.moderationStatus <> :removed
+               and m.createdAt >= :since
+             order by m.id desc
+            """)
+    List<ChatContextRow> findContextBefore(
+            @Param("roomId") Long roomId,
+            @Param("beforeId") Long beforeId,
+            @Param("type") MessageType type,
+            @Param("removed") ModerationStatus removed,
+            @Param("since") LocalDateTime since,
             Pageable pageable
     );
 }
