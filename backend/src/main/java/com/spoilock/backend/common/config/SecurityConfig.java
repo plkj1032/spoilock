@@ -202,7 +202,10 @@ public class SecurityConfig {
             if ("GET".equals(method)
                     && (
                     path.equals("/api/dramas")
-                            || path.startsWith("/api/dramas/")
+                            || (
+                            path.startsWith("/api/dramas/")
+                                    && !path.matches("/api/dramas/[0-9]+/rating/?")
+                    )
                             || path.equals(
                             "/api/auth/nickname/check"
                     )
