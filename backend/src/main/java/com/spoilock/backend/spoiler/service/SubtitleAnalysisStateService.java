@@ -5,6 +5,7 @@ import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.drama.domain.entity.Episode;
 import com.spoilock.backend.drama.repository.EpisodeRepository;
 import com.spoilock.backend.drama.service.DramaAdminAccessService;
+import com.spoilock.backend.monitoring.service.MonitoringRealtimeNotifier;
 import com.spoilock.backend.spoiler.dto.AdminEpisodeAiResponse;
 import com.spoilock.backend.drama.repository.EpisodeVideoRepository;
 import com.spoilock.backend.spoiler.entity.EpisodeAnalysis;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +38,7 @@ public class SubtitleAnalysisStateService {
     private final EpisodeAnalysisRepository analysisRepository;
     private final EpisodeVideoRepository videoRepository;
     private final DramaAdminAccessService dramaAdminAccessService;
+    private final MonitoringRealtimeNotifier realtimeNotifier;
 
     /** 분석 요청 전 확인 결과 */
     public record Target(
@@ -151,6 +154,7 @@ public class SubtitleAnalysisStateService {
         EpisodeAnalysis analysis = findAnalysis(episodeId);
 
         analysis.startJob(jobId, source);
+        realtimeNotifier.publishMedia(episodeId, "STARTED");
 
         log.info("{} 분석 작업 시작: episodeId={}, jobId={}",
                 source == AnalysisSource.VIDEO ? "영상" : "자막", episodeId, jobId);
@@ -177,6 +181,7 @@ public class SubtitleAnalysisStateService {
 
         String token = EpisodeAnalysis.UPLOADING_PREFIX + UUID.randomUUID();
         analysis.startUpload(token, source);
+        realtimeNotifier.publishMedia(episodeId, "UPLOADING");
 
         log.info("분석 요청 접수 (영상 전달 대기): episodeId={}, source={}", episodeId, source);
 
@@ -204,7 +209,13 @@ public class SubtitleAnalysisStateService {
     public void markUploadFailed(Long episodeId, String token, String message) {
         analysisRepository.findByEpisode_Id(episodeId)
                 .filter(a -> token.equals(a.getAnalysisJobId()))
-                .ifPresent(a -> a.failUpload(message));
+                .ifPresent(a -> {
+                    a.failUpload(message);
+                    realtimeNotifier.publishMedia(
+                            episodeId,
+                            "UPLOAD_FAILED"
+                    );
+                });
     }
 
     /** 서버 재시작 등으로 전달이 중단된 접수 기록 정리 */
@@ -217,6 +228,10 @@ public class SubtitleAnalysisStateService {
                 .ifPresent(a -> {
                     log.warn("영상 전달이 {}분 넘게 끝나지 않아 실패 처리: episodeId={}", staleMinutes, episodeId);
                     a.failUpload("영상을 분석 서버로 보내는 중 중단되었습니다. 다시 분석을 요청해 주세요.");
+
+                    realtimeNotifier.publishMedia(
+                            episodeId,"UPLOAD_FAILED"
+                    );
                 });
     }
 
@@ -226,6 +241,8 @@ public class SubtitleAnalysisStateService {
     @Transactional
     public void markRequestFailed(Long episodeId, String message) {
         findAnalysis(episodeId).failRequest(message);
+
+        realtimeNotifier.publishMedia(episodeId, "REQUEST_FAILED");
     }
 
     // ============================================
@@ -244,6 +261,8 @@ public class SubtitleAnalysisStateService {
 
         EpisodeAnalysis analysis = found.get();
         AnalysisStatus before = analysis.getAnalysisStatus();
+        Integer beforeProgress = analysis.getAnalysisProgress();
+        String beforeError = analysis.getErrorMessage();
         AnalysisStatus status = toStatus(job.status());
 
         Integer eventCount = null;
@@ -259,6 +278,14 @@ public class SubtitleAnalysisStateService {
                 eventCount,
                 job.error()
         );
+
+        boolean changed =
+                before != analysis.getAnalysisStatus()
+                    || !Objects.equals(beforeProgress, analysis.getAnalysisProgress())
+                    || !Objects.equals(beforeError, analysis.getErrorMessage());
+        if (changed) {
+            realtimeNotifier.publishMedia(episodeId, analysis.getAnalysisStatus().name());
+        }
 
         if (status != before) {
             log.info("자막 분석 상태 변경: episodeId={}, jobId={}, {} → {}",
@@ -282,6 +309,8 @@ public class SubtitleAnalysisStateService {
                         null,
                         "분석 서버에서 작업을 찾을 수 없습니다. 다시 분석을 요청해 주세요."
                 ));
+
+        realtimeNotifier.publishMedia(episodeId, "JOB_LOST");
     }
 
     private EpisodeAnalysis findAnalysis(Long episodeId) {

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MonitoringTraceService {
     private final MonitoringTraceWriter writer;
+    private final MonitoringRealtimeNotifier realtimeNotifier;
 
     public void record(Long messageId, String stage, Long durationMs) {
         try {
@@ -18,5 +19,8 @@ public class MonitoringTraceService {
             log.warn("[MONITOR_TRACE_FAILED] messageId={} stage={} errorType={}",
                     messageId, stage, ex.getClass().getSimpleName());
         }
+        //기록 저장 실패 시에도 최신 분석 상태를 다시 조회하도록 알린다
+        // 알림 발행 실패는 notifier 내부에서 처리
+        realtimeNotifier.publish(messageId,stage);
     }
 }

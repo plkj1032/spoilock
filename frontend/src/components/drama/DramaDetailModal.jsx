@@ -6,8 +6,9 @@ import "../../styles/DramaDetailLayout.css";
 import "../../styles/DramaDetailModal.css";
 import "../../styles/DramaWatchPage.css";
 import Modal from "../common/Modal";
+import DramaRatingPanel from "./DramaRatingPanel";
 
-export default function DramaDetailModal({ dramaId, onClose }) {
+export default function DramaDetailModal({ dramaId, onClose, user }) {
   const dialogRef = useRef(null);
   const titleId = useId();
 
@@ -214,6 +215,8 @@ export default function DramaDetailModal({ dramaId, onClose }) {
               시청하기
             </Link>
           )}
+          <DramaRatingPanel dramaId={detail.id} user={user} />
+
           <footer className="drama-detail-actions">
             <Link to={`/chat?dramaId=${detail.id}`} onClick={onClose}>
               채팅방 가기 <span aria-hidden="true">→</span>

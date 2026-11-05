@@ -43,7 +43,7 @@ export default function AppRouter({
         path="/dramas/:dramaId/watch"
         element={
           <RequireLogin user={user} pending={pending}>
-            <DramaWatchPage key={user?.id} />
+            <DramaWatchPage key={user?.id} user={user} />
           </RequireLogin>
         }
       />
