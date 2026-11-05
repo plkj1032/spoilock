@@ -72,6 +72,12 @@ public class ChatAnalysisService {
             return;
         }
 
+        traceService.record(
+                messageId,
+                "AI_STARTED",
+                null
+        );
+
         // ========================================
         // 2. AI 분석 시작 시간 기록
         // ========================================

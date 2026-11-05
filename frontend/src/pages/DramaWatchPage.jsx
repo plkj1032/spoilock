@@ -7,8 +7,9 @@ import "../styles/DramaWatchPage.css";
 import "../styles/DramaWatchLayout.css";
 import "../styles/DramaWatchPage.css";
 import WatchProgressPanel from "../components/drama/WatchProgressPanel";
+import DramaRatingPanel from "../components/drama/DramaRatingPanel";
 
-function WatchContent({ dramaId }) {
+function WatchContent({ dramaId, user }) {
   const [drama, setDrama] = useState(null);
   const [episodes, setEpisodes] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -16,6 +17,7 @@ function WatchContent({ dramaId }) {
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [episodesOpen, setEpisodesOpen] = useState(true);
+  const [ratingRevision, setRatingRevision] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -255,7 +257,17 @@ function WatchContent({ dramaId }) {
             </nav>
           )}
 
-          <WatchProgressPanel dramaId={dramaId} episode={selectedEpisode} />
+          <WatchProgressPanel
+            dramaId={dramaId}
+            episode={selectedEpisode}
+            onSaved={() => setRatingRevision((value) => value + 1)}
+          />
+
+          <DramaRatingPanel
+            dramaId={dramaId}
+            user={user}
+            refreshKey={ratingRevision}
+          />
 
           <section className="watch-about">
             <span className="watch-kicker">ABOUT THE SERIES</span>
@@ -283,8 +295,8 @@ function WatchContent({ dramaId }) {
   );
 }
 
-export default function DramaWatchPage() {
+export default function DramaWatchPage({ user }) {
   const { dramaId } = useParams();
 
-  return <WatchContent key={dramaId} dramaId={dramaId} />;
+  return <WatchContent key={dramaId} dramaId={dramaId} user={user} />;
 }

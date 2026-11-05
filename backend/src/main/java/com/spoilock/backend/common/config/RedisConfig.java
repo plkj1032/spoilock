@@ -3,6 +3,7 @@ package com.spoilock.backend.common.config;
 import com.spoilock.backend.chat.redis.ChatPresenceNotifier;
 import com.spoilock.backend.chat.redis.ChatRedisSubscriber;
 import com.spoilock.backend.chat.redis.ChatRoomListNotifier;
+import com.spoilock.backend.monitoring.service.MonitoringRealtimeNotifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -28,7 +29,8 @@ public class RedisConfig {
             ChannelTopic chatTopic,
             ChatPresenceNotifier presenceNotifier,
             ChatRoomListNotifier roomListNotifier,
-            LoginSessionNotifier loginSessionNotifier
+            LoginSessionNotifier loginSessionNotifier,
+            MonitoringRealtimeNotifier monitoringRealtimeNotifier
     ) {
         RedisMessageListenerContainer container =
                 new RedisMessageListenerContainer();
@@ -57,6 +59,12 @@ public class RedisConfig {
         container.addMessageListener(
                 loginSessionNotifier,
                 new ChannelTopic(LoginSessionNotifier.CHANNEL)
+        );
+
+        //관리자 모니터링 변경 알림
+        container.addMessageListener(
+                monitoringRealtimeNotifier,
+                new ChannelTopic(MonitoringRealtimeNotifier.CHANNEL)
         );
 
         return container;

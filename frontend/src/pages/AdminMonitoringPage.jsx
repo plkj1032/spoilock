@@ -4,6 +4,8 @@ import { adminMonitoringApi } from "../api/adminMonitoringApi";
 import MonitoringMessageDetail from "../components/admin/MonitoringMessageDetail";
 import "../styles/AdminCenter.css";
 import "../styles/AdminMonitoring.css";
+import { Client } from "@stomp/stompjs";
+import { authApi } from "../api/authApi";
 
 // ========================================
 // 1. 상태 코드 한글 표시
@@ -22,6 +24,7 @@ const LABELS = {
   SUBTITLE_VIDEO: "자막 + 영상",
   VIDEO: "영상(STT)",
 
+  AI_STARTED: "AI 분석 시작",
   AI_RESULT: "AI 판정 반환",
   AI_FAILED: "AI 판정 실패",
   DB_SAVED: "DB 결과 저장",
@@ -377,7 +380,7 @@ export default function AdminMonitoringPage() {
     let mounted = true;
     let currentController = null;
 
-    async function reload() {
+    async function loadSnapshot() {
       if (document.hidden) return;
 
       currentController?.abort();
@@ -478,27 +481,154 @@ export default function AdminMonitoringPage() {
       setLoading(false);
     }
 
-    void reload();
+    // 조회 중 알림이 오면 현재 조회 완료 후 한 번 더 조회한다.
+    // 이벤트가 많아도 진행 중인 요청을 계속 취소하지 않는다.
+    let reloading = false;
+    let reloadPending = false;
+    let eventTimer = null;
 
-    // 10초 자동 갱신
+    async function reload() {
+      if (!mounted || document.hidden) return;
+
+      if (reloading) {
+        reloadPending = true;
+        return;
+      }
+
+      reloading = true;
+
+      try {
+        await loadSnapshot();
+      } finally {
+        reloading = false;
+
+        if (mounted && reloadPending) {
+          reloadPending = false;
+          scheduleReload();
+        }
+      }
+    }
+
+    // 짧은 시간에 여러 단계 알림이 와도 한 번에 갱신한다.
+    function scheduleReload() {
+      if (!mounted || document.hidden || eventTimer !== null) return;
+
+      eventTimer = window.setTimeout(() => {
+        eventTimer = null;
+        void reload();
+      }, 500);
+    }
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+    const useSecondServer =
+      new URLSearchParams(window.location.search).get("server") === "8081";
+
+    const secondaryUrl = import.meta.env.VITE_WS_SECONDARY_URL;
+
+    const client = new Client({
+      brokerURL:
+        useSecondServer && secondaryUrl
+          ? secondaryUrl
+          : `${protocol}//${window.location.host}/ws`,
+
+      reconnectDelay: 5000,
+      connectionTimeout: 5000,
+      heartbeatIncoming: 0,
+      heartbeatOutgoing: 10000,
+
+      beforeConnect: async () => {
+        if (!mounted) {
+          void client.deactivate();
+          return;
+        }
+
+        try {
+          // 기존 인증 복원 경로로 만료된 쿠키를 갱신한다.
+          const me = await authApi.restore();
+
+          if (!mounted || !me) {
+            void client.deactivate();
+            return;
+          }
+        } catch {
+          // 일시적인 통신 실패만으로 로그아웃시키지 않는다.
+          // 실제 연결·구독 권한은 서버에서 확인한다.
+        }
+
+        if (!mounted) {
+          void client.deactivate();
+        }
+      },
+
+      onConnect: () => {
+        if (!mounted) {
+          void client.deactivate();
+          return;
+        }
+
+        client.subscribe("/topic/admin.monitoring", (frame) => {
+          try {
+            const event = JSON.parse(frame.body);
+
+            if (
+              event?.type === "CHAT_ANALYSIS_CHANGED" ||
+              event?.type === "MEDIA_ANALYSIS_CHANGED"
+            ) {
+              scheduleReload();
+            }
+          } catch {
+            // 잘못된 알림은 무시한다.
+          }
+        });
+
+        // 재연결 중 놓쳤던 변경도 다시 조회한다.
+        scheduleReload();
+      },
+
+      onStompError: () => {
+        if (mounted) {
+          client.forceDisconnect();
+        }
+      },
+    });
+
+    void reload();
+    client.activate();
+
+    // 서버 상태·작업 이력 갱신 및 알림 유실 보완.
+    // 채팅 변경은 이 주기를 기다리지 않고 WebSocket 알림으로 갱신된다.
     const timer = window.setInterval(() => {
       void reload();
-    }, 10000);
+    }, 30000);
 
-    // 탭 복귀 시 갱신
     const onVisible = () => {
       if (!document.hidden) {
         void reload();
       }
     };
 
+    const onOnline = () => {
+      scheduleReload();
+    };
+
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
 
     return () => {
       mounted = false;
       currentController?.abort();
+
       window.clearInterval(timer);
+
+      if (eventTimer !== null) {
+        window.clearTimeout(eventTimer);
+      }
+
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+
+      void client.deactivate();
     };
   }, [range, dramaId, chatPage, jobPage, targetMessageId, reloadKey]);
 

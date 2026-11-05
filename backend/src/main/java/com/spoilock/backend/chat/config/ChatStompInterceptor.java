@@ -84,6 +84,19 @@ public class ChatStompInterceptor implements ChannelInterceptor {
         }
 
         if (command == StompCommand.SUBSCRIBE
+                && "/topic/admin.monitoring".equals(destination)) {
+            boolean admin = authentication.getAuthorities()
+                    .stream()
+                    .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+            if (!admin) {
+                throw new AccessDeniedException(
+                        "관리자만 모니터링을 구독할 수 있습니다."
+                );
+            }
+            return message;
+        }
+
+        if (command == StompCommand.SUBSCRIBE
                 && (
                 "/user/queue/chat".equals(destination)
                         || "/topic/chat.rooms".equals(destination)

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { dramaApi } from "../../api/dramaApi";
 
-export default function WatchProgressPanel({ dramaId, episode }) {
+export default function WatchProgressPanel({ dramaId, episode, onSaved }) {
   const activeRef = useRef(false);
   const savingRef = useRef(false);
 
@@ -90,6 +90,7 @@ export default function WatchProgressPanel({ dramaId, episode }) {
       setMessage(
         `${data.watchedEpisodeNumber}화까지 시청 진도를 저장했습니다.`,
       );
+      onSaved?.();
     } catch (err) {
       if (!activeRef.current) return;
 

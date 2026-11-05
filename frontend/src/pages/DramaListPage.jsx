@@ -29,6 +29,7 @@ export default function DramaListPage({ user, onLogin, onNotice }) {
         <DramaDetailModal
           key={detailDramaId}
           dramaId={detailDramaId}
+          user={user}
           onClose={() => setDetailDramaId(null)}
         />
       )}
