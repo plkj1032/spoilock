@@ -57,7 +57,12 @@ public record SpoilerJudgeResponse(
         String guessBasis,
 
         @JsonProperty("matched_episodes")
-        List<Integer> matchedEpisodes
+        List<Integer> matchedEpisodes,
+
+        // 채팅이 옮겨 말한 자막 대사의 회차 ("서윤하가 '…'라고 했잖아", 질문 속 인용 포함)
+        //  작성자 진도와 상관없이 이 회차보다 덜 본 사람에게 가림
+        @JsonProperty("quoted_line_episodes")
+        List<Integer> quotedLineEpisodes
 ) {
 
     /** 추측 정보가 없는 응답 (이전 버전 Python 서버·테스트용) */
@@ -66,7 +71,7 @@ public record SpoilerJudgeResponse(
             String episodeBasis, Boolean needsReview, String reason, String error, Boolean aboutStory
     ) {
         this(messageId, verdict, matchedEventId, requiredEpisodeNumber, episodeBasis, needsReview,
-                reason, error, aboutStory, null, null, null, null);
+                reason, error, aboutStory, null, null, null, null, null);
     }
     public SpoilerJudgeResponse(
             Long messageId,
@@ -85,7 +90,7 @@ public record SpoilerJudgeResponse(
         this(
                 messageId, verdict, matchedEventId, requiredEpisodeNumber,
                 episodeBasis, needsReview, reason, error, aboutStory,
-                guessEventIds, guessEpisodes, guessBasis, null
+                guessEventIds, guessEpisodes, guessBasis, null, null
         );
     }
 }
