@@ -121,6 +121,17 @@ public final class SpoilerVerdictPolicy {
                 .max(Integer::compareTo)
                 .orElse(null);
 
+        // 자막 대사를 옮겨 말한 경우 ("서윤하가 '…'라고 했잖아", 질문 속 인용 포함)
+        //  대사를 아는 것 자체가 그 회차 내용이므로 작성자 진도와 상관없이 그 회차보다 덜 본 사람에게 가림
+        Integer quotedEpisode = quotedLineEpisode(response, indexedEpisodes);
+        if (quotedEpisode != null
+                && (requiredEpisode == null || quotedEpisode > requiredEpisode)) {
+            return AnalysisDecision.publishFrom(
+                    quotedEpisode,
+                    "대사 인용: " + quotedEpisode + "화 대사, 작성자 " + authorWatchedEpisode + "화"
+            );
+        }
+
         if (requiredEpisode == null) {
             return AnalysisDecision.publishAll(
                     "작성 당시 진도 이후 내용: 작성자 "
@@ -356,5 +367,18 @@ public final class SpoilerVerdictPolicy {
 
     private static String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * 채팅이 옮겨 말한 자막 대사 중 가장 늦은 회차. 판정 범위(indexedEpisodes) 밖의 회차는 무시
+     */
+    private static Integer quotedLineEpisode(SpoilerJudgeResponse response, List<Integer> indexedEpisodes) {
+        if (response.quotedLineEpisodes() == null || indexedEpisodes == null) {
+            return null;
+        }
+        return response.quotedLineEpisodes().stream()
+                .filter(episode -> episode != null && indexedEpisodes.contains(episode))
+                .max(Integer::compareTo)
+                .orElse(null);
     }
 }

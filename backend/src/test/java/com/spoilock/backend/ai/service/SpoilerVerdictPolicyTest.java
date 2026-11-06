@@ -315,4 +315,36 @@ class SpoilerVerdictPolicyTest {
         assertEquals(AnalysisPolicyCode.SPOILER, AnalysisPolicyCode.from(d));
         assertTrue(AnalysisPolicyDetail.from(d).equals(AnalysisPolicyDetail.EVENT_MATCH));
     }
+
+    // ---------------------------------------------------------------- 자막 대사 인용
+
+    private static SpoilerJudgeResponse quoted(Integer matchEpisode, List<Integer> quotedEpisodes) {
+        return new SpoilerJudgeResponse(1L, "MATCH", "e-q", matchEpisode, DEMO_BASIS, false, "r", null, true,
+                List.of(), List.of(), null, List.of(matchEpisode), quotedEpisodes);
+    }
+
+    @Test
+    void quoted_line_is_gated_even_when_author_has_not_watched() {
+        // 1화까지 본 작성자가 3화 대사를 인용 → 작성자 진도 예외 없이 3화부터 공개
+        AnalysisDecision d = demoPolicy.decideChat(quoted(3, List.of(3)), EPISODES, 1);
+
+        assertEquals(3, d.requiredEpisode());
+        assertEquals(AnalysisPolicyCode.SPOILER, AnalysisPolicyCode.from(d));
+    }
+
+    @Test
+    void match_without_quote_keeps_author_rule() {
+        // 인용이 아니면 기존 규칙: 작성자가 안 본 회차는 공개
+        AnalysisDecision d = demoPolicy.decideChat(quoted(3, List.of()), EPISODES, 1);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+    }
+
+    @Test
+    void quoted_episode_outside_range_is_ignored() {
+        AnalysisDecision d = demoPolicy.decideChat(quoted(3, List.of(9)), EPISODES, 1);
+
+        assertNull(d.requiredEpisode());
+    }
 }

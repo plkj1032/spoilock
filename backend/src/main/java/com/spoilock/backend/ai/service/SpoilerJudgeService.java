@@ -80,7 +80,9 @@ public class SpoilerJudgeService {
         }
 
         if (publishHeld) {
-            return AnalysisDecision.publishAll(HoldRules.HELD_PUBLISHED_PREFIX + decision.note());
+            // 새 결정을 만들어도 AI 원본 응답은 유지 → 모니터링에서 보류 이유(stance·후보 등) 확인 가능
+            return AnalysisDecision.publishAll(HoldRules.HELD_PUBLISHED_PREFIX + decision.note())
+                    .withAiResponse(decision.aiResponse());
         }
 
         if (!holdAsFinale) {
