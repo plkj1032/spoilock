@@ -114,6 +114,10 @@
   font-size: 12px;
   line-height: 1.7;
 }
+/* 채팅 원문 아래 정보와의 간격 */
+.monitor-detail__content {
+  margin-bottom: 24px;
+}
 
 @media (max-width: 600px) {
   .monitor-detail {

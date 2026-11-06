@@ -11,6 +11,54 @@ const PAGE_SIZE = 10;
 const MAX_IMAGES = 4;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
+function SelectedImagePreview({ file, disabled, onRemove }) {
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    const image = imageRef.current;
+    const url = URL.createObjectURL(file);
+
+    if (image) {
+      image.src = url;
+    }
+
+    // 사진 삭제 또는 화면 이탈 시 미리보기 메모리 정리
+    return () => {
+      if (image) {
+        image.removeAttribute("src");
+      }
+      URL.revokeObjectURL(url);
+    };
+  }, [file]);
+
+  return (
+    <li className="feed-image-preview">
+      <div className="feed-image-preview__visual">
+        <img ref={imageRef} alt={`${file.name} 미리보기`} draggable={false} />
+
+        <button
+          type="button"
+          className="feed-image-preview__remove"
+          disabled={disabled}
+          onClick={onRemove}
+          aria-label={`${file.name} 첨부 삭제`}
+          title="사진 삭제"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <span className="feed-image-preview__name" title={file.name}>
+        {file.name}
+      </span>
+
+      <span className="feed-image-preview__size">
+        {(file.size / (1024 * 1024)).toFixed(2)} MB
+      </span>
+    </li>
+  );
+}
+
 // ==================================================
 // 1. 피드 작성 컴포넌트
 // ==================================================
@@ -27,6 +75,9 @@ export function FeedComposer({
 
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
+
+  const [imageDragging, setImageDragging] = useState(false);
+  const imageDragDepthRef = useRef(0);
 
   const [loadingDramas, setLoadingDramas] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -79,15 +130,11 @@ export function FeedComposer({
   // ================================================
   // 사진 선택 및 검증
   // ================================================
-  function handleFileChange(event) {
-    const selected = Array.from(event.target.files ?? []);
+  function addImages(fileList) {
+    if (saving) return;
 
-    if (selected.length > MAX_IMAGES) {
-      setError("사진은 최대 4장까지 첨부할 수 있습니다.");
-      setFiles([]);
-      event.target.value = "";
-      return;
-    }
+    const selected = Array.from(fileList ?? []);
+    if (selected.length === 0) return;
 
     const invalidType = selected.some(
       (file) => !["image/jpeg", "image/png"].includes(file.type),
@@ -95,8 +142,6 @@ export function FeedComposer({
 
     if (invalidType) {
       setError("JPG 또는 PNG 이미지만 첨부할 수 있습니다.");
-      setFiles([]);
-      event.target.value = "";
       return;
     }
 
@@ -106,13 +151,87 @@ export function FeedComposer({
 
     if (invalidSize) {
       setError("사진은 한 장당 5MB 이하이며 빈 파일은 등록할 수 없습니다.");
-      setFiles([]);
-      event.target.value = "";
+      return;
+    }
+
+    // 같은 파일을 다시 선택하거나 떨어뜨려도 중복 첨부하지 않음
+    const nextFiles = [...files];
+
+    for (const file of selected) {
+      const duplicated = nextFiles.some(
+        (existing) =>
+          existing.name === file.name &&
+          existing.size === file.size &&
+          existing.lastModified === file.lastModified &&
+          existing.type === file.type,
+      );
+
+      if (!duplicated) {
+        nextFiles.push(file);
+      }
+    }
+
+    if (nextFiles.length > MAX_IMAGES) {
+      setError("사진은 최대 4장까지 첨부할 수 있습니다.");
       return;
     }
 
     setError("");
-    setFiles(selected);
+    setFiles(nextFiles);
+  }
+
+  function handleFileChange(event) {
+    addImages(event.currentTarget.files);
+
+    // 선택 취소 후 같은 파일도 다시 선택할 수 있도록 초기화
+    event.currentTarget.value = "";
+  }
+
+  function handleImageDragEnter(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (saving) return;
+    if (!Array.from(event.dataTransfer.types).includes("Files")) return;
+
+    imageDragDepthRef.current += 1;
+    setImageDragging(true);
+  }
+
+  function handleImageDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    event.dataTransfer.dropEffect = saving ? "none" : "copy";
+  }
+
+  function handleImageDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    imageDragDepthRef.current = Math.max(0, imageDragDepthRef.current - 1);
+
+    if (imageDragDepthRef.current === 0) {
+      setImageDragging(false);
+    }
+  }
+
+  function handleImageDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    imageDragDepthRef.current = 0;
+    setImageDragging(false);
+
+    if (saving) return;
+
+    addImages(event.dataTransfer.files);
+  }
+
+  function removeImage(targetFile) {
+    if (saving) return;
+
+    setFiles((previous) => previous.filter((file) => file !== targetFile));
   }
 
   function clearFiles() {
@@ -244,37 +363,90 @@ export function FeedComposer({
           />
 
           {/* 이미지 첨부 */}
-          <div className="feed-composer__images">
-            <label htmlFor="feed-image-input">
-              <span aria-hidden="true">📷 </span>
-              사진 첨부 (최대 4장)
-            </label>
+          <div
+            className={[
+              "feed-composer__images",
+              "feed-image-dropzone",
+              imageDragging && !saving ? "is-dragging" : "",
+              saving ? "is-disabled" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onDragEnter={handleImageDragEnter}
+            onDragOver={handleImageDragOver}
+            onDragLeave={handleImageDragLeave}
+            onDrop={handleImageDrop}
+          >
+            <strong className="feed-image-dropzone__title">
+              {saving
+                ? "게시 중에는 사진을 변경할 수 없어요"
+                : imageDragging
+                  ? "여기에 사진을 놓아주세요"
+                  : "사진을 끌어다 놓거나 선택해 주세요"}
+            </strong>
+
+            <p className="feed-image-dropzone__description">
+              JPG·PNG / 최대 4장 / 한 장당 5MB
+            </p>
 
             <input
               ref={fileInputRef}
-              id="feed-image-input"
               type="file"
               accept="image/jpeg,image/png"
               multiple
               disabled={saving}
+              hidden
               onChange={handleFileChange}
             />
 
+            <button
+              type="button"
+              className="feed-image-dropzone__choose"
+              disabled={saving}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {files.length > 0 ? "사진 추가" : "사진 선택"}
+            </button>
+
             {files.length > 0 && (
               <div className="feed-composer__selection">
-                <p>선택한 사진: {files.length}장</p>
+                <div className="feed-image-selection__header">
+                  <p role="status">
+                    {saving ? "게시 처리 중" : "첨부 대기 중"}: {files.length} /{" "}
+                    {MAX_IMAGES}장
+                  </p>
 
-                <ul>
-                  {files.map((file, index) => (
-                    <li key={`${file.name}-${index}`}>{file.name}</li>
+                  <button
+                    type="button"
+                    className="feed-image-selection__clear"
+                    onClick={clearFiles}
+                    disabled={saving}
+                  >
+                    전체 삭제
+                  </button>
+                </div>
+
+                <ul className="feed-image-preview-list">
+                  {files.map((file) => (
+                    <SelectedImagePreview
+                      key={JSON.stringify([
+                        file.name,
+                        file.size,
+                        file.lastModified,
+                        file.type,
+                      ])}
+                      file={file}
+                      disabled={saving}
+                      onRemove={() => removeImage(file)}
+                    />
                   ))}
                 </ul>
-
-                <button type="button" onClick={clearFiles} disabled={saving}>
-                  사진 선택 취소
-                </button>
               </div>
             )}
+
+            <p className="feed-image-dropzone__description">
+              사진은 ‘피드 게시’를 누르면 업로드됩니다.
+            </p>
           </div>
 
           {/* 게시 버튼 */}
