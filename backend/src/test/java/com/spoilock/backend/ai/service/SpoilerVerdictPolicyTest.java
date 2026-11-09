@@ -347,4 +347,25 @@ class SpoilerVerdictPolicyTest {
 
         assertNull(d.requiredEpisode());
     }
+
+    // ---------------------------------------------------------------- 채팅 추측 (11/9)
+
+    @Test
+    void chat_guess_without_match_is_public_even_if_author_watched() {
+        // 1화를 본 작성자의 추측(AI 원본 NO_MATCH, 추측 회차 1) → 0화 시청자에게도 공개
+        AnalysisDecision d = demoPolicy.decideChat(
+                guess("NO_MATCH", null, DEMO_BASIS, true, List.of(1), DEMO_BASIS), EPISODES, 1);
+
+        assertTrue(d.publish());
+        assertNull(d.requiredEpisode());
+    }
+
+    @Test
+    void chat_match_with_guess_still_uses_guess_episode() {
+        // 사실(MATCH 1화)과 추측(2화)이 같이 있으면 작성자가 본 2화까지 가림
+        AnalysisDecision d = demoPolicy.decideChat(
+                guess("MATCH", 1, DEMO_BASIS, true, List.of(2), DEMO_BASIS), EPISODES, 2);
+
+        assertEquals(2, d.requiredEpisode());
+    }
 }
