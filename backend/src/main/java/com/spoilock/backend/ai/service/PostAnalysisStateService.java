@@ -1,7 +1,9 @@
+
 package com.spoilock.backend.ai.service;
 
 import com.spoilock.backend.ai.client.SpoilerApiProperties;
 import com.spoilock.backend.common.enums.AnalysisStatus;
+import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.post.entity.Post;
 import com.spoilock.backend.post.repository.PostRepository;
 
@@ -14,10 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 게시글·댓글 분석 상태 저장 전용. 메서드마다 짧은 독립 트랜잭션(REQUIRES_NEW).
- * Python HTTP 호출 구간에는 DB 트랜잭션을 걸지 않기 위해 별도 Bean 으로 분리.
- */
 @Service
 @RequiredArgsConstructor
 public class PostAnalysisStateService {
@@ -25,42 +23,78 @@ public class PostAnalysisStateService {
     private final PostRepository postRepository;
     private final SpoilerApiProperties properties;
 
-    /** PENDING/FAILED → PROCESSING. 이미 다른 작업이 가져갔으면 false */
+    // ============================================
+    // 1. AI 분석 작업 선점
+    // ============================================
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean tryStart(Long postId) {
+    public boolean tryStart(Long postId, long revision) {
+
         return postRepository.claimAnalysis(
                 postId,
-                List.of(AnalysisStatus.PENDING, AnalysisStatus.FAILED),
+                revision,
+                List.of(
+                        AnalysisStatus.PENDING,
+                        AnalysisStatus.FAILED
+                ),
                 AnalysisStatus.PROCESSING,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                List.of(
+                        ModerationStatus.PENDING,
+                        ModerationStatus.VISIBLE
+                )
         ) == 1;
     }
 
-    /** 멈춘 PROCESSING → PENDING (복구용) */
+    // ============================================
+    // 2. 멈춘 AI 분석 작업 복구
+    // ============================================
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean releaseStuck(Long postId) {
+    public boolean releaseStuck(Long postId, long revision) {
+
         return postRepository.transitionAnalysisStatus(
                 postId,
+                revision,
                 List.of(AnalysisStatus.PROCESSING),
                 AnalysisStatus.PENDING
         ) == 1;
     }
 
-    /** 분석 결정을 글 상태에 반영. PROCESSING 이 아니면(다른 작업이 처리함) 무시 */
+    // ============================================
+    // 3. AI 분석 결과 저장
+    // ============================================
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean apply(Long postId, AnalysisDecision decision) {
-        Post post = postRepository.findById(postId).orElse(null);
+    public boolean apply(
+            Long postId,
+            long revision,
+            AnalysisDecision decision
+    ) {
+        Post post = postRepository
+                .findByIdForUpdate(postId)
+                .orElse(null);
 
         if (post == null
-                || post.getAnalysisStatus() != AnalysisStatus.PROCESSING) {
+                || post.getContentRevision() != revision
+                || post.getAnalysisStatus() != AnalysisStatus.PROCESSING
+                || post.getModerationStatus() == ModerationStatus.REMOVED
+                || post.getModerationStatus() == ModerationStatus.HIDDEN) {
             return false;
         }
 
         if (decision.failed()) {
-            SpoilerApiProperties.Recovery recovery = properties.recovery();
-            post.failAnalysis(recovery == null ? 30 : recovery.retryBaseDelaySeconds());
+            SpoilerApiProperties.Recovery recovery =
+                    properties.recovery();
+
+            post.failAnalysis(
+                    recovery == null
+                            ? 30
+                            : recovery.retryBaseDelaySeconds()
+            );
         } else {
-            post.completeAnalysis(decision.publish(), decision.requiredEpisode(), decision.untilFinale());
+            post.completeAnalysis(
+                    decision.publish(),
+                    decision.requiredEpisode(),
+                    decision.untilFinale()
+            );
         }
 
         return true;

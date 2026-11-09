@@ -96,6 +96,9 @@ public class Post extends AuditedEntity {
     @Column(name = "audience", nullable = false, length = 20)
     private PostAudience audience = PostAudience.PUBLIC;
 
+    @Column(name = "content_revision", nullable = false)
+    private long contentRevision = 0L;
+
 
     // SNS 게시글 작성
     public static Post create(
@@ -145,6 +148,86 @@ public class Post extends AuditedEntity {
         comment.moderationStatus = ModerationStatus.PENDING;
 
         return comment;
+    }
+
+    // ============================================
+    // 게시글 수정: 본문 + 공개 범위
+    // ============================================
+    public boolean editPost(
+            String newContent,
+            PostAudience newAudience
+    )
+    {
+        if(parentPost != null)
+        {
+            throw new IllegalStateException(
+                    "댓글은 게시글 수정 메서드를 사용할 수 없습니다."
+            );
+        }
+
+        String value = newContent.trim();
+        boolean contentChanged = !content.equals(value);
+
+        this.audience = newAudience;
+
+        if(contentChanged)
+        {
+            this.content = value;
+            resetForReanalysis();
+        }
+
+        return contentChanged;
+    }
+
+    // ============================================
+    // 댓글 수정: 본문만 수정
+    // ============================================
+    public boolean editComment(String newContent)
+    {
+        if(parentPost == null)
+        {
+            throw new IllegalStateException(
+                    "게시글은 댓글 수정 메서드를 사용할 수 없습니다."
+            );
+        }
+
+        String value = newContent.trim();
+
+        if(content.equals(value))
+        {
+            return false;
+        }
+
+        this.content = value;
+        resetForReanalysis();
+
+        return true;
+    }
+
+    // ============================================
+    // 본문 변경 시 AI 판정 초기화
+    // ============================================
+    private void resetForReanalysis()
+    {
+        this.contentRevision++;
+
+        this.analysisStatus = AnalysisStatus.PENDING;
+        this.moderationStatus = ModerationStatus.PENDING;
+
+        this.requiredEpisodeNumber = null;
+        this.requiredUntilFinale = false;
+
+        this.analysisAttempts = 0;
+        this.analysisStartedAt = null;
+        this.analysisRetryAt = null;
+    }
+
+    // ============================================
+    // 작성자 소프트 삭제
+    // ============================================
+    public void removeByAuthor(){
+        this.contentRevision++;
+        this.moderationStatus = ModerationStatus.REMOVED;
     }
 
     // ============================================

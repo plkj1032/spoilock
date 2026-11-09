@@ -1,110 +1,34 @@
+
 package com.spoilock.backend.post.repository;
 
-import com.spoilock.backend.ai.service.PostAnalysisTarget;
-import com.spoilock.backend.common.enums.AnalysisStatus;
 import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.post.entity.Post;
-import jakarta.persistence.LockModeType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository
+        extends JpaRepository<Post, Long>, PostRepositoryCustom {
 
+    // 특정 게시글의 댓글 조회
     Page<Post> findByParentPost_IdAndModerationStatusIn(
             Long parentId,
             Collection<ModerationStatus> statuses,
             Pageable pageable
     );
 
+    // 특정 게시글의 댓글 수
     long countByParentPost_IdAndModerationStatusIn(
             Long parentId,
             Collection<ModerationStatus> statuses
     );
 
+    // 사용자별 게시글 수
     long countByUser_IdAndParentPostIsNullAndModerationStatusIn(
             Long userId,
             Collection<ModerationStatus> statuses
-    );
-
-
-
-    // ============================================
-    // 스포일러 분석 (게시글·댓글 공통)
-    // ============================================
-
-    /**
-     * 분석 상태를 조건부로 변경 (원자적).
-     * 예: PENDING/FAILED → PROCESSING. 다른 스레드·서버가 먼저 가져갔으면 0 반환.
-     */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            update Post p
-               set p.analysisStatus = :to
-             where p.id = :postId
-               and p.analysisStatus in :from
-            """)
-    int transitionAnalysisStatus(
-            @Param("postId") Long postId,
-            @Param("from") Collection<AnalysisStatus> from,
-            @Param("to") AnalysisStatus to
-    );
-
-    /**
-     * 분석 선점: PENDING/FAILED → PROCESSING + 시작 시각 기록 (원자적). 다른 서버가 먼저 가져갔으면 0
-     */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            update Post p
-               set p.analysisStatus = :to,
-                   p.analysisStartedAt = :now
-             where p.id = :postId
-               and p.analysisStatus in :from
-            """)
-    int claimAnalysis(
-            @Param("postId") Long postId,
-            @Param("from") Collection<AnalysisStatus> from,
-            @Param("to") AnalysisStatus to,
-            @Param("now") LocalDateTime now
-    );
-
-    /**
-     * 복구 대상: 오래 남은 PENDING, 멈춘 PROCESSING, 재시도 시각이 된 FAILED(최대 횟수 미만)
-     * (관리자가 숨김/삭제한 글은 제외)
-     */
-    @Query("""
-            select new com.spoilock.backend.ai.service.PostAnalysisTarget(
-                       p.id, d.id, p.content, p.analysisStatus)
-              from Post p
-              join p.drama d
-             where p.moderationStatus in :moderation
-               and (
-                    (p.analysisStatus = :pending    and p.createdAt < :pendingBefore)
-                 or (p.analysisStatus = :processing
-                     and coalesce(p.analysisStartedAt, p.createdAt) < :processingBefore)
-                 or (p.analysisStatus = :failed
-                     and p.analysisAttempts < :maxAttempts
-                     and (p.analysisRetryAt is null or p.analysisRetryAt <= :now))
-               )
-             order by p.id asc
-            """)
-    List<PostAnalysisTarget> findAnalysisTargets(
-            @Param("moderation") Collection<ModerationStatus> moderation,
-            @Param("pending") AnalysisStatus pending,
-            @Param("pendingBefore") LocalDateTime pendingBefore,
-            @Param("processing") AnalysisStatus processing,
-            @Param("processingBefore") LocalDateTime processingBefore,
-            @Param("failed") AnalysisStatus failed,
-            @Param("maxAttempts") int maxAttempts,
-            @Param("now") LocalDateTime now,
-            Pageable pageable
     );
 }
