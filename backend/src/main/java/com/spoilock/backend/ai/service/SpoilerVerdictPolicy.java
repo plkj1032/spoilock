@@ -84,7 +84,17 @@ public final class SpoilerVerdictPolicy {
             contentEpisodes.add(response.requiredEpisodeNumber());
         }
 
-        // 추측형이라는 이유로 제외하지 않고 같은 사건 회차로 취급
+        // 추측·질문(AI 원본 NO_MATCH + 추측 회차)은 작성자 진도와 상관없이 전체 공개 (11/9 결정)
+        //  사실이 아니므로 아직 안 본 사람에게도 보여 줌
+        if ("NO_MATCH".equals(verdict)
+                && response.guessEpisodes() != null
+                && !response.guessEpisodes().isEmpty()) {
+            return AnalysisDecision.publishAll(
+                    "추측·질문: 전체 공개, 작성자 " + authorWatchedEpisode + "화"
+            );
+        }
+
+        // MATCH 와 함께 온 추측 회차는 같은 사건 회차로 취급
         if (response.guessEpisodes() != null
                 && !response.guessEpisodes().isEmpty()) {
 
