@@ -90,6 +90,7 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
+                                "/api/auth/session",
                                 "/api/auth/logout",
 
                                 "/api/auth/email/send",
@@ -229,6 +230,7 @@ public class SecurityConfig {
                     || path.equals("/api/auth/signup")
                     || path.equals("/api/auth/csrf")
                     || path.equals("/api/auth/refresh")
+                    || path.equals("/api/auth/session")
                     || path.equals("/api/auth/logout")
                     || path.equals("/api/auth/email/send")
                     || path.equals("/api/auth/email/verify")
