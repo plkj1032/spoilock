@@ -129,12 +129,31 @@ async function request(
 // 동시에 여러 번 갱신하지 않도록 방지
 // =====================================================
 let refreshInFlight = null;
+let sessionInFlight = null;
+
+// 같은 탭의 세션 복구·토큰 갱신 요청을 순서대로 실행
+let authRequestQueue = Promise.resolve();
+
+function enqueueAuthRequest(task) {
+  const result = authRequestQueue.then(task);
+
+  // 앞 요청이 실패해도 다음 요청은 실행 가능
+  authRequestQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+
+  return result;
+}
 
 function refreshOnce() {
   if (!refreshInFlight) {
-    refreshInFlight = request("/api/auth/refresh", {
-      method: "POST",
-    }).finally(() => {
+    refreshInFlight = enqueueAuthRequest(() =>
+      request("/api/auth/refresh", {
+        method: "POST",
+        cache: "no-store",
+      }),
+    ).finally(() => {
       refreshInFlight = null;
     });
   }
@@ -142,6 +161,20 @@ function refreshOnce() {
   return refreshInFlight;
 }
 
+function restoreSessionOnce() {
+  if (!sessionInFlight) {
+    sessionInFlight = enqueueAuthRequest(() =>
+      request("/api/auth/session", {
+        method: "POST",
+        cache: "no-store",
+      }),
+    ).finally(() => {
+      sessionInFlight = null;
+    });
+  }
+
+  return sessionInFlight;
+}
 // =====================================================
 // 5. 인증 API
 // =====================================================
@@ -205,26 +238,8 @@ export const authApi = {
     }),
 
   // 새로고침 시 로그인 상태 복원
-  async restore() {
-    try {
-      return await this.me();
-    } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401) {
-        throw error;
-      }
-
-      try {
-        await refreshOnce();
-        return await this.me();
-      } catch (refreshError) {
-        if (refreshError instanceof ApiError && refreshError.status === 401) {
-          return null;
-        }
-
-        throw refreshError;
-      }
-    }
-  },
+  // 사이트 접속·새로고침 시 로그인 상태 복원
+  restore: () => restoreSessionOnce(),
 };
 
 // =====================================================
