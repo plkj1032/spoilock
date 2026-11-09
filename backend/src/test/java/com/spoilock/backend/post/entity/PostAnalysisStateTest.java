@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 class PostAnalysisStateTest {
 
     private static Post newPost() {
-        return Post.create(null, null, " 내용 ");
+        return Post.create(null, null, " 내용 ", PostAudience.PUBLIC);
     }
 
     @Test
