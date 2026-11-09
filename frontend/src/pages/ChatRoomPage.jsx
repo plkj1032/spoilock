@@ -30,6 +30,30 @@ const BLOCK_MESSAGES = {
   DEFAULT: "🔒 아직 공개되지 않은 메시지입니다.",
 };
 
+// Presentation only: keep the server visibility decision and never render a blocked body.
+function ChatMessageGuard({ reason }) {
+  const title = {
+    NOT_WATCHED: "스포일러 보호 중",
+    ANALYZING: "스포일러 확인 중",
+    REVIEW: "메시지 검토 중",
+    FAILED: "확인 지연 중",
+    HIDDEN: "숨겨진 메시지",
+  }[reason] ?? "보호 중인 메시지";
+  const icon = reason === "ANALYZING" || reason === "FAILED"
+    ? "⏳"
+    : reason === "HIDDEN" ? "🚫" : "🔒";
+  const description = (BLOCK_MESSAGES[reason] ?? BLOCK_MESSAGES.DEFAULT)
+    .replace(/^(?:🔒|⏳|🚫)\s*/u, "");
+
+  return (
+    <div className="chat-message-guard">
+      <span className="chat-message-guard__icon" aria-hidden="true">{icon}</span>
+      <strong>{title}</strong>
+      <p>{description}</p>
+    </div>
+  );
+}
+
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
   const merged = new Map(
@@ -1132,7 +1156,8 @@ export default function ChatRoomPage({ user, onNotice }) {
                 <article
                   key={message.messageId}
                   data-message-id={message.messageId}
-                  className={`chat-message ${mine ? "mine" : "other"}`}
+                  data-protected={blocked || undefined}
+                  className={`chat-message ${mine ? "mine" : "other"}${blocked ? " is-blocked" : ""}`}
                 >
                   <div className="chat-message-header">
                     <div className="chat-author">
@@ -1205,12 +1230,11 @@ export default function ChatRoomPage({ user, onNotice }) {
                       ))}
                   </div>
 
-                  <p className="chat-message-content">
-                    {blocked
-                      ? (BLOCK_MESSAGES[message.blockReason] ??
-                        BLOCK_MESSAGES.DEFAULT)
-                      : message.content}
-                  </p>
+                  {blocked ? (
+                    <ChatMessageGuard reason={message.blockReason} />
+                  ) : (
+                    <p className="chat-message-content">{message.content}</p>
+                  )}
 
                   <time
                     dateTime={message.createdAt}

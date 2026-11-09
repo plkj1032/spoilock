@@ -146,6 +146,12 @@ export default function HomePage({ user, onLogin, onNotice }) {
         </div>
       </div>
 
+      <p className="home-gallery-hint">
+        {selectedDrama
+          ? `${selectedDrama.title}의 채팅방과 커뮤니티를 모아 보고 있어요.`
+          : "포스터를 선택하면 해당 드라마의 채팅방과 커뮤니티를 볼 수 있어요."}
+      </p>
+
       <DramaGallery
         key={user?.id ?? "guest"}
         user={user}

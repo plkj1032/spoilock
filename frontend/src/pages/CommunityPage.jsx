@@ -401,12 +401,33 @@ export function FeedComposer({
 
             <button
               type="button"
-              className="feed-image-dropzone__choose"
+              className="feed-composer__image-button"
+              aria-label={files.length > 0 ? "사진 더 첨부" : "사진 첨부"}
+              title="사진 첨부 (JPG·PNG, 최대 4장)"
               disabled={saving}
               onClick={() => fileInputRef.current?.click()}
             >
-              {files.length > 0 ? "사진 추가" : "사진 선택"}
+              <svg
+                viewBox="0 0 24 24"
+                width="21"
+                height="21"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-5-5L5 21" />
+              </svg>
             </button>
+            <span className="feed-image-button-hint" aria-hidden="true">
+              {files.length > 0
+                ? `첨부 ${files.length}/${MAX_IMAGES}장`
+                : "사진 첨부 · 최대 4장"}
+            </span>
 
             {files.length > 0 && (
               <div className="feed-composer__selection">

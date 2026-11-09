@@ -7,6 +7,7 @@ export default function DramaCard({
   progressLoading,
   onAction,
   onSelect,
+  selected = false,
 }) {
   const total = drama.totalEpisodeCount ?? 0;
 
@@ -25,7 +26,7 @@ export default function DramaCard({
 
   return (
     <article
-      className="drama-card"
+      className={`drama-card${selected ? " is-selected" : ""}`}
       onClick={onSelect}
       tabIndex={onSelect ? 0 : undefined}
       aria-label={onSelect ? `${drama.title} 선택` : undefined}
