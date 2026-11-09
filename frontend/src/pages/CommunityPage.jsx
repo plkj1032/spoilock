@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { dramaApi } from "../api/dramaApi";
 import { feedApi } from "../api/feedApi";
 import FeedCard from "../components/feed/FeedCard";
+import AudienceSwitch from "../components/feed/AudienceSwitch";
 import { useSearchParams } from "react-router-dom";
 import "../styles/CommunityPage.css";
 import "../styles/FeedPage.css";
@@ -82,6 +83,8 @@ export function FeedComposer({
   const [loadingDramas, setLoadingDramas] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const [audience, setAudience] = useState("PUBLIC");
 
   // 공개된 드라마 목록 조회
   useEffect(() => {
@@ -265,7 +268,11 @@ export function FeedComposer({
 
     try {
       // 먼저 게시글 생성
-      const created = await feedApi.createPost(dramaId, content.trim());
+      const created = await feedApi.createPost(
+        dramaId,
+        content.trim(),
+        audience,
+      );
 
       const postId = created?.postId;
       let imageError = null;
@@ -287,6 +294,7 @@ export function FeedComposer({
 
       // 게시글 저장 성공 후 입력값 초기화
       setContent("");
+      setAudience("PUBLIC");
       clearFiles();
 
       // 전체 피드 첫 페이지 다시 조회
@@ -350,6 +358,13 @@ export function FeedComposer({
               </option>
             ))}
           </select>
+
+          {/* 게시글 공개 범위: 전체 공개 / 팔로워 공개 */}
+          <AudienceSwitch
+            value={audience}
+            onChange={setAudience}
+            disabled={saving}
+          />
 
           {/* 게시글 내용 */}
           <textarea

@@ -1,0 +1,73 @@
+.feed-audience {
+  min-width: 0;
+  margin: 16px 0;
+  padding: 0;
+  border: 0;
+}
+
+.feed-audience__legend {
+  margin-bottom: 9px;
+  font-size: 0.91rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.feed-audience__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  background: rgba(126, 147, 178, 0.11);
+  border: 1px solid rgba(135, 156, 187, 0.2);
+  border-radius: 12px;
+}
+
+.feed-audience__option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1 1 145px;
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.feed-audience__option.is-selected {
+  background: rgba(48, 100, 179, 0.19);
+  border-color: rgba(101, 158, 245, 0.55);
+}
+
+.feed-audience__option:focus-within {
+  outline: 2px solid #82b4fb;
+  outline-offset: 2px;
+}
+
+.feed-audience__option input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.feed-audience__help {
+  margin: 9px 2px 0;
+  font-size: 0.79rem;
+  line-height: 1.6;
+  opacity: 0.76;
+}
+
+.feed-audience:disabled .feed-audience__option {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

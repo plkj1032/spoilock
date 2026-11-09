@@ -1,5 +1,7 @@
 package com.spoilock.backend.post.dto;
 
+import com.spoilock.backend.post.entity.PostAudience;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,6 +14,9 @@ public record CreateFeedRequest(
 
         @NotBlank
         @Size(max = 2000)
-        String content
+        String content,
+
+        @NotNull
+        PostAudience audience
 ) {
 }

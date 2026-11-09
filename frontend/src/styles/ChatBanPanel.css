@@ -181,21 +181,32 @@
   font-size: 13px;
 }
 
-.chat-ban-dialog .chat-ban-avatar {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #437cf3, #7051e7);
-  color: #fff;
-  font-size: 17px;
-  font-weight: 800;
-}
 @media (max-width: 570px) {
   .chat-ban-dialog {
     right: 16px;
     bottom: 16px;
     max-height: calc(100dvh - 32px);
   }
+}
+.chat-ban-dialog .chat-ban-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chat-ban-dialog .chat-ban-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #437cf3, #7051e7);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
 }

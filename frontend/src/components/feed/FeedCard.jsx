@@ -377,32 +377,40 @@ export default function FeedCard({ post, user }) {
             );
           })()}
 
+          {/* 사진이 2장 이상일 때만 이동 버튼 표시 */}
           {media.length > 1 && (
             <>
-              <button
-                type="button"
-                className="feed-card__media-prev"
-                onClick={() =>
-                  setMediaIndex(
-                    (index) => (index - 1 + media.length) % media.length,
-                  )
-                }
-                aria-label="이전 이미지"
-              >
-                ‹
-              </button>
+              {/* 첫 번째 사진이 아닐 때만 이전 버튼 표시 */}
+              {mediaIndex > 0 && (
+                <button
+                  type="button"
+                  className="feed-card__media-prev"
+                  onClick={() =>
+                    setMediaIndex((index) => Math.max(0, index - 1))
+                  }
+                  aria-label="이전 이미지"
+                >
+                  ‹
+                </button>
+              )}
 
-              <button
-                type="button"
-                className="feed-card__media-next"
-                onClick={() =>
-                  setMediaIndex((index) => (index + 1) % media.length)
-                }
-                aria-label="다음 이미지"
-              >
-                ›
-              </button>
+              {/* 마지막 사진이 아닐 때만 다음 버튼 표시 */}
+              {mediaIndex < media.length - 1 && (
+                <button
+                  type="button"
+                  className="feed-card__media-next"
+                  onClick={() =>
+                    setMediaIndex((index) =>
+                      Math.min(media.length - 1, index + 1),
+                    )
+                  }
+                  aria-label="다음 이미지"
+                >
+                  ›
+                </button>
+              )}
 
+              {/* 현재 사진 번호 */}
               <span className="feed-card__media-count">
                 {mediaIndex + 1} / {media.length}
               </span>
