@@ -34,10 +34,40 @@ export const feedApi = {
     });
   },
 
-  createPost(dramaId, content) {
+  createPost(dramaId, content, audience = "PUBLIC") {
     return feedRequest("/api/feed/posts", {
       method: "POST",
-      body: { dramaId: Number(dramaId), content },
+      body: {
+        dramaId: Number(dramaId),
+        content,
+        audience,
+      },
+    });
+  },
+
+  updatePost(postId, content, audience) {
+    return feedRequest(`/api/feed/posts/${postId}`, {
+      method: "PATCH",
+      body: { content, audience },
+    });
+  },
+
+  deletePost(postId) {
+    return feedRequest(`/api/feed/posts/${postId}`, {
+      method: "DELETE",
+    });
+  },
+
+  updateComment(postId, commentId, content) {
+    return feedRequest(`/api/feed/posts/${postId}/comments/${commentId}`, {
+      method: "PATCH",
+      body: { content },
+    });
+  },
+
+  deleteComment(postId, commentId) {
+    return feedRequest(`/api/feed/posts/${postId}/comments/${commentId}`, {
+      method: "DELETE",
     });
   },
 

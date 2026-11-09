@@ -92,25 +92,36 @@ public class Post extends AuditedEntity {
     private ModerationStatus moderationStatus =
             ModerationStatus.PENDING;
 
-    // SNS 피드 작성
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audience", nullable = false, length = 20)
+    private PostAudience audience = PostAudience.PUBLIC;
+
+
+    // SNS 게시글 작성
     public static Post create(
             User author,
             Drama drama,
-            String content
-    )
-    {
+            String content,
+            PostAudience audience
+    ) {
         Post post = new Post();
 
         post.user = author;
         post.drama = drama;
         post.content = content.trim();
 
-        // 아직 AI 검열이 끝나지 않은 글
+        // 공개 범위 저장
+        post.audience = audience == null
+                ? PostAudience.PUBLIC
+                : audience;
+
+        // AI 검열 대기
         post.analysisStatus = AnalysisStatus.PENDING;
         post.moderationStatus = ModerationStatus.PENDING;
 
         return post;
     }
+
 
     public static Post createComment(
             User author,
