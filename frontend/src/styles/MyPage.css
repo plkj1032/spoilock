@@ -344,6 +344,14 @@
   line-height: 1.8;
 }
 
+#root .mypage-avatar {
+  background: linear-gradient(135deg, #437cf3, #7051e7);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
 @media (max-width: 760px) {
   .mypage-panel {
     padding: 20px;

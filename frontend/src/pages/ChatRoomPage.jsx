@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Client } from "@stomp/stompjs";
 import { chatApi } from "../api/chatApi";
+import ChatMessageThread from "../components/chat/ChatMessageThread";
 import ChatBanPanel from "../components/chat/ChatBanPanel";
 import { apiRequest, authApi } from "../api/authApi";
 import Button from "../components/common/Button";
@@ -19,40 +20,6 @@ import ChatReportModal from "../components/chat/ChatReportModal";
 import UserFollowDialog from "../components/user/UserFollowDialog";
 import ChatFollowingInviteModal from "../components/chat/ChatFollowingInviteModal";
 import ChatOwnershipModal from "../components/chat/ChatOwnershipModal";
-
-// 서버가 원문 대신 보내는 차단 이유별 안내 (사건 내용은 절대 표시하지 않음)
-const BLOCK_MESSAGES = {
-  ANALYZING: "⏳ 스포일러 여부를 확인하고 있어요…",
-  NOT_WATCHED: "🔒 아직 시청하지 않은 회차의 내용이 포함된 메시지예요.",
-  REVIEW: "🔒 스포일러 여부를 확인할 수 없어 가려진 메시지예요.",
-  FAILED: "⏳ 확인이 지연되고 있어요. 잠시 후 다시 표시돼요.",
-  HIDDEN: "🚫 관리자가 숨긴 메시지예요.",
-  DEFAULT: "🔒 아직 공개되지 않은 메시지입니다.",
-};
-
-// Presentation only: keep the server visibility decision and never render a blocked body.
-function ChatMessageGuard({ reason }) {
-  const title = {
-    NOT_WATCHED: "스포일러 보호 중",
-    ANALYZING: "스포일러 확인 중",
-    REVIEW: "메시지 검토 중",
-    FAILED: "확인 지연 중",
-    HIDDEN: "숨겨진 메시지",
-  }[reason] ?? "보호 중인 메시지";
-  const icon = reason === "ANALYZING" || reason === "FAILED"
-    ? "⏳"
-    : reason === "HIDDEN" ? "🚫" : "🔒";
-  const description = (BLOCK_MESSAGES[reason] ?? BLOCK_MESSAGES.DEFAULT)
-    .replace(/^(?:🔒|⏳|🚫)\s*/u, "");
-
-  return (
-    <div className="chat-message-guard">
-      <span className="chat-message-guard__icon" aria-hidden="true">{icon}</span>
-      <strong>{title}</strong>
-      <p>{description}</p>
-    </div>
-  );
-}
 
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
@@ -1132,122 +1099,28 @@ export default function ChatRoomPage({ user, onNotice }) {
               <p className="chat-empty">아직 대화가 없습니다.</p>
             )}
 
-            {messages.map((message) => {
-              const blocked = message.visibility !== "SHOW";
-              const system = message.messageType !== "CHAT";
-              const mine = String(message.userId) === String(user.id);
-              const isRoomOwner =
-                room?.createdById != null &&
-                String(message.userId) === String(room.createdById);
-
-              if (system) {
-                return (
-                  <div
-                    key={message.messageId}
-                    data-message-id={message.messageId}
-                    className="chat-system-message"
-                  >
-                    {blocked ? "공개되지 않은 알림입니다." : message.content}
-                  </div>
-                );
-              }
-
-              return (
-                <article
-                  key={message.messageId}
-                  data-message-id={message.messageId}
-                  data-protected={blocked || undefined}
-                  className={`chat-message ${mine ? "mine" : "other"}${blocked ? " is-blocked" : ""}`}
-                >
-                  <div className="chat-message-header">
-                    <div className="chat-author">
-                      {mine ? (
-                        <strong>{message.nickname}</strong>
-                      ) : (
-                        <button
-                          type="button"
-                          className="chat-author-button"
-                          onClick={() => {
-                            setProfileTarget({
-                              userId: message.userId,
-                              nickname: message.nickname,
-                            });
-                          }}
-                        >
-                          {message.nickname}
-                        </button>
-                      )}
-
-                      {onlineUserIds.has(String(message.userId)) && (
-                        <span
-                          className="chat-online-dot"
-                          role="img"
-                          aria-label="현재 이 채팅방에 접속 중"
-                          title="현재 이 채팅방에 접속 중"
-                        />
-                      )}
-                    </div>
-                    {room && !mine && !isRoomOwner && (
-                      <button
-                        type="button"
-                        className="chat-report-trigger"
-                        aria-haspopup="dialog"
-                        aria-label={`${message.nickname}님의 메시지 신고`}
-                        onClick={() => {
-                          setShowBanPanel(false);
-                          setShowMemberPanel(false);
-                          setReportTarget({
-                            messageId: message.messageId,
-                            nickname: message.nickname,
-                          });
-                        }}
-                      >
-                        신고
-                      </button>
-                    )}
-                    {canKick &&
-                      !mine &&
-                      (bannedUserIds.has(String(message.userId)) ? (
-                        <span className="chat-kicked-label">강퇴됨</span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="chat-kick-button"
-                          onClick={() =>
-                            kickMember(message.userId, message.nickname)
-                          }
-                          disabled={
-                            !connected ||
-                            kickingUserId !== null ||
-                            bansLoading ||
-                            Boolean(bansError)
-                          }
-                        >
-                          {String(kickingUserId) === String(message.userId)
-                            ? "처리 중…"
-                            : "강퇴"}
-                        </button>
-                      ))}
-                  </div>
-
-                  {blocked ? (
-                    <ChatMessageGuard reason={message.blockReason} />
-                  ) : (
-                    <p className="chat-message-content">{message.content}</p>
-                  )}
-
-                  <time
-                    dateTime={message.createdAt}
-                    className="chat-message-time"
-                  >
-                    {new Date(message.createdAt).toLocaleTimeString("ko-KR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </article>
-              );
-            })}
+            <ChatMessageThread
+              messages={messages}
+              user={user}
+              room={room}
+              onlineUserIds={onlineUserIds}
+              canKick={canKick}
+              bannedUserIds={bannedUserIds}
+              connected={connected}
+              kickingUserId={kickingUserId}
+              bansLoading={bansLoading}
+              bansError={bansError}
+              onProfile={setProfileTarget}
+              onReport={(message) => {
+                setShowBanPanel(false);
+                setShowMemberPanel(false);
+                setReportTarget({
+                  messageId: message.messageId,
+                  nickname: message.nickname,
+                });
+              }}
+              onKick={kickMember}
+            />
           </div>
           {isAwayFromBottom && (
             <div className="chat-scroll-controls">

@@ -114,7 +114,12 @@ export default function ChatBanPanel({
           bans.map((ban) => (
             <article key={ban.banId} className="chat-ban-item">
               <div className="chat-ban-item__top">
-                <strong>{ban.nickname}</strong>
+                <div className="chat-ban-profile">
+                  <span className="chat-ban-avatar" aria-hidden="true">
+                    {Array.from((ban.nickname || "").trim() || "?")[0]}
+                  </span>
+                  <strong>{ban.nickname || "사용자"}</strong>
+                </div>
 
                 <button
                   type="button"
