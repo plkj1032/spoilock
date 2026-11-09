@@ -87,7 +87,8 @@ public class FeedService {
         Post post = Post.create(
                 user,
                 drama,
-                request.content()
+                request.content(),
+                request.audience()
         );
 
         // 생성 시 PENDING 상태 유지
