@@ -100,7 +100,8 @@ public class FeedService {
                 new PostAnalysisRequested(
                         saved.getId(),
                         drama.getId(),
-                        saved.getContent()
+                        saved.getContent(),
+                        saved.getContentRevision()
                 )
         );
 
@@ -256,14 +257,12 @@ public class FeedService {
                 post.getUser().getNickname(),
                 post.getDrama().getId(),
                 post.getDrama().getTitle(),
-
-                // 차단된 원문은 서버에서 제거
                 visible ? post.getContent() : null,
-
                 visible,
                 blockReason,
                 post.getAnalysisStatus().name(),
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                post.getAudience().name() // 추가된 11번째 인자
         );
     }
 

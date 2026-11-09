@@ -1,4 +1,4 @@
-package com.spoilock.backend.admin.monitoring;
+package com.spoilock.backend.monitoring.domain.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QChatAnalysisTrace extends EntityPathBase<ChatAnalysisTrace> {
 
-    private static final long serialVersionUID = -127120957L;
+    private static final long serialVersionUID = 926265763L;
 
     public static final QChatAnalysisTrace chatAnalysisTrace = new QChatAnalysisTrace("chatAnalysisTrace");
 

@@ -193,7 +193,8 @@ public class FeedSocialService {
                 new PostAnalysisRequested(
                         saved.getId(),
                         parent.getDrama().getId(),
-                        saved.getContent()
+                        saved.getContent(),
+                        saved.getContentRevision()
                 )
         );
 

@@ -1,3 +1,4 @@
+
 package com.spoilock.backend.post.dto;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public record FeedItemResponse(
         boolean visible,
         String blockReason,
         String analysisStatus,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String audience
 ) {
 }

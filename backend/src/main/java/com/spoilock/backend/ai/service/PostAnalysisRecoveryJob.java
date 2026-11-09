@@ -78,7 +78,10 @@ public class PostAnalysisRecoveryJob {
         for (PostAnalysisTarget target : targets) {
             try {
                 if (target.analysisStatus() == AnalysisStatus.PROCESSING) {
-                    stateService.releaseStuck(target.postId());
+                    stateService.releaseStuck(
+                            target.postId(),
+                            target.revision()
+                    );
                 }
                 postAnalysisService.analyze(target.toEvent());
             } catch (Exception e) {

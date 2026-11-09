@@ -340,6 +340,12 @@ export function FeedComposer({
         </button>
       ) : (
         <form onSubmit={handleSubmit}>
+          {/* 게시글 공개 범위: 전체 공개 / 팔로워 공개 */}
+          <AudienceSwitch
+            value={audience}
+            onChange={setAudience}
+            disabled={saving}
+          />
           {/* 드라마 선택 */}
           <select
             className="feed-composer__select"
@@ -358,13 +364,6 @@ export function FeedComposer({
               </option>
             ))}
           </select>
-
-          {/* 게시글 공개 범위: 전체 공개 / 팔로워 공개 */}
-          <AudienceSwitch
-            value={audience}
-            onChange={setAudience}
-            disabled={saving}
-          />
 
           {/* 게시글 내용 */}
           <textarea

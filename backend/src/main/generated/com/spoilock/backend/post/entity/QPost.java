@@ -32,7 +32,11 @@ public class QPost extends EntityPathBase<Post> {
 
     public final EnumPath<com.spoilock.backend.common.enums.AnalysisStatus> analysisStatus = createEnum("analysisStatus", com.spoilock.backend.common.enums.AnalysisStatus.class);
 
+    public final EnumPath<PostAudience> audience = createEnum("audience", PostAudience.class);
+
     public final StringPath content = createString("content");
+
+    public final NumberPath<Long> contentRevision = createNumber("contentRevision", Long.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
