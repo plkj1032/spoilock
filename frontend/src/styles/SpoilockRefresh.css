@@ -1,0 +1,637 @@
+/*
+ * Spoilock UI refinement (2026-11)
+ * Keep existing navigation and page components. Overrides are intentionally
+ * scoped so the work can be reviewed/reverted as a single patch.
+ */
+
+/* Common typography / spacing */
+.section-overline {
+  font-size: 11px;
+  letter-spacing: 1.6px;
+}
+
+.section-top h1 {
+  font-size: clamp(26px, 2.4vw, 32px);
+  line-height: 1.3;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* Home: retain four posters, make the feed a little wider than room list */
+.home-gallery-hint {
+  margin: -8px 0 18px;
+  color: #a9bad5;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (min-width: 861px) {
+  .home-social-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 24px;
+  }
+}
+
+.home-social-grid .room-copy strong {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.home-social-grid .room-copy small,
+.home-social-grid .room-members,
+.home-social-grid .room-enter {
+  font-size: 12px;
+}
+
+.home-social-grid .room-card {
+  transition: background 0.2s ease, border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.home-social-grid .room-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #6488d5;
+}
+
+/* Drama gallery: preserve the existing 4-column / responsive 2-column grid */
+.drama-grid .drama-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drama-grid .drama-description {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.drama-grid .drama-description h3 {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.drama-grid .progress-label {
+  margin-top: auto;
+}
+
+.drama-grid .drama-card.is-selected {
+  border-color: #8baaff;
+  box-shadow: 0 0 0 2px rgb(114 150 255 / 23%);
+}
+
+.drama-grid .drama-card:focus-visible {
+  outline: 2px solid #8baaff;
+  outline-offset: 3px;
+}
+
+/* Chat directory: keep existing search, drama selection and filters */
+.chat-directory .chat-directory-card {
+  transition: background 0.18s ease, border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.chat-directory .chat-directory-card:hover:not(:disabled) {
+  border-color: #6488d5;
+  transform: translateY(-1px);
+}
+
+.chat-directory .chat-directory-description {
+  font-size: 13px;
+}
+
+/* Chat room: compact action row, dark bubbles and visible spoiler protection */
+.chat-room-heading > div:first-child {
+  min-width: 0;
+}
+
+.chat-room-actions {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.chat-room-actions .button {
+  padding: 9px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.chat-message {
+  max-width: 76%;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.chat-message.mine {
+  color: #fff;
+  background: #416ce2;
+  border-bottom-right-radius: 5px;
+}
+
+.chat-message.other {
+  color: #f0f5ff;
+  background: #22344e;
+  border-color: #344b6c;
+  border-bottom-left-radius: 5px;
+}
+
+.chat-message.is-blocked {
+  color: #e9dfff;
+  background: #2b2945;
+  border-color: #705d9b;
+}
+
+.chat-message .chat-message-time {
+  color: rgb(232 239 255 / 75%);
+}
+
+.chat-message .chat-author-button,
+.chat-message .chat-report-trigger,
+.chat-message .chat-kick-button {
+  color: inherit;
+}
+
+.chat-input {
+  border: 1px solid #405578;
+  border-radius: 12px;
+  background: #15243a;
+  color: #f4f7ff;
+  font-size: 14px;
+}
+
+.chat-input::placeholder {
+  color: #91a5c5;
+}
+
+.chat-input:focus-visible {
+  border-color: #8baaff;
+  outline: 2px solid #8baaff;
+  outline-offset: 1px;
+}
+
+/* Community: X-like reading width without adding side navigation */
+.community-page.feed-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding-top: 38px;
+}
+
+.community-page .feed-page__heading {
+  margin: 0 0 22px;
+}
+
+.community-page .feed-page__heading p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.community-page .feed-composer {
+  padding: 20px;
+}
+
+.feed-composer form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  align-items: start;
+}
+
+.feed-composer .feed-composer__select,
+.feed-composer .feed-composer__textarea {
+  grid-column: 1 / -1;
+}
+
+.feed-composer .feed-composer__textarea {
+  box-sizing: border-box;
+  height: 104px;
+  min-height: 104px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* The existing drop handlers and image previews stay mounted. */
+.feed-composer .feed-image-dropzone {
+  grid-column: 1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+}
+
+.feed-composer .feed-image-dropzone.is-dragging {
+  padding: 6px;
+  border-color: #8baaff;
+  background: #203556;
+}
+
+/* Visually hidden, still available to assistive technology. */
+.feed-composer .feed-image-dropzone__title,
+.feed-composer .feed-image-dropzone__description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.feed-composer .feed-composer__image-button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #344d76;
+  border-radius: 10px;
+  background: #213454;
+  color: #9cbcff;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.feed-composer .feed-composer__image-button:hover:not(:disabled) {
+  border-color: #7396ee;
+  background: #2c466e;
+}
+
+.feed-composer .feed-composer__image-button:focus-visible {
+  outline: 2px solid #9cbcff;
+  outline-offset: 3px;
+}
+
+.feed-composer .feed-composer__image-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.feed-composer .feed-image-button-hint {
+  color: #a4b6d2;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.feed-composer .feed-image-dropzone .feed-composer__selection {
+  flex-basis: 100%;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.feed-composer .feed-composer__bottom {
+  grid-column: 2;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.feed-composer .feed-composer__submit {
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.community-page .feed-list {
+  gap: 13px;
+}
+
+.community-page .feed-card {
+  padding: 20px;
+}
+
+.community-page .feed-card__content {
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.community-page .feed-card__protected {
+  background: #252640;
+  border-color: #57547d;
+}
+
+@media (max-width: 860px) {
+  .home-gallery-hint {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 570px) {
+  .chat-room-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .chat-message {
+    max-width: 90%;
+  }
+
+  .community-page.feed-page {
+    padding-top: 28px;
+  }
+
+  .community-page .feed-composer,
+  .community-page .feed-card {
+    padding: 15px;
+  }
+
+  .feed-composer .feed-image-button-hint {
+    font-size: 11px;
+  }
+
+  .feed-composer .feed-composer__bottom {
+    gap: 6px;
+  }
+
+  .feed-composer .feed-composer__bottom span {
+    font-size: 11px;
+  }
+
+  .feed-composer .feed-composer__submit {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .feed-composer form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feed-composer .feed-composer__bottom {
+    grid-column: 1;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drama-grid .drama-card,
+  .chat-directory .chat-directory-card,
+  .home-social-grid .room-card {
+    transition: none;
+  }
+}
+
+/* Follow-up: aligned feed, two chat colours, navigation icons, readable type. */
+body {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+#root :is(input, textarea, select) { font-family: inherit; font-size: 16px; }
+#root .button { font-size: 14px; }
+
+/* Equal outer edges for the composer, tabs and every post. */
+#root .community-page.feed-page {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+#root .community-page > :is(.feed-composer, .feed-page__tabs, .feed-list, .feed-empty),
+#root .feed-list > .feed-card,
+#root .home-following-list > .feed-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-inline: 0;
+  align-self: stretch;
+}
+
+#root .feed-list,
+#root .home-following-list {
+  min-width: 0;
+  align-items: stretch;
+}
+
+#root .feed-card :is(.feed-card__body, .feed-card__media, .feed-card__protected) {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Main text 16px, secondary information 14px, small badges 13px. */
+#root :is(.page-subtitle, .home-gallery-hint, .feed-page__heading p,
+  .chat-directory-heading p, .chat-room-heading p) {
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+#root :is(.section-overline, .eyebrow, .demo-mark, .chat-directory-badge) {
+  font-size: 13px;
+}
+
+#root :is(.section-link, .progress-label, .card-action, .room-filter-reset,
+  .home-column-toolbar, .home-column-heading .home-create-room,
+  .home-social-grid .room-copy small, .home-social-grid .room-members,
+  .home-social-grid .room-enter, .chat-directory-description,
+  .chat-directory-drama, .chat-directory-count, .chat-directory-enter,
+  .chat-directory-summary p, .chat-directory-summary select,
+  .chat-directory-types button, .chat-directory select, .chat-directory-reset,
+  .feed-card__author-info span, .feed-card__footer,
+  .feed-card__protected p, .feed-card__comment p, .feed-card__comment strong,
+  .feed-composer__heading p, .feed-composer__bottom span,
+  .feed-composer .feed-image-button-hint,
+  .feed-card__follow .button, .chat-room-actions .button,
+  .user-greeting, .auth-loading, .header-actions .button) {
+  font-size: 14px;
+}
+
+#root :is(.drama-description h3, .chat-directory-copy > strong) {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+#root :is(.home-social-grid .room-copy strong, .feed-card__author-info strong,
+  .feed-composer__heading strong, .feed-card__protected strong,
+  .feed-card__content, .feed-composer__textarea,
+  .feed-composer__select, .feed-composer__submit,
+  .feed-page__tabs button, .chat-input, .chat-directory-search input) {
+  font-size: 16px;
+}
+
+#root :is(.feed-card__content, .feed-composer__textarea) {
+  line-height: 1.75;
+}
+
+#root :is(.section-top h1, .feed-page__heading h1) {
+  font-size: clamp(28px, 3vw, 34px);
+  line-height: 1.3;
+}
+
+#root .chat-room-heading h1 { font-size: 26px; }
+#root .home-column-heading h2 { font-size: 26px; }
+
+/* Keep the menu at the top; use monochrome line icons like the reference. */
+#root .nav-links a {
+  gap: 7px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+#root .nav-menu-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Two bubble colours only: blue for me, light grey for other people. */
+#root .chat-message {
+  min-width: 0;
+  max-width: 76%;
+  padding: 14px 17px;
+  font-size: 16px;
+  line-height: 1.65;
+  border: 2px solid transparent;
+  box-sizing: border-box;
+}
+
+#root .chat-message.mine {
+  background: #416ce2;
+  color: #fff;
+  border-color: #688bf0;
+}
+
+#root .chat-message.other {
+  background: #f1f3f5;
+  color: #243042;
+  border-color: #b3becb;
+}
+
+#root .chat-message[data-protected] {
+  border-width: 2px;
+  border-style: solid;
+}
+
+#root .chat-message.other[data-protected] {
+  border-color: #65768c;
+  box-shadow: inset 0 0 0 1px #65768c;
+}
+
+#root .chat-message.mine[data-protected] {
+  border-color: #dce7ff;
+  box-shadow: inset 0 0 0 1px #dce7ff;
+}
+
+#root .chat-message-header {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#root .chat-message :is(.chat-author-button, .chat-report-trigger, .chat-kick-button) {
+  color: inherit;
+}
+
+#root .chat-message .chat-author-button { font-size: 16px; }
+
+#root .chat-message :is(.chat-report-trigger, .chat-kick-button) {
+  border: 1px solid currentColor;
+  background: transparent;
+  font-size: 13px;
+  padding: 4px 9px;
+}
+
+#root .chat-message.other :is(.chat-report-trigger, .chat-kick-button):hover:not(:disabled) {
+  background: #dce2e9;
+}
+
+#root .chat-message .chat-message-time { font-size: 13px; }
+#root .chat-message.other .chat-message-time { color: #536174; }
+#root .chat-message.mine .chat-message-time { color: #f0f4ff; }
+
+/* Same centred lock/title/description structure as a protected feed post.
+   The guard inherits its bubble colour; no purple third state. */
+#root .chat-message-guard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 340px;
+  max-width: 100%;
+  padding: 18px 8px;
+  margin-block: 10px;
+  border-block: 1px solid currentColor;
+  color: inherit;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#root .chat-message-guard__icon { font-size: 27px; line-height: 1.2; }
+#root .chat-message-guard strong { font-size: 16px; }
+#root .chat-message-guard p { margin: 0; font-size: 14px; line-height: 1.65; }
+#root .chat-message.other .chat-message-guard p { color: #536174; }
+
+/* The enlarged navigation and account actions get a second top row early. */
+@media (max-width: 1000px) {
+  #root .site-header { height: auto; }
+  #root .header-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 46px;
+    gap: 0 12px;
+    padding: 10px 20px 0;
+  }
+  #root .logo-link { grid-column: 1; grid-row: 1; }
+  #root .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  #root .nav-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    gap: 30px;
+  }
+  #root .chat-room-heading { flex-wrap: wrap; }
+  #root .chat-room-actions { flex-wrap: wrap; flex-shrink: 1; }
+}
+
+@media (max-width: 570px) {
+  #root .header-content { padding-inline: 12px; }
+  #root .nav-links { gap: 20px; }
+  #root .nav-links a { font-size: 15px; gap: 5px; }
+  #root .nav-menu-icon { width: 18px; height: 18px; }
+  #root .header-actions .button { padding: 8px 9px; }
+  #root .community-page.feed-page { padding-inline: 16px; }
+  #root .chat-message { max-width: 94%; padding: 12px; }
+  #root .chat-room-heading h1 { font-size: 23px; }
+  #root .home-column-heading h2 { font-size: 23px; }
+  #root .progress-label { flex-wrap: wrap; }
+  #root .chat-room-actions {
+    overflow: visible;
+    flex-wrap: wrap;
+  }
+  #root .feed-card__header { flex-wrap: wrap; }
+}
+
+@media (max-width: 420px) {
+  #root .header-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 46px;
+    row-gap: 6px;
+  }
+  #root .header-actions { grid-column: 1; grid-row: 2; justify-content: flex-start; }
+  #root .nav-links { grid-column: 1; grid-row: 3; }
+}

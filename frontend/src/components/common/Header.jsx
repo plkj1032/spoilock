@@ -16,12 +16,31 @@ export default function Header({ user, pending, onLogin, onLogout, busy }) {
         {/* 주 메뉴 */}
         <nav className="nav-links" aria-label="주 메뉴">
           <NavLink to="/dramas" end>
-            드라마
+            <svg className="nav-menu-icon" viewBox="0 0 24 24" width="20" height="20"
+              fill="none" stroke="currentColor" strokeWidth="1.7"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <rect x="6" y="3" width="15" height="16" rx="2" /><path d="M3 7v14h14" /><path d="m12 7 5 4-5 4Z" />
+            </svg>
+            <span>드라마</span>
           </NavLink>
 
-          <NavLink to="/chat">채팅</NavLink>
+          <NavLink to="/chat">
+            <svg className="nav-menu-icon" viewBox="0 0 24 24" width="20" height="20"
+              fill="none" stroke="currentColor" strokeWidth="1.7"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M4 3h16v13H9l-5 5Z" /><path d="M8 7h8M8 11h6" />
+            </svg>
+            <span>채팅</span>
+          </NavLink>
 
-          <NavLink to="/community">커뮤니티</NavLink>
+          <NavLink to="/community">
+            <svg className="nav-menu-icon" viewBox="0 0 24 24" width="20" height="20"
+              fill="none" stroke="currentColor" strokeWidth="1.7"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <span>커뮤니티</span>
+          </NavLink>
         </nav>
 
         {/* 사용자 메뉴 */}

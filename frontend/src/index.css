@@ -1,5 +1,5 @@
 :root {
-  font-family: "Pretendard", "Noto Sans KR", "Segoe UI", Arial, sans-serif;
+  font-family: "SUIT Variable", "Noto Sans KR", "Segoe UI", Arial, sans-serif;
   color: #f4f7ff;
   background: #0e1626;
   font-synthesis: none;
@@ -14,7 +14,9 @@ body {
   min-width: 320px;
 }
 button,
-input {
+input,
+textarea,
+select {
   font: inherit;
 }
 button {
