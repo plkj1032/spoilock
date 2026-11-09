@@ -1,0 +1,237 @@
+/* 기존 chat-message 스타일과 분리하여 공통 테마와의 충돌 방지 */
+#root .chat-message-list:has(.talk-row) {
+  gap: 0;
+}
+#root .talk-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 17px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+#root .talk-row--continued {
+  margin-top: 5px;
+}
+#root .talk-avatar-slot {
+  width: 38px;
+  flex: 0 0 38px;
+}
+#root .talk-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #437cf3, #7051e7);
+  color: white;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+#root .talk-body {
+  min-width: 0;
+  max-width: min(76%, 620px);
+}
+#root .talk-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 5px;
+}
+#root .talk-author button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #cbd7eb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#root .talk-online {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #65d6ae;
+}
+#root .talk-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+#root .talk-bubble {
+  min-width: 0;
+  padding: 10px 13px;
+  border-radius: 3px 14px 14px 14px;
+  background: #f1f4f8;
+  color: #223149;
+  box-shadow: 0 1px 2px #00000012;
+}
+#root .talk-content {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#root .talk-row--continued .talk-bubble {
+  border-radius: 14px;
+}
+#root .talk-row--mine {
+  justify-content: flex-end;
+}
+#root .talk-row--mine .talk-line {
+  flex-direction: row-reverse;
+}
+#root .talk-row--mine .talk-bubble {
+  background: #416ce2;
+  color: white;
+  border-radius: 14px 3px 14px 14px;
+}
+#root .talk-row--mine.talk-row--continued .talk-bubble {
+  border-radius: 14px;
+}
+#root .talk-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+#root .talk-meta time {
+  color: #91a0b9;
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+#root .talk-actions {
+  position: relative;
+}
+#root .talk-menu-trigger {
+  padding: 0 5px;
+  border: 0;
+  background: transparent;
+  color: #a8b7cf;
+  font: inherit;
+  font-size: 20px;
+  line-height: 22px;
+  cursor: pointer;
+}
+#root .talk-menu {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  top: 24px;
+  width: 130px;
+  padding: 4px;
+  border: 1px solid #425575;
+  border-radius: 9px;
+  background: #1a2940;
+  box-shadow: 0 6px 20px #0005;
+}
+#root .talk-menu button,
+#root .talk-menu span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px;
+  color: #e4ecfa;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+}
+#root .talk-menu button {
+  cursor: pointer;
+}
+#root .talk-menu button:hover:not(:disabled) {
+  background: #30476c;
+}
+#root .talk-menu button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+#root .talk-protection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 280px;
+}
+#root .talk-protection__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+#root .talk-protection strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.6;
+}
+#root .talk-protection p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #67758a;
+  overflow-wrap: anywhere;
+}
+#root .talk-row--mine .talk-protection p {
+  color: #e1eaff;
+}
+#root .talk-bubble--protected {
+  border: 1px solid #cfdae8;
+  box-shadow: none;
+}
+#root .talk-row--mine .talk-bubble--protected {
+  border-color: #8daaf4;
+}
+#root .talk-row button:focus-visible {
+  outline: 2px solid #aac6ff;
+  outline-offset: 3px;
+}
+#root .chat-message-list:has(.talk-row) .chat-system-message {
+  margin: 16px 0 4px;
+  font-size: 12px;
+}
+@media (max-width: 570px) {
+  #root .talk-row {
+    gap: 7px;
+  }
+  #root .talk-avatar-slot {
+    width: 32px;
+    flex-basis: 32px;
+  }
+  #root .talk-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    border-radius: 11px;
+  }
+  #root .talk-body {
+    max-width: calc(100% - 39px);
+  }
+  #root .talk-row--mine .talk-body {
+    max-width: 90%;
+  }
+  #root .talk-bubble {
+    padding: 9px 11px;
+  }
+  #root .talk-menu {
+    left: auto;
+    right: 0;
+  }
+  #root .talk-content {
+    font-size: 13px;
+  }
+  #root .talk-meta time {
+    font-size: 9px;
+  }
+}
