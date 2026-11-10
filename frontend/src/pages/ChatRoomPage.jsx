@@ -934,6 +934,7 @@ export default function ChatRoomPage({ user, onNotice }) {
               {canInvite && (
                 <Button
                   variant="outline"
+                  className="chat-action-invite"
                   aria-haspopup="dialog"
                   disabled={leaving}
                   onClick={() => setShowInviteModal(true)}
@@ -944,6 +945,7 @@ export default function ChatRoomPage({ user, onNotice }) {
               {canKick && (
                 <Button
                   variant="outline"
+                  className="chat-action-manage"
                   aria-expanded={showBanPanel}
                   onClick={() => {
                     setShowMemberPanel(false);
@@ -961,6 +963,7 @@ export default function ChatRoomPage({ user, onNotice }) {
               )}
               <Button
                 variant="outline"
+                className="chat-action-members"
                 aria-haspopup="dialog"
                 aria-expanded={showMemberPanel}
                 disabled={!connected}
@@ -974,7 +977,7 @@ export default function ChatRoomPage({ user, onNotice }) {
                 {!membersLoading && !membersError && ` ${members.length}`}
               </Button>
 
-              <Button variant="outline" onClick={leaveRoom} disabled={leaving}>
+              <Button variant="outline" className="chat-action-exit" onClick={leaveRoom} disabled={leaving}>
                 {leaving ? "나가는 중..." : "채팅방 나가기"}
               </Button>
             </div>

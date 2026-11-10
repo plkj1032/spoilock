@@ -1,0 +1,479 @@
+/* Soft navy: colour overrides only. Load after SpoilockRefresh.css.
+ * Keep the existing layout, SUIT typography, logos and chat bubble colours.
+ * Removing this import restores the previous palette.
+ */
+:root {
+  --soft-bg: #1b2535;
+  --soft-nav: #202c40;
+  --soft-panel: #27364c;
+  --soft-inset: #202e43;
+  --soft-raised: #30425a;
+  --soft-border: #455773;
+  --soft-text: #e8edf6;
+  --soft-muted: #b4c0d3;
+  --soft-accent: #a7bff4;
+  --soft-action: #4d68b4;
+  --soft-action-hover: #5670bd;
+  --soft-selected: #364e74;
+  --soft-focus: #aec6ff;
+
+  /* Existing shared tokens also feed components outside these overrides. */
+  --bg: var(--soft-bg);
+  --nav: var(--soft-nav);
+  --panel: var(--soft-panel);
+  --panel2: var(--soft-inset);
+  --border: var(--soft-border);
+  --muted: var(--soft-muted);
+  --blue: var(--soft-action);
+  --bluebright: var(--soft-accent);
+  background: var(--soft-bg);
+  color: var(--soft-text);
+}
+
+body,
+#root {
+  background-color: var(--soft-bg);
+  color: var(--soft-text);
+}
+
+#root .site-header {
+  background: var(--soft-nav);
+  border-bottom-color: var(--soft-border);
+}
+
+#root .nav-links a { color: var(--soft-muted); }
+#root .nav-links a:is(.active, :hover) { color: var(--soft-text); }
+#root .nav-links a.active { border-bottom-color: var(--soft-accent); }
+
+/* Main surfaces. Explicit selectors avoid recolouring images or status badges. */
+#root :is(.drama-card, .room-card, .chat-directory-card,
+  .chat-directory-tools, .feed-card, .feed-composer, .feed-page__tabs,
+  .mypage-panel, .mypage-drama-card, .mypage-room,
+  .home-column-empty, .feed-empty, .feed-list__error,
+  .chat-directory-empty, .watch-episodes, .watch-progress-panel,
+  .watch-current-episode, .watch-empty) {
+  background: var(--soft-panel);
+  border-color: var(--soft-border);
+  color: var(--soft-text);
+}
+
+#root :is(.room-card, .chat-directory-card, .mypage-room):hover:not(:disabled) {
+  background: var(--soft-raised);
+  border-color: #829cc5;
+}
+
+#root .drama-card:is(:hover, .is-selected) { border-color: #9bb6ed; }
+#root .drama-card.is-selected { box-shadow: 0 0 0 2px rgb(167 191 244 / 22%); }
+
+#root :is(.room-icon, .chat-directory-badge, .feed-card__comment,
+  .chat-directory-clear, .feed-composer__image-button,
+  .watch-page .watch-episode) {
+  background: var(--soft-inset);
+  border-color: var(--soft-border);
+}
+
+#root :is(.feed-page__tabs button.is-active,
+  .chat-directory-types button[aria-pressed="true"],
+  .mypage-tabs button[aria-pressed="true"],
+  .watch-page .watch-episode.is-selected) {
+  background: var(--soft-selected);
+  border-color: #8da9dc;
+  color: var(--soft-text);
+}
+
+/* Protected posts remain distinct without a separate purple surface. */
+#root .feed-card .feed-card__protected {
+  background: var(--soft-raised);
+  border-color: #7189ac;
+  color: var(--soft-text);
+}
+
+#root .feed-card .feed-card__protected p { color: #c7d3e5; }
+#root :is(.feed-card__footer, .feed-card__comments) { border-color: var(--soft-border); }
+#root .feed-card__content { color: var(--soft-text); }
+
+/* Chat canvas only: the two bubble colours and protected-message borders stay intact. */
+#root .chat-room-shell {
+  background: var(--soft-bg);
+  border-color: var(--soft-border);
+}
+#root :is(.chat-room-header, .chat-input-form) {
+  background: var(--soft-panel);
+  border-color: var(--soft-border);
+}
+
+/* body also covers dialogs mounted in a portal outside #root. */
+:is(#root, body) :is(.auth-dialog, .notification-dialog, .chat-member-dialog,
+  .user-follow-dialog, .profile-edit-dialog, .drama-detail-dialog,
+  .chat-create-modal, .home-feed-compose-dialog, .chat-report-dialog,
+  .following-invite-dialog, .chat-owner-dialog) {
+  background: var(--soft-panel);
+  border-color: var(--soft-border);
+  color: var(--soft-text);
+  box-shadow: 0 18px 48px rgb(8 15 27 / 30%);
+}
+
+:is(#root, body) :is(.modal-backdrop, .chat-create-backdrop),
+:is(#root, body) :is(.notification-dialog, .chat-member-dialog,
+  .user-follow-dialog, .profile-edit-dialog, .drama-detail-dialog,
+  .home-feed-compose-dialog, .chat-report-dialog,
+  .following-invite-dialog, .chat-owner-dialog)::backdrop {
+  background: rgb(13 21 34 / 58%);
+}
+
+:is(#root, body) :is(.notification-item, .user-follow-dialog__stat,
+  .user-follow-dialog__feed-preview, .user-follow-dialog__feed-placeholder,
+  .auth-terms, .auth-terms-content, .auth-terms__content,
+  .drama-detail-section, .chat-owner-member) {
+  background: var(--soft-inset);
+  border-color: var(--soft-border);
+}
+:is(#root, body) .notification-item.is-unread {
+  background: var(--soft-selected);
+  border-color: #809dca;
+}
+
+/* Search, composer, chat and account form controls. */
+:is(#root, body) :is(.chat-input, .chat-directory-search,
+  .chat-directory select, .feed-composer__textarea, .feed-composer select,
+  .feed-card__comment-form input, .auth-form input:not([type="checkbox"]),
+  .mypage-form input, .profile-edit-field input,
+  .chat-create-field input, .chat-create-field textarea, .chat-create-field select,
+  .chat-report-form select, .chat-report-form textarea) {
+  background: var(--soft-inset);
+  border-color: #647a99;
+  color: var(--soft-text);
+}
+
+:is(#root, body) .chat-owner-member.is-selected {
+  background: var(--soft-selected);
+  border-color: #8da9dc;
+}
+
+#root :is(.chat-directory select, .feed-composer select) :is(option, optgroup) {
+  background: var(--soft-inset);
+  color: var(--soft-text);
+}
+
+:is(#root, body) :is(.chat-input, .chat-directory-search input,
+  .feed-composer__textarea, .feed-card__comment-form input,
+  .auth-form input, .mypage-form input, .profile-edit-field input)::placeholder {
+  color: #acbad0;
+  opacity: 1;
+}
+
+:is(#root, body) :is(.mypage-form input, .profile-edit-field input)[readonly] {
+  background: var(--soft-panel);
+  color: var(--soft-muted);
+}
+
+:is(#root, body) :is(.chat-input, .chat-directory-search,
+  .feed-composer__textarea, .feed-composer select, .chat-directory select,
+  .auth-form input, .mypage-form input, .profile-edit-field input):focus-within {
+  border-color: var(--soft-focus);
+}
+
+/* Keep primary actions blue, with a softer saturation and readable white text.
+   Social-login brand colours and danger/success states are intentionally untouched. */
+:is(#root, body) :is(.button-primary, .feed-composer__submit,
+  .feed-composer__login, .feed-empty button, .feed-list__error button,
+  .feed-card__comment-form button, .mypage-button, .profile-edit-primary,
+  .watch-page .watch-primary-button, .drama-detail-watch-link) {
+  background: var(--soft-action);
+  color: #fff;
+}
+:is(#root, body) :is(.button-primary, .feed-composer__submit,
+  .feed-composer__login, .feed-empty button, .feed-list__error button,
+  .feed-card__comment-form button, .mypage-button, .profile-edit-primary,
+  .watch-page .watch-primary-button, .drama-detail-watch-link):hover:not(:disabled) {
+  background: var(--soft-action-hover);
+}
+
+:is(#root, body) :is(.button-subtle, .button-outline,
+  .notification-bell, .notification-close, .modal-close, .chat-member-close,
+  .profile-edit-secondary, .profile-edit-close, .user-follow-dialog__close) {
+  background: var(--soft-raised);
+  border-color: #647a99;
+  color: var(--soft-text);
+}
+:is(#root, body) :is(.button-subtle, .button-outline, .notification-bell,
+  .notification-close, .modal-close, .chat-member-close,
+  .profile-edit-secondary, .profile-edit-close, .user-follow-dialog__close):hover:not(:disabled) {
+  background: #3a4e6a;
+}
+
+#root :is(.section-overline, .section-link, .card-action,
+  .room-enter, .chat-directory-enter, .mypage-link, .watch-kicker) {
+  color: var(--soft-accent);
+}
+
+/* Raise subdued text with the surfaces, so lightening the background does not
+   make descriptions and timestamps harder to read. Chat timestamps are excluded. */
+#root :is(.page-subtitle, .home-gallery-hint, .muted, .progress-label,
+  .home-column-toolbar, .room-copy small, .room-members,
+  .chat-directory-description, .chat-directory-drama, .chat-directory-count,
+  .chat-directory-summary p, .chat-directory-heading p, .chat-room-heading p,
+  .chat-system-message, .feed-page__heading p, .feed-card__author-info span,
+  .feed-card__footer, .feed-card__action:not(.is-liked), .feed-card__comment p,
+  .feed-composer__heading p, .feed-composer__bottom span, .feed-image-button-hint,
+  .feed-page__tabs button:not(.is-active), .chat-directory-reset,
+  .chat-directory-types button:not([aria-pressed="true"]),
+  .feed-list__loading, .feed-list__end, .feed-empty p, .home-column-empty,
+  .mypage-heading p, .mypage-help, .mypage-identity p, .mypage-room-drama,
+  .watch-back, .watch-brand, .watch-navigation small, .watch-episode-copy small,
+  .watch-episode-number, .watch-about dt, .watch-sidebar-note) {
+  color: var(--soft-muted);
+}
+
+:is(#root, body) :is(.dialog-description, .auth-helper-text, .switch-auth,
+  .profile-edit-help, .notification-content, .notification-header p,
+  .notification-item-footer time, .notification-read-label,
+  .user-follow-dialog__profile p, .user-follow-dialog__stat span) {
+  color: var(--soft-muted);
+}
+
+#root :is(.chat-message-list, .home-following-scroll, .notification-body,
+  .chat-member-dialog__body, .watch-episode-list) {
+  scrollbar-color: #6b809f var(--soft-bg);
+}
+#root :is(.chat-message-list, .home-following-scroll)::-webkit-scrollbar-track {
+  background: var(--soft-bg);
+}
+#root :is(.chat-message-list, .home-following-scroll)::-webkit-scrollbar-thumb {
+  background: #6b809f;
+}
+
+/* Button hierarchy: lighter than the panel, but still within the navy palette. */
+:root {
+  --soft-action: #526fb2;
+  --soft-action-hover: #5670bd;
+  --soft-button-secondary: #445b79;
+  --soft-button-secondary-hover: #506886;
+  --soft-button-quiet: #354a64;
+  --soft-button-quiet-hover: #405772;
+  --soft-button-border: #8196b3;
+  --soft-button-text: #f5f7fc;
+  --soft-button-danger: #564653;
+  --soft-button-danger-hover: #665460;
+  --soft-button-danger-border: #af919f;
+  --soft-heading-label: #b5c3d2;
+}
+
+/* Primary: send, save, create, watch and upload. */
+:is(#root, body) :is(.button.button-primary,
+  .admin-subtitles__button--primary, .admin-video__submit,
+  .admin-terms-actions button:not(.secondary),
+  .drama-rating button.drama-rating__save,
+  .chat-report-primary, .following-invite-dialog .following-invite-primary,
+  .chat-owner-actions .chat-owner-submit) {
+  background: var(--soft-action);
+  color: #fff;
+  border-color: #91a8d6;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
+}
+:is(#root, body) :is(.button.button-primary,
+  .admin-subtitles__button--primary, .admin-video__submit,
+  .admin-terms-actions button:not(.secondary),
+  .drama-rating button.drama-rating__save,
+  .chat-report-primary, .following-invite-dialog .following-invite-primary,
+  .chat-owner-actions .chat-owner-submit):hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--soft-action-hover);
+}
+
+/* Secondary: view, edit, choose file and open related pages. */
+:is(#root, body) :is(.button.button-outline,
+  .admin-subtitles__button--outline, .admin-video__file-button,
+  .admin-terms-actions button.secondary, .monitor-text-button,
+  .monitor-pagination button, .episode-upload button,
+  .drama-detail-actions a, .drama-detail-homepage > a,
+  .drama-detail-status button,
+  .drama-rating button:not(.drama-rating__save)) {
+  background: var(--soft-button-secondary);
+  border-color: var(--soft-button-border);
+  color: var(--soft-button-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+:is(#root, body) :is(.button.button-outline,
+  .admin-subtitles__button--outline, .admin-video__file-button,
+  .admin-terms-actions button.secondary, .monitor-text-button,
+  .monitor-pagination button, .episode-upload button,
+  .drama-detail-actions a, .drama-detail-homepage > a,
+  .drama-detail-status button,
+  .drama-rating button:not(.drama-rating__save)):hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--soft-button-secondary-hover);
+  border-color: #a3b5cf;
+}
+
+/* Quiet: cancel, close and secondary account actions. */
+:is(#root, body) :is(.button.button-subtle, .profile-edit-secondary,
+  .chat-report-secondary, .notification-bell,
+  .notification-close, .modal-close, .chat-member-close,
+  .profile-edit-close, .user-follow-dialog__close, .drama-detail-close,
+  .chat-create-close, .chat-report-close, .home-feed-compose-header > button) {
+  background: var(--soft-button-quiet);
+  border-color: #7287a3;
+  color: #e0e8f2;
+  box-shadow: none;
+}
+:is(#root, body) :is(.button.button-subtle, .profile-edit-secondary,
+  .chat-report-secondary, .notification-bell,
+  .notification-close, .modal-close, .chat-member-close,
+  .profile-edit-close, .user-follow-dialog__close, .drama-detail-close,
+  .chat-create-close, .chat-report-close, .home-feed-compose-header > button):hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--soft-button-quiet-hover);
+}
+
+/* Explicit semantic classes: no reliance on button order or translated labels. */
+:is(#root, body) .chat-room-actions .button.chat-action-manage {
+  background: #4a5067;
+  border-color: #8d95af;
+  color: var(--soft-button-text);
+}
+:is(#root, body) .chat-room-actions .button.chat-action-manage:hover:not(:disabled) {
+  background: #565d75;
+}
+:is(#root, body) .chat-room-actions .button.chat-action-members {
+  background: #435f72;
+  border-color: #8aa6b8;
+  color: var(--soft-button-text);
+}
+:is(#root, body) .chat-room-actions .button.chat-action-members:hover:not(:disabled) {
+  background: #506c7f;
+}
+:is(#root, body) .chat-room-actions .button.chat-action-invite {
+  background: var(--soft-button-secondary);
+  border-color: var(--soft-button-border);
+  color: var(--soft-button-text);
+}
+:is(#root, body) .chat-room-actions .button.chat-action-invite:hover:not(:disabled) {
+  background: var(--soft-button-secondary-hover);
+}
+
+/* Destructive/exit actions keep a subtle warning hue without a bright red fill. */
+:is(#root, body) :is(.chat-room-actions .button.chat-action-exit,
+  .admin-page .button.admin-drama-delete, .button.episode-delete,
+  .admin-subtitles__button--danger, .admin-video__delete) {
+  background: var(--soft-button-danger);
+  border-color: var(--soft-button-danger-border);
+  color: #f5e9ef;
+  box-shadow: none;
+}
+:is(#root, body) :is(.chat-room-actions .button.chat-action-exit,
+  .admin-page .button.admin-drama-delete, .button.episode-delete,
+  .admin-subtitles__button--danger, .admin-video__delete):hover:not(:disabled) {
+  background: var(--soft-button-danger-hover);
+  border-color: #c3a6b3;
+}
+
+/* Filters/tabs have a visible resting surface and a brighter selected state. */
+:is(#root, body) :is(.chat-directory .chat-directory-types button,
+  .admin-content-switch button, .admin-subtitles__episode-button,
+  .feed-page__tabs button) {
+  background: var(--soft-button-quiet);
+  color: #e0e8f2;
+  border-color: #7287a3;
+}
+:is(#root, body) :is(.chat-directory .chat-directory-types button,
+  .admin-content-switch button, .admin-subtitles__episode-button,
+  .feed-page__tabs button):hover:not(:disabled) {
+  background: var(--soft-button-quiet-hover);
+}
+:is(#root, body) :is(.chat-directory .chat-directory-types button[aria-pressed="true"],
+  .admin-content-switch button[aria-pressed="true"],
+  .admin-subtitles__episode-button--active, .feed-page__tabs button.is-active) {
+  background: #4b6286;
+  border-color: #a2b5d0;
+  color: var(--soft-button-text);
+  box-shadow: inset 0 -2px 0 #b4c5df;
+}
+:is(#root, body) :is(.chat-directory .chat-directory-types button[aria-pressed="true"],
+  .admin-content-switch button[aria-pressed="true"],
+  .admin-subtitles__episode-button--active, .feed-page__tabs button.is-active):hover:not(:disabled) {
+  background: #546d91;
+}
+
+/* Entry affordance in the room directory; the whole row remains the button. */
+#root .chat-directory-card .chat-directory-enter {
+  background: var(--soft-button-secondary);
+  color: var(--soft-button-text);
+  border: 1px solid var(--soft-button-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  text-align: center;
+}
+#root .chat-directory-card:hover:not(:disabled) .chat-directory-enter {
+  background: var(--soft-button-secondary-hover);
+}
+
+/* Small section labels: EXPLORE, SPOILOCK SOCIAL, DRAMA and admin headings. */
+:is(#root, body) :is(.section-overline, .eyebrow, p.eyebrow.muted, .drama-detail-eyebrow,
+  .drama-detail-header > span, .drama-rating__eyebrow, .profile-edit-overline,
+  .watch-kicker, .watch-brand, .admin-subtitles__eyebrow,
+  .admin-video__eyebrow, .monitor-trace-modal-eyebrow) {
+  color: var(--soft-heading-label);
+}
+
+/* Keep a visible keyboard focus indicator for controls with their own CSS. */
+:is(#root, body) :is(.button, .admin-subtitles__button,
+  .admin-subtitles__episode-button, .admin-video__submit, .admin-video__delete,
+  .admin-terms-actions button, .monitor-text-button, .monitor-pagination button,
+  .drama-detail-actions a, .drama-detail-homepage > a,
+  .drama-rating button, .chat-directory-types button,
+  .admin-content-switch button, .feed-page__tabs button):focus-visible {
+  outline: 2px solid #c2d1e4;
+  outline-offset: 3px;
+}
+
+/* Subtle depth: neutral light over the existing navy, without extra hues.
+ * Adjust only these opacity tokens to tune the effect; 0 removes it.
+ */
+:root {
+  --soft-page-light: 0.018;
+  --soft-surface-light: 0.022;
+}
+
+#root {
+  background-image: radial-gradient(ellipse 100% 650px at 50% 0,
+    rgb(255 255 255 / var(--soft-page-light)), transparent 100%);
+  background-repeat: no-repeat;
+}
+
+#root .site-header,
+#root :is(.drama-card, .room-card, .chat-directory-card,
+  .chat-directory-tools, .feed-card, .feed-composer, .feed-page__tabs,
+  .mypage-panel, .mypage-drama-card, .mypage-room,
+  .chat-room-header, .chat-input-form) {
+  background-image: linear-gradient(150deg,
+    rgb(255 255 255 / var(--soft-surface-light)),
+    rgb(255 255 255 / 0) 85%);
+}
+
+/* Keep the same faint highlight when a card's background changes on hover. */
+#root :is(.room-card, .chat-directory-card, .mypage-room):hover:not(:disabled) {
+  background-image: linear-gradient(150deg,
+    rgb(255 255 255 / var(--soft-surface-light)),
+    rgb(255 255 255 / 0) 85%);
+}
+
+/* Header only: reduce the logo's real layout size, not its transform scale. */
+#root .site-header .brand.brand--playlock {
+  font-size: 22px;
+  gap: 8px;
+}
+
+#root .site-header .brand--playlock .brand-mark {
+  width: 30px;
+  height: 34px;
+}
+
+@media (max-width: 570px) {
+  #root .site-header .brand.brand--playlock {
+    font-size: 18px;
+    gap: 6px;
+  }
+
+  #root .site-header .brand--playlock .brand-mark {
+    width: 25px;
+    height: 28px;
+  }
+}
