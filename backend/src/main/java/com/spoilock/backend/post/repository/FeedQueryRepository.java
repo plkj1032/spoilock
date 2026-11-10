@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.spoilock.backend.common.enums.ModerationStatus;
 import com.spoilock.backend.drama.domain.enums.DramaStatus;
 import com.spoilock.backend.post.entity.Post;
+import com.spoilock.backend.post.entity.PostAudience;
 import com.spoilock.backend.user.enums.AccountStatus;
 
 import lombok.RequiredArgsConstructor;
@@ -79,7 +80,7 @@ public class FeedQueryRepository {
                                 ModerationStatus.PENDING,
                                 ModerationStatus.VISIBLE
                         ),
-
+                        audienceCondition(viewerId),
                         followingCondition,
                         cursorCondition,
                         dramaId == null ? null : post.drama.id.eq(dramaId)
@@ -92,6 +93,7 @@ public class FeedQueryRepository {
                 .fetch();
     }
     public List<Post> findUserFeed(
+            Long viewerId,
             Long authorId,
             LocalDateTime cursorTime,
             Long cursorId,
@@ -113,6 +115,7 @@ public class FeedQueryRepository {
                 .join(post.drama).fetchJoin()
                 .where(
                         post.user.id.eq(authorId),
+                        audienceCondition(viewerId),
                         post.parentPost.isNull(),
                         post.user.accountStatus.eq(
                                 AccountStatus.ACTIVE
@@ -168,6 +171,7 @@ public class FeedQueryRepository {
                                 ModerationStatus.VISIBLE
                         ),
 
+                        audienceCondition(viewerId),
                         followingCondition,
 
                         dramaId == null
@@ -177,5 +181,45 @@ public class FeedQueryRepository {
                 .fetchOne();
 
         return count == null ? 0L : count;
+    }
+    // 조회자가 볼 수 있는 공개 범위의 게시글 수
+    public long countUserFeed(
+            Long viewerId,
+            Long authorId
+    ) {
+        Long count = queryFactory
+                .select(post.id.count())
+                .from(post)
+                .where(
+                        post.user.id.eq(authorId),
+                        post.parentPost.isNull(),
+
+                        audienceCondition(viewerId),
+
+                        post.user.accountStatus.eq(AccountStatus.ACTIVE),
+                        post.drama.status.eq(DramaStatus.PUBLISHED),
+
+                        post.moderationStatus.in(
+                                ModerationStatus.PENDING,
+                                ModerationStatus.VISIBLE
+                        )
+                )
+                .fetchOne();
+
+        return count == null ? 0L : count;
+    }
+
+    private BooleanExpression audienceCondition(Long viewerId) {
+        return post.audience.eq(PostAudience.PUBLIC)
+                .or(post.user.id.eq(viewerId))
+                .or(
+                        JPAExpressions.selectOne()
+                                .from(userFollow)
+                                .where(
+                                        userFollow.follower.id.eq(viewerId),
+                                        userFollow.following.id.eq(post.user.id)
+                                )
+                                .exists()
+                );
     }
 }

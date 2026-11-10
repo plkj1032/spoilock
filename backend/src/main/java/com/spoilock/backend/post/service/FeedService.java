@@ -362,6 +362,7 @@ public class FeedService {
         FeedCursor parsed = parseCursor(cursor);
 
         List<Post> result = feedQueryRepository.findUserFeed(
+                viewerId,
                 author.getId(),
                 parsed == null ? null : parsed.createdAt(),
                 parsed == null ? null : parsed.id(),
@@ -419,15 +420,10 @@ public class FeedService {
                 3
         );
 
-        long count =
-                postRepository
-                        .countByUser_IdAndParentPostIsNullAndModerationStatusIn(
-                                authorId,
-                                List.of(
-                                        ModerationStatus.PENDING,
-                                        ModerationStatus.VISIBLE
-                                )
-                        );
+        long count = feedQueryRepository.countUserFeed(
+                viewerId,
+                authorId
+        );
 
         return new ProfileFeedPreview(
                 authorId,
