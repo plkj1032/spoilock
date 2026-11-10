@@ -91,15 +91,17 @@ export default function HomePage({ user, onLogin, onNotice }) {
     setCreatePostOpen(true);
   }
 
-  const communityParams = new URLSearchParams({
-    tab: "FOLLOWING",
-  });
+  const communityParams = new URLSearchParams();
 
   if (selectedDrama) {
     communityParams.set("dramaId", String(selectedDrama.id));
   }
 
-  const communityUrl = `/community?${communityParams}`;
+  const communityQuery = communityParams.toString();
+
+  const communityUrl = communityQuery
+    ? `/community?${communityQuery}`
+    : "/community";
   const feedSummaryKey = `${user?.id ?? "guest"}:${selectedDrama?.id ?? "all"}:${followingRevision}`;
 
   const currentFeedSummary =
@@ -291,7 +293,7 @@ export default function HomePage({ user, onLogin, onNotice }) {
         >
           <header className="home-column-heading">
             <div>
-              <span className="section-overline">FOLLOWING FEEDS</span>
+              <span className="section-overline">COMMUNITY FEEDS</span>
 
               <h2 id="home-following-title">
                 {selectedDrama ? `${selectedDrama.title} 커뮤니티` : "커뮤니티"}
@@ -317,8 +319,8 @@ export default function HomePage({ user, onLogin, onNotice }) {
             >
               <span>
                 {selectedDrama
-                  ? "이 드라마의 팔로잉 이야기"
-                  : "팔로잉 최신 이야기"}
+                  ? "이 드라마의 최신 이야기"
+                  : "커뮤니티 최신 이야기"}
               </span>
 
               <span role="status">{feedCountText}</span>

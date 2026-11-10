@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { feedApi } from "../../api/feedApi";
 import FollowButton from "../common/FollowButton";
 import UserFollowDialog from "../user/UserFollowDialog";
+import AudienceSwitch from "./AudienceSwitch";
 
 // 이미지 블러 안내 (서버가 판정한 이유)
 function mediaBlurMessage(item) {
@@ -35,7 +36,7 @@ function formatDate(value) {
   });
 }
 
-export default function FeedCard({ post, user }) {
+export default function FeedCard({ post, user, onChanged }) {
   const [profileTarget, setProfileTarget] = useState(null);
 
   const [social, setSocial] = useState(null);
@@ -49,6 +50,12 @@ export default function FeedCard({ post, user }) {
   const [commentsPage, setCommentsPage] = useState(0);
   const [hasMoreComments, setHasMoreComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+
+  const [editingPost, setEditingPost] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [editAudience, setEditAudience] = useState("PUBLIC");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editCommentContent, setEditCommentContent] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -279,7 +286,159 @@ export default function FeedCard({ post, user }) {
       setBusy(false);
     }
   }
+  // 게시글 수정 시작
+  function startPostEdit() {
+    setEditContent(post.content ?? "");
+    setEditAudience(post.audience ?? "PUBLIC");
+    setEditingPost(true);
+    setError("");
+  }
 
+  // 게시글 수정 저장
+  async function savePostEdit(event) {
+    event.preventDefault();
+
+    const content = editContent.trim();
+
+    if (busy || !content || content.length > 2000) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      // 성공 시 본문 없는 204 응답
+      await feedApi.updatePost(post.postId, content, editAudience);
+
+      setEditingPost(false);
+
+      // 서버가 판정한 최신 상태로 목록 다시 조회
+      onChanged?.();
+    } catch (err) {
+      setError(err.message || "게시글 수정에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 게시글 삭제
+  async function deletePost() {
+    if (busy) return;
+
+    const confirmed = window.confirm(
+      "이 게시글을 삭제할까요? 삭제하면 되돌릴 수 없습니다.",
+    );
+
+    if (!confirmed) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await feedApi.deletePost(post.postId);
+
+      onChanged?.();
+    } catch (err) {
+      setError(err.message || "게시글 삭제에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 댓글 수정 시작
+  function startCommentEdit(comment) {
+    setEditingCommentId(comment.id);
+    setEditCommentContent(comment.content ?? "");
+    setError("");
+  }
+
+  // 댓글 목록과 개수 다시 조회
+  async function refreshCommentsAfterChange() {
+    // 기존 조회 결과가 남지 않도록 비우고 서버 응답으로 갱신
+    setComments([]);
+    setCommentsPage(0);
+    setHasMoreComments(false);
+    setLoadingComments(true);
+
+    try {
+      const [data, stats] = await Promise.all([
+        feedApi.getComments(post.postId, 0),
+        feedApi.getSocial(post.postId),
+      ]);
+
+      setComments(data.content ?? []);
+      setHasMoreComments(!data.last);
+      setSocial(stats);
+    } finally {
+      setLoadingComments(false);
+    }
+  }
+
+  // 댓글 수정 저장
+  async function saveCommentEdit(event, commentId) {
+    event.preventDefault();
+
+    const content = editCommentContent.trim();
+
+    if (busy || !content || content.length > 1000) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await feedApi.updateComment(post.postId, commentId, content);
+    } catch (err) {
+      setError(err.message || "댓글 수정에 실패했습니다.");
+      setBusy(false);
+      return;
+    }
+
+    // 저장에 성공한 경우에만 수정창 닫기
+    setEditingCommentId(null);
+    setEditCommentContent("");
+
+    try {
+      await refreshCommentsAfterChange();
+    } catch {
+      setError(
+        "댓글은 수정됐지만 목록을 새로 불러오지 못했습니다. 댓글창을 닫았다가 다시 열어 주세요.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 댓글 삭제
+  async function deleteComment(commentId) {
+    if (busy) return;
+
+    if (!window.confirm("이 댓글을 삭제할까요?")) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await feedApi.deleteComment(post.postId, commentId);
+    } catch (err) {
+      setError(err.message || "댓글 삭제에 실패했습니다.");
+      setBusy(false);
+      return;
+    }
+
+    if (editingCommentId === commentId) {
+      setEditingCommentId(null);
+      setEditCommentContent("");
+    }
+
+    try {
+      await refreshCommentsAfterChange();
+    } catch {
+      setError(
+        "댓글은 삭제됐지만 목록을 새로 불러오지 못했습니다. 댓글창을 닫았다가 다시 열어 주세요.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <article className="feed-card">
       <header className="feed-card__header">
@@ -294,7 +453,22 @@ export default function FeedCard({ post, user }) {
           </div>
 
           <div className="feed-card__author-info">
-            <strong>{post.authorNickname}</strong>
+            <strong className="feed-card__author-name">
+              {post.authorNickname}
+
+              <span
+                className="feed-card__audience"
+                role="img"
+                aria-label={
+                  post.audience === "FOLLOWERS" ? "팔로워 공개" : "전체 공개"
+                }
+                title={
+                  post.audience === "FOLLOWERS" ? "팔로워 공개" : "전체 공개"
+                }
+              >
+                {post.audience === "FOLLOWERS" ? "👥" : "🌐"}
+              </span>
+            </strong>
 
             <span>
               {post.dramaTitle} · {formatDate(post.createdAt)}
@@ -302,6 +476,21 @@ export default function FeedCard({ post, user }) {
           </div>
         </button>
 
+        {mine && (
+          <div className="feed-card__manage">
+            <button
+              type="button"
+              disabled={busy || editingPost}
+              onClick={startPostEdit}
+            >
+              수정
+            </button>
+
+            <button type="button" disabled={busy} onClick={deletePost}>
+              삭제
+            </button>
+          </div>
+        )}
         {!mine && (
           <div className="feed-card__follow">
             <FollowButton targetUserId={post.authorId} currentUser={user} />
@@ -310,7 +499,46 @@ export default function FeedCard({ post, user }) {
       </header>
 
       <div className="feed-card__body">
-        {post.visible ? (
+        {editingPost ? (
+          <form className="feed-edit" onSubmit={savePostEdit}>
+            <AudienceSwitch
+              value={editAudience}
+              onChange={setEditAudience}
+              disabled={busy}
+            />
+
+            <textarea
+              aria-label="게시글 수정"
+              value={editContent}
+              onChange={(event) => setEditContent(event.target.value)}
+              maxLength={2000}
+              rows={4}
+              disabled={busy}
+              autoFocus
+            />
+
+            <p className="feed-edit-help">
+              본문을 수정하면 스포일러 검사를 다시 진행합니다. 첨부 사진은
+              유지됩니다.
+            </p>
+
+            <div className="feed-edit-actions">
+              <span>{editContent.length} / 2000</span>
+
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setEditingPost(false)}
+              >
+                취소
+              </button>
+
+              <button type="submit" disabled={busy || !editContent.trim()}>
+                {busy ? "저장 중…" : "저장"}
+              </button>
+            </div>
+          </form>
+        ) : post.visible ? (
           <p className="feed-card__content">{post.content}</p>
         ) : (
           <div className="feed-card__protected">
@@ -456,15 +684,91 @@ export default function FeedCard({ post, user }) {
         <section className="feed-card__comments">
           <h3>댓글</h3>
 
-          {comments.map((comment) => (
-            <div className="feed-card__comment" key={comment.id}>
-              <strong>{comment.nickname}</strong>
+          {comments.map((comment) => {
+            const myComment =
+              user?.id != null && String(comment.authorId) === String(user.id);
 
-              <p>
-                {comment.visible ? comment.content : "🔒 분석 중인 댓글입니다."}
-              </p>
-            </div>
-          ))}
+            const isEditing = editingCommentId === comment.id;
+
+            return (
+              <div className="feed-card__comment" key={comment.id}>
+                <div className="feed-card__comment-head">
+                  <strong>{comment.nickname}</strong>
+
+                  {myComment && (
+                    <div className="feed-card__manage">
+                      <button
+                        type="button"
+                        disabled={busy || loadingComments || isEditing}
+                        onClick={() => startCommentEdit(comment)}
+                      >
+                        수정
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={busy || loadingComments}
+                        onClick={() => deleteComment(comment.id)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {isEditing ? (
+                  <form
+                    className="feed-edit"
+                    onSubmit={(event) => saveCommentEdit(event, comment.id)}
+                  >
+                    <textarea
+                      aria-label="댓글 수정"
+                      value={editCommentContent}
+                      onChange={(event) =>
+                        setEditCommentContent(event.target.value)
+                      }
+                      maxLength={1000}
+                      rows={3}
+                      disabled={busy}
+                      autoFocus
+                    />
+
+                    <p className="feed-edit-help">
+                      댓글을 수정하면 스포일러 검사를 다시 진행합니다.
+                    </p>
+
+                    <div className="feed-edit-actions">
+                      <span>{editCommentContent.length} / 1000</span>
+
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditCommentContent("");
+                        }}
+                      >
+                        취소
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={busy || !editCommentContent.trim()}
+                      >
+                        {busy ? "저장 중…" : "저장"}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p>
+                    {comment.visible
+                      ? comment.content
+                      : "🔒 스포일러 보호 중인 댓글입니다."}
+                  </p>
+                )}
+              </div>
+            );
+          })}
 
           {!loadingComments && comments.length === 0 && (
             <p className="feed-card__comment-empty">

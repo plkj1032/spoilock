@@ -654,3 +654,184 @@
   color: #e2eaff;
   cursor: pointer;
 }
+
+/* 작성자 정보 + 우측 공개 범위 선택 */
+:is(#root, .home-feed-compose-dialog) .feed-composer__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* 작성자 정보 */
+:is(#root, .home-feed-compose-dialog)
+  .feed-composer__top
+  .feed-composer__heading {
+  flex: 1 1 220px;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* 공개 범위 스위치: 우측 배치 및 너비 축소 */
+:is(#root, .home-feed-compose-dialog) .feed-composer__top .feed-audience {
+  flex: 0 1 180px;
+  width: min(100%, 180px);
+  min-width: 0;
+  margin: 0 0 0 auto;
+}
+
+/* 스위치 바깥 영역 */
+:is(#root, .home-feed-compose-dialog)
+  .feed-composer__top
+  .feed-audience__options {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 3px;
+}
+
+/* 전체 공개 / 팔로워 공개 각각의 선택 영역 */
+:is(#root, .home-feed-compose-dialog)
+  .feed-composer__top
+  .feed-audience__option {
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 모바일에서는 작성자 정보 아래에 배치 */
+@media (max-width: 570px) {
+  :is(#root, .home-feed-compose-dialog) .feed-composer__top .feed-audience {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
+
+/* 작성자 이름 + 공개 범위 아이콘 */
+#root .feed-card__author-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 공개 범위 아이콘 */
+#root .feed-card__author-info .feed-card__audience {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* 작성자 수정·삭제 버튼 */
+#root .feed-card__manage {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+#root .feed-card__manage button,
+#root .feed-edit-actions button {
+  padding: 7px 11px;
+  border: 1px solid #3d557b;
+  border-radius: 8px;
+  background: #1b2b44;
+  color: #e2eaff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#root .feed-card__manage button:last-child {
+  color: #ffb9bd;
+}
+
+#root .feed-card__manage button:hover:not(:disabled),
+#root .feed-edit-actions button:hover:not(:disabled) {
+  background: #2b4163;
+}
+
+#root .feed-card__manage button:disabled,
+#root .feed-edit-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 본문 수정 폼 */
+#root .feed-edit {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+#root .feed-edit textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #526d98;
+  border-radius: 10px;
+  background: #0e192b;
+  color: #edf3ff;
+  font: inherit;
+  line-height: 1.6;
+}
+
+#root .feed-edit .feed-audience {
+  width: 100%;
+  max-width: 320px;
+  margin: 0;
+}
+
+#root .feed-edit-help {
+  margin: 0;
+  color: #a8bcda;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#root .feed-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#root .feed-edit-actions > span {
+  margin-right: auto;
+  color: #a8bcda;
+  font-size: 12px;
+}
+
+#root .feed-card__header {
+  flex-wrap: wrap;
+}
+
+/* 댓글 작성자 이름 + 수정·삭제 버튼 */
+#root .feed-card__comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#root .feed-card__comment-head > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#root .feed-card__comment-head .feed-card__manage {
+  margin-left: auto;
+}

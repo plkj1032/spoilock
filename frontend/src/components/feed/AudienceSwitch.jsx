@@ -14,8 +14,6 @@ export default function AudienceSwitch({
 
   return (
     <fieldset className="feed-audience" disabled={disabled}>
-      <legend className="feed-audience__legend">게시글 공개 범위</legend>
-
       <div className="feed-audience__options">
         <label
           className={`feed-audience__option ${
@@ -30,7 +28,7 @@ export default function AudienceSwitch({
             onChange={() => onChange("PUBLIC")}
           />
           <span aria-hidden="true">🌐</span>
-          전체 공개
+          전체
         </label>
 
         <label
@@ -46,15 +44,9 @@ export default function AudienceSwitch({
             onChange={() => onChange("FOLLOWERS")}
           />
           <span aria-hidden="true">👥</span>
-          팔로워 공개
+          팔로워
         </label>
       </div>
-
-      <p className="feed-audience__help">
-        {value === "FOLLOWERS"
-          ? "나를 팔로우하는 사용자와 나만 볼 수 있어요. 스포일러 보호는 별도로 적용돼요."
-          : "모든 SPOILOCK 사용자에게 공개돼요. 스포일러 보호는 별도로 적용돼요."}
-      </p>
     </fieldset>
   );
 }
