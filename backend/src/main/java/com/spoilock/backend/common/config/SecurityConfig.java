@@ -76,6 +76,12 @@ public class SecurityConfig {
                 // ==========================================
                 .authorizeHttpRequests(auth -> auth
 
+                        // ALB 헬스체크 - 로그인 없이 접근 허용
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/health"
+                        ).permitAll()
+
                         // 오류 페이지 접근 허용
                         .dispatcherTypeMatchers(
                                 DispatcherType.ERROR
