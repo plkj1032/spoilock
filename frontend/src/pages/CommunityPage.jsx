@@ -319,17 +319,26 @@ export function FeedComposer({
 
   return (
     <section className="feed-composer">
-      <div className="feed-composer__heading">
-        <div className="feed-composer__avatar">
-          {Array.from(user?.nickname || "S")[0]}
+      <div className="feed-composer__top">
+        <div className="feed-composer__heading">
+          <div className="feed-composer__avatar">
+            {Array.from(user?.nickname || "S")[0]}
+          </div>
+
+          <div>
+            <strong>{user?.nickname ?? "SPOILOCK 사용자"}</strong>
+            <p>드라마에 대한 이야기를 남겨 보세요.</p>
+          </div>
         </div>
 
-        <div>
-          <strong>{user?.nickname ?? "SPOILOCK 사용자"}</strong>
-          <p>드라마에 대한 이야기를 남겨 보세요.</p>
-        </div>
+        {user && (
+          <AudienceSwitch
+            value={audience}
+            onChange={setAudience}
+            disabled={saving}
+          />
+        )}
       </div>
-
       {!user ? (
         <button
           type="button"
@@ -341,11 +350,6 @@ export function FeedComposer({
       ) : (
         <form onSubmit={handleSubmit}>
           {/* 게시글 공개 범위: 전체 공개 / 팔로워 공개 */}
-          <AudienceSwitch
-            value={audience}
-            onChange={setAudience}
-            disabled={saving}
-          />
           {/* 드라마 선택 */}
           <select
             className="feed-composer__select"
@@ -536,6 +540,16 @@ export function FeedList({
   // 무한스크롤 감시용
   const bottomRef = useRef(null);
 
+  function reloadAfterChange() {
+    setItems([]);
+    setCursor(null);
+    setNextCursor(null);
+    setHasNext(true);
+    setError("");
+    setLoading(true);
+    setRetryKey((current) => current + 1);
+  }
+
   // ================================================
   // 피드 목록 조회
   // ================================================
@@ -692,7 +706,12 @@ export function FeedList({
     >
       {/* 피드 카드 */}
       {items.map((post) => (
-        <FeedCard key={post.postId} post={post} user={user} />
+        <FeedCard
+          key={post.postId}
+          post={post}
+          user={user}
+          onChanged={reloadAfterChange}
+        />
       ))}
 
       {/* 게시글 없음 */}
@@ -747,27 +766,10 @@ export default function CommunityPage({ user, onLogin, onNotice }) {
       ? requestedDramaId
       : null;
 
-  const tab = searchParams.get("tab") === "FOLLOWING" ? "FOLLOWING" : "ALL";
-
-  function setTab(nextTab) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-
-      if (nextTab === "FOLLOWING") {
-        next.set("tab", "FOLLOWING");
-      } else {
-        next.delete("tab");
-      }
-
-      return next;
-    });
-  }
   const [revision, setRevision] = useState(0);
 
   // 새 글 작성 후 전체 피드 처음부터 새로 조회
   function handleCreated() {
-    setTab("ALL");
-
     setRevision((current) => current + 1);
   }
 
@@ -811,32 +813,11 @@ export default function CommunityPage({ user, onLogin, onNotice }) {
         </div>
       )}
 
-      {/* 전체 / 팔로잉 탭 */}
-      <div className="feed-page__tabs" role="group" aria-label="피드 종류">
-        <button
-          type="button"
-          className={tab === "ALL" ? "is-active" : ""}
-          aria-pressed={tab === "ALL"}
-          onClick={() => setTab("ALL")}
-        >
-          전체 피드
-        </button>
-
-        <button
-          type="button"
-          className={tab === "FOLLOWING" ? "is-active" : ""}
-          aria-pressed={tab === "FOLLOWING"}
-          onClick={() => setTab("FOLLOWING")}
-        >
-          팔로잉
-        </button>
-      </div>
-
       {/* 로그인 상태에 따라 피드 표시 */}
       {user ? (
         <FeedList
-          key={`${user.id}:${tab}:${selectedDramaId ?? "all"}:${revision}`}
-          type={tab}
+          key={`${user.id}:ALL:${selectedDramaId ?? "all"}:${revision}`}
+          type="ALL"
           user={user}
           dramaId={selectedDramaId}
         />

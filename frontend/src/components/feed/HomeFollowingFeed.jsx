@@ -32,7 +32,7 @@ export default function HomeFollowingFeed({
 
       try {
         const data = await feedApi.getFeed({
-          type: "FOLLOWING",
+          type: "ALL",
           size: 3,
           dramaId,
           signal: controller.signal,
@@ -61,7 +61,7 @@ export default function HomeFollowingFeed({
         setResult({
           userId,
           items: [],
-          error: error.message || "팔로잉 피드를 불러오지 못했습니다.",
+          error: error.message || "커뮤니티 피드를 불러오지 못했습니다.",
         });
       } finally {
         requesting = false;
@@ -94,8 +94,8 @@ export default function HomeFollowingFeed({
   if (!user) {
     return (
       <div className="home-column-empty">
-        <strong>팔로우한 사람들의 이야기를 만나보세요</strong>
-        <p>로그인하면 팔로잉 사용자의 게시글을 볼 수 있어요.</p>
+        <strong>드라마를 좋아하는 사람들의 이야기를 만나보세요</strong>
+        <p>로그인하면 전체 공개 글과 팔로우한 사람의 글을 볼 수 있어요.</p>
 
         <button
           type="button"
@@ -113,7 +113,7 @@ export default function HomeFollowingFeed({
   if (!current) {
     return (
       <div className="home-column-empty" role="status">
-        팔로잉 피드를 불러오는 중입니다.
+        커뮤니티 피드를 불러오는 중입니다.
       </div>
     );
   }
@@ -139,14 +139,14 @@ export default function HomeFollowingFeed({
       <div className="home-column-empty">
         <strong>
           {dramaId
-            ? "이 드라마의 팔로잉 게시글이 아직 없어요"
+            ? "이 드라마의 게시글이 아직 없어요"
             : "아직 표시할 이야기가 없어요"}
         </strong>
 
         <p>
-          내가 작성했거나 팔로우한 사람이 작성한
+          전체 공개글과 팔로우한 사람의 글,
           <br />
-          게시글이 여기에 표시돼요.
+          내가 작성한 글이 여기에 표시돼요.
         </p>
       </div>
     );
@@ -156,12 +156,20 @@ export default function HomeFollowingFeed({
     <div
       className="home-following-scroll"
       role="region"
-      aria-label="팔로잉 최신 게시글"
+      aria-label="커뮤니티 최신 게시글"
       tabIndex={0}
     >
       <div className="home-following-list">
         {current.items.map((post) => (
-          <FeedCard key={post.postId} post={post} user={user} />
+          <FeedCard
+            key={post.postId}
+            post={post}
+            user={user}
+            onChanged={() => {
+              setResult(null);
+              setRevision((current) => current + 1);
+            }}
+          />
         ))}
       </div>
     </div>

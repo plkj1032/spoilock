@@ -201,6 +201,7 @@
   margin: 16px 0 4px;
   font-size: 12px;
 }
+
 @media (max-width: 570px) {
   #root .talk-row {
     gap: 7px;
@@ -233,5 +234,72 @@
   }
   #root .talk-meta time {
     font-size: 9px;
+  }
+}
+/* =========================================
+   채팅방 글씨 크기 확대
+   ========================================= */
+
+/* 채팅 본문 */
+#root .talk-content {
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+/* 작성자 이름 */
+#root .talk-author button {
+  font-size: 15px;
+}
+
+/* 전송 시간 */
+#root .talk-meta time {
+  font-size: 12px;
+}
+
+/* 스포일러 보호 / 분석 중 안내 제목 */
+#root .talk-protection strong {
+  font-size: 16px;
+}
+
+/* 스포일러 보호 / 분석 중 안내 설명 */
+#root .talk-protection p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 커진 안내 문구가 들어갈 공간 */
+#root .talk-protection {
+  max-width: 330px;
+}
+
+/* 신고·강퇴 메뉴 */
+#root .talk-menu button,
+#root .talk-menu span {
+  font-size: 14px;
+}
+
+/* 입장·퇴장·강퇴 등 시스템 안내 */
+#root .chat-message-list:has(.talk-row) .chat-system-message {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 말풍선 내부 여백 */
+#root .talk-bubble {
+  padding: 12px 15px;
+}
+
+/* 모바일 */
+@media (max-width: 570px) {
+  #root .talk-content {
+    font-size: 16px;
+  }
+
+  #root .talk-meta time {
+    font-size: 11px;
+  }
+
+  #root .talk-bubble {
+    padding: 10px 12px;
   }
 }
