@@ -6,6 +6,7 @@ import App from "./App.jsx";
 import "./index.css";
 import "./styles/NativeControls.css";
 import "./styles/SpoilockRefresh.css";
+import "./styles/SoftNavyTheme.css";
 
 const router = createBrowserRouter([
   {
