@@ -71,4 +71,31 @@ if [ "$READY" != "true" ]; then
   exit 1
 fi
 
+# ========================================
+# React 프론트엔드 배포
+# ========================================
+
+FRONTEND_DIR="/var/www/spoilock"
+
+echo "React 배포 시작"
+
+mkdir -p "$WORK_DIR/frontend"
+
+aws s3 cp \
+  "$S3_SOURCE/frontend.tar.gz" \
+  "$WORK_DIR/frontend.tar.gz"
+
+tar -xzf "$WORK_DIR/frontend.tar.gz" \
+  -C "$WORK_DIR/frontend"
+
+test -f "$WORK_DIR/frontend/index.html"
+
+mkdir -p "$FRONTEND_DIR"
+
+cp -a "$WORK_DIR/frontend/." "$FRONTEND_DIR/"
+
+chmod -R a+rX "$FRONTEND_DIR"
+
+echo "React 배포 완료"
+
 echo "SPOILOCK 백엔드 배포 성공!"
