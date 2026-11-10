@@ -30,7 +30,7 @@ public class FeedMutationController {
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UpdateFeedRequest request
             ){
-        Long userId = Long.valueOf(jwt.getId());
+        Long userId = Long.valueOf(jwt.getSubject());
 
         mutationService.updatePost(
                 postId,
@@ -46,7 +46,7 @@ public class FeedMutationController {
             @PathVariable Long postId,
             @AuthenticationPrincipal Jwt jwt
     ){
-        Long userId = Long.valueOf(jwt.getId());
+        Long userId = Long.valueOf(jwt.getSubject());
 
         mutationService.deletePost(
                 postId,
@@ -62,7 +62,7 @@ public class FeedMutationController {
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody UpdateCommentRequest request
     ){
-        Long userId = Long.valueOf(jwt.getId());
+        Long userId = Long.valueOf(jwt.getSubject());
 
         mutationService.updateComment(
                 postId,
@@ -79,7 +79,7 @@ public class FeedMutationController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal Jwt jwt
     ){
-        Long userId = Long.valueOf(jwt.getId());
+        Long userId = Long.valueOf(jwt.getSubject());
 
         mutationService.deleteComment(
                 postId,
