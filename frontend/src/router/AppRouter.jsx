@@ -17,6 +17,7 @@ import DramaWatchPage from "../pages/DramaWatchPage";
 import AdminMonitoringPage from "../pages/AdminMonitoringPage";
 import KakaoSignupPage from "../pages/KakaoSignupPage";
 import RequireLogin from "../components/auth/RequireLogin";
+import AdminCopyrightPage from "../pages/AdminCopyrightPage";
 
 export default function AppRouter({
   user,
@@ -110,6 +111,19 @@ export default function AppRouter({
             <main className="container main-content">로그인 확인 중...</main>
           ) : user?.role === "ADMIN" ? (
             <AdminMonitoringPage />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+      {/* 관리자 저작권 관리 */}
+      <Route
+        path="/admin/copyright"
+        element={
+          pending ? (
+            <main className="container main-content">로그인 확인 중...</main>
+          ) : user?.role === "ADMIN" ? (
+            <AdminCopyrightPage />
           ) : (
             <Navigate to="/" replace />
           )

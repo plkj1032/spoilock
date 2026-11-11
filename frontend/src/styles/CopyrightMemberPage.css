@@ -1,0 +1,158 @@
+.copyright-member-page {
+  max-width: 900px;
+}
+
+.copyright-member-page > header {
+  margin-bottom: 24px;
+}
+
+.copyright-member-page > header p,
+.copyright-member-help {
+  color: #a9bbd4;
+  line-height: 1.7;
+}
+
+.copyright-member-page a {
+  color: #a9c7ff;
+}
+
+.copyright-member-card {
+  padding: 24px;
+  border: 1px solid #344968;
+  border-radius: 16px;
+  background: #101c2f;
+  color: #e5edfa;
+}
+
+.copyright-member-card fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.copyright-member-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+.copyright-member-card input,
+.copyright-member-card textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #405a80;
+  border-radius: 9px;
+  background: #17263d;
+  color: #f1f5ff;
+  font: inherit;
+}
+
+.copyright-member-card textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.copyright-member-card button,
+.copyright-member-link {
+  display: inline-block;
+  padding: 10px 14px;
+  border: 1px solid #48648e;
+  border-radius: 9px;
+  background: #243c61;
+  color: #edf4ff;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.copyright-member-card button:disabled,
+.copyright-member-card fieldset:disabled button {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.copyright-member-page :is(input, textarea, button, a):focus-visible {
+  outline: 2px solid #719cff;
+  outline-offset: 3px;
+}
+
+.copyright-member-target {
+  margin-top: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #344968;
+}
+
+.copyright-member-error {
+  color: #ffb5bd;
+  line-height: 1.7;
+}
+
+.copyright-member-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.copyright-member-list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.copyright-member-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #344968;
+  border-radius: 12px;
+}
+
+.copyright-member-list li p {
+  margin-bottom: 0;
+  color: #a9bbd4;
+  font-size: 13px;
+}
+
+.copyright-member-list li button {
+  flex-shrink: 0;
+}
+
+.copyright-member-detail {
+  display: grid;
+  gap: 20px;
+}
+
+.copyright-member-detail dt {
+  margin-bottom: 7px;
+  color: #9fb5d5;
+  font-size: 13px;
+}
+
+.copyright-member-detail dd {
+  margin: 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .copyright-member-card {
+    padding: 18px;
+  }
+
+  .copyright-member-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

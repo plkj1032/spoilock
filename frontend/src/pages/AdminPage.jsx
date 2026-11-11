@@ -31,6 +31,13 @@ const CENTERS = [
     to: "/admin/monitoring",
     label: "AI 모니터링",
   },
+  {
+    number: "05",
+    title: "저작권 관리센터",
+    description: "작품별 이용 권한, 계약 증빙 자료와 변경 이력을 관리합니다.",
+    to: "/admin/copyright",
+    label: "저작권 관리",
+  },
 ];
 
 export default function AdminPage() {

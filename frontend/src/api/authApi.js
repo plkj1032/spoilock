@@ -56,7 +56,7 @@ async function csrfToken() {
 // =====================================================
 async function request(
   path,
-  { method = "GET", body, formData, signal, cache } = {},
+  { method = "GET", body, formData, signal, cache, responseType = "json" } = {},
 ) {
   // JSON과 FormData 동시 전송 방지
   if (body !== undefined && formData !== undefined) {
@@ -119,6 +119,11 @@ async function request(
       response.status,
       messages[response.status] || "요청 처리에 실패했습니다.",
     );
+  }
+
+  // 다운로드 요청은 JSON 대신 파일 데이터로 반환
+  if (responseType === "blob") {
+    return response.blob();
   }
 
   return data;
