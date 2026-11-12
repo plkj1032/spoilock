@@ -168,12 +168,25 @@ function refreshOnce() {
 
 function restoreSessionOnce() {
   if (!sessionInFlight) {
-    sessionInFlight = enqueueAuthRequest(() =>
-      request("/api/auth/session", {
-        method: "POST",
-        cache: "no-store",
-      }),
-    ).finally(() => {
+    sessionInFlight = enqueueAuthRequest(async () => {
+      const restore = () =>
+        request("/api/auth/session", {
+          method: "POST",
+          cache: "no-store",
+        });
+
+      try {
+        return await restore();
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 403) {
+          throw error;
+        }
+
+        // 세션 복구 요청이 403이면 CSRF 토큰을 다시 받아 한 번만 재시도.
+        // request() 내부에서 /api/auth/csrf 조회 후 헤더를 구성함.
+        return await restore();
+      }
+    }).finally(() => {
       sessionInFlight = null;
     });
   }

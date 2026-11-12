@@ -68,14 +68,16 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
 
       beforeConnect: async () => {
         if (!active || expired) {
-          void client.deactivate();
+          await client.deactivate();
           return;
         }
 
-        await checkSession();
+        const authenticated = await checkSession();
 
-        if (!active || expired) {
-          void client.deactivate();
+        // 인증 확인이 실패하면 이번 연결과 자동 재연결을 중단
+        if (!authenticated || !active || expired) {
+          await client.deactivate();
+          return;
         }
       },
 
@@ -98,14 +100,29 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
       },
     });
 
+    async function recoverConnection() {
+      if (!active || expired) return;
+
+      const authenticated = await checkSession();
+
+      if (!authenticated || !active || expired) return;
+
+      // 인증이 확인됐고 연결이 중단된 경우에만 재개
+      if (!client.active) {
+        client.activate();
+      }
+    }
+
     function checkWhenVisible() {
       if (document.visibilityState === "visible") {
-        void checkSession();
+        void recoverConnection();
       }
     }
 
     function checkWhenOnline() {
-      void checkSession();
+      if (document.visibilityState === "visible") {
+        void recoverConnection();
+      }
     }
 
     // WebSocket 연결이 불가능한 환경에서도 화면 상태를 보완

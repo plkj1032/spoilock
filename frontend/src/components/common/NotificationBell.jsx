@@ -11,25 +11,56 @@ export default function NotificationBell() {
   useEffect(() => {
     let active = true;
     let fetching = false;
+    let failures = 0;
+    let nextAttemptAt = 0;
+
     const controller = new AbortController();
 
     async function refreshCount() {
-      if (fetching) return;
+      if (
+        !active ||
+        fetching ||
+        document.visibilityState !== "visible" ||
+        Date.now() < nextAttemptAt
+      ) {
+        return;
+      }
+
       fetching = true;
 
       try {
         const data = await notificationApi.getUnreadCount(controller.signal);
 
-        if (active) {
-          setUnreadCount(data.unreadCount);
-        }
-      } catch {
-        if (active) {
-          // 조회 실패를 안 읽은 알림 0개로 표시하지 않음
-          setUnreadCount(null);
-        }
+        if (!active) return;
+
+        setUnreadCount(data.unreadCount);
+        failures = 0;
+        nextAttemptAt = Date.now() + 5000;
+      } catch (error) {
+        if (!active || controller.signal.aborted) return;
+
+        // 조회 실패를 '알림 0개'로 표시하지 않음
+        setUnreadCount(null);
+        failures += 1;
+
+        // 인증 관련 실패는 30초부터, 그 외에는 10초부터 재시도
+        const baseDelay =
+          error.status === 401 || error.status === 403 ? 30000 : 10000;
+
+        const delay = Math.min(
+          baseDelay * 2 ** Math.min(failures - 1, 3),
+          120000,
+        );
+
+        nextAttemptAt = Date.now() + delay;
       } finally {
         fetching = false;
+      }
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void refreshCount();
       }
     }
 
@@ -37,10 +68,13 @@ export default function NotificationBell() {
 
     const timer = window.setInterval(refreshCount, 5000);
 
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
     return () => {
       active = false;
       controller.abort();
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [revision]);
 
