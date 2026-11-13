@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Client } from "@stomp/stompjs";
-
+import { deactivateSafely } from "../../utils/chatConnection";
 import { authApi } from "../../api/authApi";
 
 export default function LoginSessionWatcher({ userId, onSessionExpired }) {
@@ -27,7 +27,7 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
       if (!active || expired) return;
 
       expired = true;
-      void client.deactivate();
+      void deactivateSafely(client);
       onSessionExpired();
     }
 
@@ -68,7 +68,7 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
 
       beforeConnect: async () => {
         if (!active || expired) {
-          await client.deactivate();
+          await deactivateSafely(client);
           return;
         }
 
@@ -76,7 +76,7 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
 
         // 인증 확인이 실패하면 이번 연결과 자동 재연결을 중단
         if (!authenticated || !active || expired) {
-          await client.deactivate();
+          await deactivateSafely(client);
           return;
         }
       },
@@ -142,7 +142,7 @@ export default function LoginSessionWatcher({ userId, onSessionExpired }) {
       window.removeEventListener("online", checkWhenOnline);
       document.removeEventListener("visibilitychange", checkWhenVisible);
 
-      void client.deactivate();
+      void deactivateSafely(client);
     };
   }, [userId, onSessionExpired]);
 

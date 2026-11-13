@@ -6,6 +6,7 @@ import "../styles/AdminCenter.css";
 import "../styles/AdminMonitoring.css";
 import { Client } from "@stomp/stompjs";
 import { authApi } from "../api/authApi";
+import { deactivateSafely } from "../utils/chatConnection";
 
 // ========================================
 // 1. 상태 코드 한글 표시
@@ -539,7 +540,7 @@ export default function AdminMonitoringPage() {
 
       beforeConnect: async () => {
         if (!mounted) {
-          await client.deactivate();
+          await deactivateSafely(client);
           return;
         }
 
@@ -547,20 +548,20 @@ export default function AdminMonitoringPage() {
           const me = await authApi.restore();
 
           if (!mounted || !me) {
-            await client.deactivate();
+            await deactivateSafely(client);
             return;
           }
         } catch {
           // 인증 확인에 실패한 상태에서는 연결하지 않음.
           // 로그인 상태 자체는 공통 인증 처리에서 판단.
-          await client.deactivate();
+          await deactivateSafely(client);
           return;
         }
       },
 
       onConnect: () => {
         if (!mounted) {
-          void client.deactivate();
+          void deactivateSafely(client);
           return;
         }
 
@@ -635,7 +636,7 @@ export default function AdminMonitoringPage() {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
 
-      void client.deactivate();
+      void deactivateSafely(client);
     };
   }, [range, dramaId, chatPage, jobPage, targetMessageId, reloadKey]);
 
