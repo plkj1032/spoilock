@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Client } from "@stomp/stompjs";
 
 import { apiRequest, authApi } from "../api/authApi";
-import { installConnectionRecovery } from "../utils/chatConnection";
+import {
+  installConnectionRecovery,
+  deactivateSafely,
+} from "../utils/chatConnection";
 
 export default function useRoomPage({
   userId,
@@ -157,7 +160,7 @@ export default function useRoomPage({
 
       beforeConnect: async () => {
         if (!active) {
-          void client.deactivate();
+          void deactivateSafely(client);
           return;
         }
 
@@ -165,17 +168,17 @@ export default function useRoomPage({
           const me = await authApi.restore();
 
           if (!active || !me || String(me.id) !== String(userId)) {
-            void client.deactivate();
+            void deactivateSafely(client);
           }
         } catch {
           // 인증 확인이 실패하면 HTTP 자동 조회만 유지
-          void client.deactivate();
+          void deactivateSafely(client);
         }
       },
 
       onConnect: () => {
         if (!active) {
-          void client.deactivate();
+          void deactivateSafely(client);
           return;
         }
 
@@ -193,7 +196,7 @@ export default function useRoomPage({
       active = false;
       stopConnectionRecovery();
       window.clearTimeout(refreshTimer);
-      void client.deactivate();
+      void deactivateSafely(client);
     };
   }, [enabled, userId, refresh]);
 

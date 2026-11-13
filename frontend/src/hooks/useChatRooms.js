@@ -3,7 +3,10 @@ import { Client } from "@stomp/stompjs";
 
 import { authApi } from "../api/authApi";
 import { chatApi } from "../api/chatApi";
-import { installConnectionRecovery } from "../utils/chatConnection";
+import {
+  installConnectionRecovery,
+  deactivateSafely,
+} from "../utils/chatConnection";
 
 export default function useChatRooms(userId, revision = 0) {
   const [rooms, setRooms] = useState([]);
@@ -100,7 +103,7 @@ export default function useChatRooms(userId, revision = 0) {
 
         beforeConnect: async () => {
           if (!active) {
-            void client.deactivate();
+            void deactivateSafely(client);
             return;
           }
 
@@ -108,17 +111,17 @@ export default function useChatRooms(userId, revision = 0) {
             const me = await authApi.restore();
 
             if (!active || !me || String(me.id) !== String(userId)) {
-              void client.deactivate();
+              void deactivateSafely(client);
             }
           } catch {
             // 목록 조회는 유지하고 인증을 확인할 수 없는 소켓은 종료한다.
-            void client.deactivate();
+            void deactivateSafely(client);
           }
         },
 
         onConnect: () => {
           if (!active) {
-            void client.deactivate();
+            void deactivateSafely(client);
             return;
           }
 
@@ -164,7 +167,7 @@ export default function useChatRooms(userId, revision = 0) {
       window.removeEventListener("online", refreshWhenVisible);
 
       if (client) {
-        void client.deactivate();
+        void deactivateSafely(client);
       }
     };
   }, [userId, revision]);

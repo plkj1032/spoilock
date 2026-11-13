@@ -20,7 +20,7 @@ import ChatReportModal from "../components/chat/ChatReportModal";
 import UserFollowDialog from "../components/user/UserFollowDialog";
 import ChatFollowingInviteModal from "../components/chat/ChatFollowingInviteModal";
 import ChatOwnershipModal from "../components/chat/ChatOwnershipModal";
-import { canPublish } from "../utils/chatConnection";
+import { canPublish, deactivateSafely } from "../utils/chatConnection";
 
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
@@ -529,7 +529,7 @@ export default function ChatRoomPage({ user, onNotice }) {
       setLoading(false);
       setError(message);
 
-      void client.deactivate();
+      void deactivateSafely(client);
     }
 
     const client = new Client({
@@ -542,7 +542,7 @@ export default function ChatRoomPage({ user, onNotice }) {
 
       beforeConnect: async () => {
         if (!active || stopped || controller.signal.aborted) {
-          await client.deactivate();
+          await deactivateSafely(client);
           return;
         }
 
@@ -557,7 +557,7 @@ export default function ChatRoomPage({ user, onNotice }) {
           const me = await authApi.restore();
 
           if (!active || stopped || controller.signal.aborted) {
-            await client.deactivate();
+            await deactivateSafely(client);
             return;
           }
 
@@ -581,14 +581,14 @@ export default function ChatRoomPage({ user, onNotice }) {
           });
 
           if (!active || stopped || controller.signal.aborted) {
-            await client.deactivate();
+            await deactivateSafely(client);
             return;
           }
 
           setRoom(latestRoom);
         } catch (err) {
           if (!active || stopped || controller.signal.aborted) {
-            await client.deactivate();
+            await deactivateSafely(client);
             return;
           }
 
@@ -607,7 +607,7 @@ export default function ChatRoomPage({ user, onNotice }) {
           // 세션 복구 실패나 일시적인 방 조회 실패는
           // 강퇴·방 삭제로 판단하지 않고 연결을 중단한 뒤 재확인
           beginRecovery();
-          await client.deactivate();
+          await deactivateSafely(client);
 
           if (!active || stopped || controller.signal.aborted) return;
 
@@ -635,7 +635,7 @@ export default function ChatRoomPage({ user, onNotice }) {
       },
       onConnect: () => {
         if (!active || stopped) {
-          void client.deactivate();
+          void deactivateSafely(client);
           return;
         }
 
@@ -695,7 +695,7 @@ export default function ChatRoomPage({ user, onNotice }) {
         clientRef.current = null;
       }
 
-      void client.deactivate();
+      void deactivateSafely(client);
     };
   }, [
     roomId,

@@ -46,3 +46,14 @@ export function installConnectionRecovery(client) {
     document.removeEventListener("visibilitychange", recover);
   };
 }
+export function deactivateSafely(client) {
+  if (!client) return Promise.resolve();
+
+  const socket = client.webSocket;
+
+  // 실제 연결이 열려 있으면 정상 종료 절차 사용
+  // 이미 닫히고 있거나 연결이 없으면 DISCONNECT 전송 생략
+  const force = !socket || socket.readyState !== WebSocket.OPEN;
+
+  return client.deactivate({ force });
+}
