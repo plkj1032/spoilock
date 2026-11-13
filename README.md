@@ -120,7 +120,7 @@ flowchart LR
 2. **사용자 발언 판정** · 대화 맥락과 후보 사건을 검색하고 Gemini가 판정
 3. **공개 정책 반영** · 화자·수신자의 시청 진도로 최종 공개 여부를 결정
 
-> 🧩 AI 서버는 별도 저장소로 관리합니다 → **[spoilock-ai](https://github.com/plkj1032/spoilock-ai)** <!-- TODO: 실제 저장소 주소로 수정 -->
+> 🧩 AI 서버는 별도 저장소로 관리합니다 → **[spoilock-ai](https://github.com/Seo-Yeon-Choi/spoilock_ai)** <!-- TODO: 실제 저장소 주소로 수정 -->
 
 <br />
 
