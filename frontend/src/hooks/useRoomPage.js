@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Client } from "@stomp/stompjs";
 
 import { apiRequest, authApi } from "../api/authApi";
+import { installConnectionRecovery } from "../utils/chatConnection";
 
 export default function useRoomPage({
   userId,
@@ -65,7 +66,7 @@ export default function useRoomPage({
     async function load() {
       try {
         const data = await apiRequest(path, {
-          retryOn401: true,
+          retryOn401: userId != null,
           cache: "no-store",
           signal: controller.signal,
         });
@@ -185,10 +186,12 @@ export default function useRoomPage({
       },
     });
 
+    const stopConnectionRecovery = installConnectionRecovery(client);
     client.activate();
 
     return () => {
       active = false;
+      stopConnectionRecovery();
       window.clearTimeout(refreshTimer);
       void client.deactivate();
     };

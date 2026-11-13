@@ -3,6 +3,7 @@ import { Client } from "@stomp/stompjs";
 
 import { authApi } from "../api/authApi";
 import { chatApi } from "../api/chatApi";
+import { installConnectionRecovery } from "../utils/chatConnection";
 
 export default function useChatRooms(userId, revision = 0) {
   const [rooms, setRooms] = useState([]);
@@ -15,6 +16,7 @@ export default function useChatRooms(userId, revision = 0) {
     let queued = false;
     let loaded = false;
     let client = null;
+    let stopConnectionRecovery = () => {};
 
     const controller = new AbortController();
 
@@ -32,6 +34,7 @@ export default function useChatRooms(userId, revision = 0) {
       try {
         const data = await chatApi.getRooms({
           signal: controller.signal,
+          retryOn401: userId != null,
         });
 
         if (!active) return;
@@ -146,11 +149,13 @@ export default function useChatRooms(userId, revision = 0) {
         },
       });
 
+      stopConnectionRecovery = installConnectionRecovery(client);
       client.activate();
-    }
+    } // if (userId != null) 종료
 
     return () => {
       active = false;
+      stopConnectionRecovery();
       controller.abort();
 
       window.clearInterval(timer);

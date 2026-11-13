@@ -539,25 +539,22 @@ export default function AdminMonitoringPage() {
 
       beforeConnect: async () => {
         if (!mounted) {
-          void client.deactivate();
+          await client.deactivate();
           return;
         }
 
         try {
-          // 기존 인증 복원 경로로 만료된 쿠키를 갱신한다.
           const me = await authApi.restore();
 
           if (!mounted || !me) {
-            void client.deactivate();
+            await client.deactivate();
             return;
           }
         } catch {
-          // 일시적인 통신 실패만으로 로그아웃시키지 않는다.
-          // 실제 연결·구독 권한은 서버에서 확인한다.
-        }
-
-        if (!mounted) {
-          void client.deactivate();
+          // 인증 확인에 실패한 상태에서는 연결하지 않음.
+          // 로그인 상태 자체는 공통 인증 처리에서 판단.
+          await client.deactivate();
+          return;
         }
       },
 
@@ -592,23 +589,33 @@ export default function AdminMonitoringPage() {
         }
       },
     });
+    function resumeMonitoringConnection() {
+      if (!mounted || document.hidden || !navigator.onLine) return;
 
+      if (!client.active) {
+        client.activate();
+      }
+    }
+
+    // 인증 확인을 먼저 시작하고 화면 데이터를 조회
+    resumeMonitoringConnection();
     void reload();
-    client.activate();
 
-    // 서버 상태·작업 이력 갱신 및 알림 유실 보완.
-    // 채팅 변경은 이 주기를 기다리지 않고 WebSocket 알림으로 갱신된다.
+    // 중단된 연결 복구 및 화면 데이터 갱신
     const timer = window.setInterval(() => {
+      resumeMonitoringConnection();
       void reload();
     }, 30000);
 
     const onVisible = () => {
       if (!document.hidden) {
+        resumeMonitoringConnection();
         void reload();
       }
     };
 
     const onOnline = () => {
+      resumeMonitoringConnection();
       scheduleReload();
     };
 

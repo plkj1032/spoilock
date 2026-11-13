@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { chatApi } from "../api/chatApi";
+import { canPublish } from "../utils/chatConnection";
 
 export default function useChatPresence(roomId) {
   const [members, setMembers] = useState([]);
@@ -33,7 +34,7 @@ export default function useChatPresence(roomId) {
       setMembersError("");
 
       async function refresh() {
-        if (!active || !client.connected) return;
+        if (!active || !canPublish(client)) return;
 
         // 조회 중 변경 알림이 오면 끝난 뒤 한 번 더 조회
         if (fetching) {
@@ -77,7 +78,7 @@ export default function useChatPresence(roomId) {
       }
 
       function sendPresence() {
-        if (!active || !client.connected) return;
+        if (!active || !canPublish(client)) return;
 
         try {
           client.publish({

@@ -20,6 +20,7 @@ import ChatReportModal from "../components/chat/ChatReportModal";
 import UserFollowDialog from "../components/user/UserFollowDialog";
 import ChatFollowingInviteModal from "../components/chat/ChatFollowingInviteModal";
 import ChatOwnershipModal from "../components/chat/ChatOwnershipModal";
+import { canPublish } from "../utils/chatConnection";
 
 // 같은 메시지는 하나만 유지하고, ID 순으로 정렬
 function mergeMessages(current, incoming) {
@@ -540,8 +541,8 @@ export default function ChatRoomPage({ user, onNotice }) {
       connectionTimeout: 5000,
 
       beforeConnect: async () => {
-        if (!active || stopped) {
-          void client.deactivate();
+        if (!active || stopped || controller.signal.aborted) {
+          await client.deactivate();
           return;
         }
 
@@ -549,15 +550,18 @@ export default function ChatRoomPage({ user, onNotice }) {
           setLoading(true);
         }
 
+        // 어느 요청에서 실패했는지 구분
+        let phase = "session";
+
         try {
-          // 액세스 토큰이 만료됐다면 기존 refresh 흐름으로 갱신
           const me = await authApi.restore();
 
-          if (!active || stopped) {
-            void client.deactivate();
+          if (!active || stopped || controller.signal.aborted) {
+            await client.deactivate();
             return;
           }
 
+          // 서버가 비로그인을 확인했거나 사용자가 바뀐 경우
           if (!me || String(me.id) !== String(user.id)) {
             stopWithError(
               "로그인 상태가 변경되었습니다. 다시 로그인해 주세요.",
@@ -565,48 +569,70 @@ export default function ChatRoomPage({ user, onNotice }) {
             return;
           }
 
-          // 재연결 전에 강퇴·방 삭제 등 접근 권한도 확인
-          const latestRoom = await getJson(`/api/chat/rooms/${roomId}`);
+          phase = "room";
 
-          if (!active || stopped) {
-            void client.deactivate();
+          // 여기서는 방 조회 자체의 응답을 확인해야 하므로
+          // 공통 함수의 자동 인증 재시도는 사용하지 않음.
+          // 401이면 아래에서 연결을 멈추고 인증부터 다시 확인.
+          const latestRoom = await apiRequest(`/api/chat/rooms/${roomId}`, {
+            signal: controller.signal,
+            cache: "no-store",
+            retryOn401: false,
+          });
+
+          if (!active || stopped || controller.signal.aborted) {
+            await client.deactivate();
             return;
           }
 
           setRoom(latestRoom);
         } catch (err) {
-          if (!active || stopped || controller.signal.aborted) return;
-
-          const status = err.status ?? err.cause?.status;
-
-          if (status === 401) {
-            stopWithError("로그인이 만료되었습니다. 다시 로그인해 주세요.");
+          if (!active || stopped || controller.signal.aborted) {
+            await client.deactivate();
             return;
           }
 
-          if (status === 403 || status === 404) {
+          const status = err.status ?? err.cause?.status;
+
+          // 실제 방 조회에서 거절된 경우만 입장 제한으로 처리
+          if (phase === "room" && (status === 403 || status === 404)) {
             stopWithError(
-              "이 채팅방에 접근할 수 없습니다. 참여 상태를 확인해 주세요.",
+              status === 404
+                ? "채팅방을 찾을 수 없습니다. 삭제되었거나 종료된 방인지 확인해 주세요."
+                : "이 채팅방에 접근할 수 없습니다. 참여 상태를 확인해 주세요.",
             );
             return;
           }
 
-          // 인증 서버의 일시적 장애도 자동 재시도
+          // 세션 복구 실패나 일시적인 방 조회 실패는
+          // 강퇴·방 삭제로 판단하지 않고 연결을 중단한 뒤 재확인
           beginRecovery();
+          await client.deactivate();
 
-          void client.deactivate().then(() => {
-            if (!active || stopped) return;
+          if (!active || stopped || controller.signal.aborted) return;
 
-            window.clearTimeout(authRetryTimer);
-            authRetryTimer = window.setTimeout(() => {
-              if (active && !stopped) {
-                client.activate();
-              }
-            }, 3000);
-          });
+          // beginRecovery의 안내 타이머가 아래 문구를 덮어쓰지 않도록 정리
+          clearRecoveryNotice();
+          setLoading(false);
+
+          setError(
+            phase === "session" || status === 401
+              ? "로그인 상태를 확인하지 못했습니다. 잠시 후 자동으로 다시 시도합니다."
+              : "채팅방 연결을 확인하지 못했습니다. 잠시 후 자동으로 다시 시도합니다.",
+          );
+
+          window.clearTimeout(authRetryTimer);
+
+          // 공통 인증 복구의 30초 제한에 맞춰 재시도
+          authRetryTimer = window.setTimeout(() => {
+            authRetryTimer = null;
+
+            if (active && !stopped && !controller.signal.aborted) {
+              client.activate();
+            }
+          }, 30000);
         }
       },
-
       onConnect: () => {
         if (!active || stopped) {
           void client.deactivate();
@@ -872,7 +898,7 @@ export default function ChatRoomPage({ user, onNotice }) {
 
     if (!text) return;
 
-    if (!connected || !client?.connected) {
+    if (!connected || !canPublish(client)) {
       if (!reconnecting) {
         setError("채팅 서버 연결을 확인해 주세요.");
       }
@@ -977,7 +1003,12 @@ export default function ChatRoomPage({ user, onNotice }) {
                 {!membersLoading && !membersError && ` ${members.length}`}
               </Button>
 
-              <Button variant="outline" className="chat-action-exit" onClick={leaveRoom} disabled={leaving}>
+              <Button
+                variant="outline"
+                className="chat-action-exit"
+                onClick={leaveRoom}
+                disabled={leaving}
+              >
                 {leaving ? "나가는 중..." : "채팅방 나가기"}
               </Button>
             </div>
