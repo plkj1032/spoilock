@@ -1,8 +1,5 @@
 <div align="center">
 
-<!-- TODO: 로고/배너 이미지 → docs/images/banner.png -->
-<img src="docs/images/banner.png" alt="SPOILOCK" width="720" />
-
 # 🔒 SPOILOCK
 
 ### 시청 진도 기반 AI 스포일러 보호 드라마 커뮤니티
@@ -35,7 +32,7 @@
 | 항목 | 내용 |
 | --- | --- |
 | **프로젝트명** | SPOILOCK (스포일러 걱정 없는 드라마 커뮤니티) |
-| **팀명** | Spo_light:0 |
+| **팀명** | Spolight:0 |
 | **기간** | 2026.10.19 ~ 2026.11.16 (4주) |
 | **교육기관** | 한국정보교육원 · 2차 팀 프로젝트 |
 
