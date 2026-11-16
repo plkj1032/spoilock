@@ -22,7 +22,10 @@
 
 <!-- TODO: 스포일러 블러 처리 데모 GIF → docs/images/demo.gif -->
 <div align="center">
-  <img src="docs/images/demo.gif" alt="SPOILOCK 데모" width="720" />
+  <a href="docs/images/demo.png">
+    <img src="docs/images/demo.png" alt="SPOILOCK 메인 페이지" width="600" />
+  </a>
+  <br />
 </div>
 
 <br />
@@ -125,7 +128,11 @@ flowchart LR
 
 <!-- TODO: 인프라 토폴로지 이미지 → docs/images/topology.png -->
 <div align="center">
-  <img src="docs/images/topology.png" alt="인프라 토폴로지" width="800" />
+  <a href="docs/images/topology.png">
+    <img src="docs/images/topology.png" alt="SPOILOCK AWS 인프라 토폴로지" width="800" />
+  </a>
+  <br />
+  <sub>ALB → Spring Boot 2대(AZ A/B) → MySQL·Redis, NAT Gateway 경유 외부 통신, VPC Peering으로 FastAPI AI 서버 연결</sub>
 </div>
 
 ```mermaid
@@ -223,7 +230,7 @@ flowchart TB
 - Java 21
 - Node.js (LTS)
 - MySQL 8.0, Redis 7.4
-- AI 서버 ([spoilock-ai](https://github.com/plkj1032/spoilock-ai)) <!-- TODO: 주소 확인 -->
+- AI 서버 ([spoilock-ai](https://github.com/Seo-Yeon-Choi/spoilock_ai)) <!-- TODO: 주소 확인 -->
 
 ### 환경 변수
 
